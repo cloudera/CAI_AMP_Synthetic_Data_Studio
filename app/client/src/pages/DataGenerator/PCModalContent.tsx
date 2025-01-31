@@ -32,7 +32,11 @@ const CompletionInput = styled(Input.TextArea)`
 /**
  * Modal Content for prompts and completions
  */
-const PCModalContent = ({ question = '', solution = '', onSubmit = (data: QuestionSolution)=>{}, readOnly = true }) => {
+const PCModalContent = ({ 
+    question = '', 
+    solution = '', 
+    onSubmit = (data: QuestionSolution)=>{}, readOnly = true }
+) => {
     const [form] = Form.useForm();
     
     return (

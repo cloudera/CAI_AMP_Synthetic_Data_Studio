@@ -116,7 +116,7 @@ const Finish = () => {
     useEffect(() => { 
         const formValues = form.getFieldsValue(true);
         const doc_paths = formValues.doc_paths;
-        if (!isEmpty(doc_paths)) {
+        if (Array.isArray(doc_paths) && !isEmpty(doc_paths)) {
             if (formValues.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING) {
                 formValues.doc_paths = doc_paths.map(item => item.value);
             } else if (formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) {

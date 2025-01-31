@@ -73,10 +73,14 @@ const Prompt = () => {
     const input_key = form.getFieldValue('input_key');
     const input_value = form.getFieldValue('input_value');
     const output_key = form.getFieldValue('output_key');
+    const caii_endpoint = form.getFieldValue('caii_endpoint');
     console.log('workflow_type', workflow_type);
     console.log('doc_paths', doc_paths);
+    console.log('useCase', useCase);
     const { data: defaultPrompt, loading: promptsLoading } = useFetchDefaultPrompt(useCase);
-    const caii_endpoint = form.getFieldValue('caii_endpoint');
+    console.log('useCase', useCase);
+    console.log('defaultPrompt', defaultPrompt);
+    
 
     // Page Bootstrap requests and useEffect
     const { data: defaultTopics, loading: topicsLoading } = usefetchTopics(useCase);
@@ -258,7 +262,8 @@ const Prompt = () => {
                             <InputNumber disabled value={dataset_size} />
                         </StyledFormItem>    
                     }
-                    {isEmpty(doc_paths) && 
+                    {isEmpty(doc_paths) && (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING ||
+                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) &&
                     <Flex gap={20} vertical>
                         <StyledFormItem
                             name={'topics'}
@@ -368,7 +373,7 @@ const Prompt = () => {
                         </FormLabel>
                         <InputNumber disabled value={selectedTopics?.length * numQuestions} />
                     </Flex>}
-                    {form.getFieldValue('workflow_type') === WorkflowType.SUPERVISED_FINE_TUNING  && (
+                    {!isEmpty(doc_paths) && form.getFieldValue('workflow_type') === WorkflowType.CUSTOM_DATA_GENERATION  && (
                         <StyledFormItem
                             name={'total_dataset_size'}
                             label={

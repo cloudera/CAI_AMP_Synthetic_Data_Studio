@@ -1,3 +1,5 @@
+import endsWith from 'lodash/endsWith';
+import isEmpty from 'lodash/isEmpty';
 import { useEffect, useState } from 'react';
 import { Flex, Form, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
@@ -42,12 +44,16 @@ const Configure = () => {
     const formData = Form.useWatch((values) => values, form);
     const { setIsStepValid } = useWizardCtx();
     const { data } = useFetchModels();
-    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState(
+        !isEmpty(form.getFieldValue('doc_paths')) ? form.getFieldValue('doc_paths') : []);
 
     const validateForm = () => {
         const values = form.getFieldsValue();
         delete values.custom_prompt_instructions;
         delete values.workflow_type;
+        delete values.doc_paths;
+        delete values.output_key;
+        delete values.output_value;
         console.log('values', values);
         
         const allFieldsFilled = Object.values(values).every(value => Boolean(value));
@@ -89,6 +95,18 @@ const Configure = () => {
             }));
         setSelectedFiles(paths);
         form.setFieldValue('doc_paths', paths);    
+    }
+
+    const onWorkflowTypeChange = (value: string) => {
+        console.log('----------onWorkflowTypeChange', value);
+        const _workflow_type = form.getFieldValue('workflow_type');
+        console.log('_workflow_type', _workflow_type);
+
+        if (_workflow_type !== value) {
+            form.setFieldValue('doc_paths', []);
+            setSelectedFiles([]);    
+        }
+        console.log(form.getFieldsValue());
     }
     
 
@@ -180,10 +198,12 @@ const Configure = () => {
                     label='Workflow'
                     tooltip='A specialized workflow for your dataset'
                     labelCol={labelCol}
-                    rules={[{ required: true }]}
                     shouldUpdate
-                >
-                    <Select placeholder={'Select a workflow'}>
+                    rules={[
+                            { required: true }
+                        ]}
+                      >
+                        <Select placeholder={'Select a workflow'} onChange={onWorkflowTypeChange}>
                         {WORKFLOW_OPTIONS.map(option => 
                             <Select.Option key={option.value} value={option.value}>
                                 {option.label}
@@ -195,7 +215,39 @@ const Configure = () => {
                 <Form.Item
                     name='use_case'
                     label='Template'
-                    rules={[{ required: true }]}
+                    rules={[
+                        { required: true },
+                        () => ({
+                            validator(_, value) {
+                              console.log('-----validator');
+                              console.log('value', value);  
+                              const _workflow_type = form.getFieldValue('workflow_type');  
+                              const values = form.getFieldValue('doc_paths');  
+                              if (Array.isArray(values) && !isEmpty(values)) {
+                                try {
+                                    if (_workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && 
+                                        !isEmpty(value)) {
+                                            const isInValid = values.some(item => !endsWith(item.path, '.json'));
+                                            if(isInValid) {
+                                                throw new Error('Invalid file extension, for custom data generation workflow only JSON files are supported.')
+                                            }
+
+                                    } else if (_workflow_type === WorkflowType.SUPERVISED_FINE_TUNING &&
+                                        !isEmpty(value)) {
+                                            const isInValid = values.some(item => !endsWith(item.path, '.pdf'));
+                                            if(isInValid) {
+                                                throw new Error('Invalid file extension, for supervised fine tuning workflow only PDF files are supported.')
+                                            }
+                                    }
+
+                                } catch(e) {
+                                    return Promise.reject(e);
+                                }
+                            }
+                            return Promise.resolve();
+                            }
+                        })
+                    ]}
                     tooltip='A specialize template for generating your dataset'
                     labelCol={labelCol}
                     shouldUpdate

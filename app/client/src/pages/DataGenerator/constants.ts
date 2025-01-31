@@ -6,6 +6,6 @@ export const MODEL_PROVIDER_LABELS = {
 };
 
 export const MIN_SEED_INSTRUCTIONS = 1
-export const MAX_SEED_INSTRUCTIONS = 100;
+export const MAX_SEED_INSTRUCTIONS = 500;
 export const MAX_NUM_QUESTION = 100; 
 export const DEMO_MODE_THRESHOLD = 25

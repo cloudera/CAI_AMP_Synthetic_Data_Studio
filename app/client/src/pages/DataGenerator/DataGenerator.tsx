@@ -21,7 +21,7 @@ const { Content } = Layout;
 
 const StyledTitle = styled.div`
     margin-top: 10px;
-    font-family: Inter;
+    font-family: Roboto, -apple-system, 'Segoe UI', sans-serif;
     font-size: 20px;
     font-weight: 600;
     font-stretch: normal;
@@ -116,7 +116,7 @@ const DataGenerator = () => {
     return (
         <WizardCtx.Provider value={{ setIsStepValid }}>
             <Layout style={{ paddingBottom: 45 }}>
-                <StyledTitle>{'Synthetic Dataset Generator'}</StyledTitle>
+                <StyledTitle>{'Synthetic Dataset Studio'}</StyledTitle>
                 <Wizard
                     current={current}
                     onChange={onStepChange}

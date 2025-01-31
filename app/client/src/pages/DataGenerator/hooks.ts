@@ -161,7 +161,7 @@ export const useDatasetSize = (
     input_value: string,
     output_key: string
  ) => {
-    if (workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION) {
+    if (workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION || isEmpty(doc_paths)) {
         return {
           data: 0
         }

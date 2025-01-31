@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { useFetchExamples } from '../../api/api';
 import TooltipIcon from '../../components/TooltipIcon';
 import PCModalContent from './PCModalContent';
-import { QuestionSolution } from './types';
+import { QuestionSolution, WorkflowType } from './types';
 
 const { Title } = Typography;
 const Container = styled.div`
@@ -31,7 +31,8 @@ const StyledTable = styled(Table)`
 const MAX_EXAMPLES = 5;
 
 const Examples = () => {
-    const form = Form.useFormInstance()
+    const form = Form.useFormInstance();
+    console.log('-------Examples', form.getFieldsValue());
     const columns = [
         {
             title: 'Prompts',
@@ -133,6 +134,13 @@ const Examples = () => {
         form.setFieldValue('examples', examples.examples)
     }
     const rowLimitReached = form.getFieldValue('examples')?.length === MAX_EXAMPLES;
+    const workflow_type = form.getFieldValue('workflow_type');
+    console.log('workflow_type', workflow_type);
+
+    const isCustomWorkflow = workflow_type === WorkflowType.CUSTOM_DATA_GENERATION;
+    if (isCustomWorkflow) {
+        columns.shift();
+    }
 
     return (
         <Container>
