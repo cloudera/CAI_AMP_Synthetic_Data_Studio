@@ -16,6 +16,7 @@ fi
 # Activate virtual environment - using relative path
 source .venv/bin/activate
 
+export NODE_OPTIONS=--max-old-space-size=16384
 # Build frontend
 cd "$CLIENT_DIR"
 rm -rf node_modules/

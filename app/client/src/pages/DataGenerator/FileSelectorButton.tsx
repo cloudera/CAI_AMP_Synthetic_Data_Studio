@@ -9,9 +9,10 @@ import { File, WorkflowType } from './types';
 interface Props {
   onAddFiles: (files: File[]) => void;
   workflowType: WorkflowType;
+  label?: string;
 }
 
-const FileSelectorButton: React.FC<Props> = ({ onAddFiles, workflowType }) => {
+const FileSelectorButton: React.FC<Props> = ({ onAddFiles, workflowType, label }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
@@ -31,7 +32,9 @@ const FileSelectorButton: React.FC<Props> = ({ onAddFiles, workflowType }) => {
         style={{ marginLeft: '4px' }}
         onClick={() => setShowModal(true)}
         icon={<FileSearchOutlined />}
-      />
+      >
+         {label ? label : null}
+        </Button>
       {showModal && (
         <Modal
           visible={showModal}

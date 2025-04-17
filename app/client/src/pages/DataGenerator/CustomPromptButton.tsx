@@ -19,6 +19,25 @@ export const StyledTextArea = styled(Input.TextArea)`
     min-height: 175px !important;
 `;
 
+const StyledModal = styled(Modal)`
+  .ant-modal-content {
+    max-height: 90vh;
+    // height: 760px;
+    height: 85vh;
+    width: 750px;
+    .ant-modal-body {
+      padding-top: 0;
+      min-height: 70vh;
+    }
+  }
+  // .ant-modal-content {
+  //       border-radius: 8px;
+  //       box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
+  //       background-color: #ffffff;
+  //       padding: 24px;
+  //  }
+`        
+
 const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_endpoint, use_case, setPrompt }) => {
   const [form] = Form.useForm();
   const [showModal, setShowModal] = useState(false);
@@ -40,6 +59,7 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
       }
   }, [mutation.error, mutation.isSuccess]);
 
+  console.log('mutation', mutation);
   const onFinish = async () => {
     const custom_prompt = form.getFieldValue('custom_prompt_instructions');
     try { 
@@ -67,7 +87,7 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
       <Button onClick={() => setShowModal(true)} style={{ marginLeft: '8px' }}>Generate Custom Prompt</Button>
       {showModal && 
         (
-            <Modal
+            <StyledModal
               visible={showModal}
               okText={`Generate`}
               title={`Generate Cutom Prompt`}
@@ -98,7 +118,7 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
                     </Form.Item>
                 </Form>
 
-            </Modal>
+            </StyledModal>
         )
       }
     </>

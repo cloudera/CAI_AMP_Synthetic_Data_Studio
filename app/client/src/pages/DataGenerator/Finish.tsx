@@ -1,6 +1,8 @@
 import isNumber from 'lodash/isNumber';
 import filter from 'lodash/filter';
 import isString from 'lodash/isString';
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
 import { FC, useEffect } from 'react';
 import { HomeOutlined, PageviewOutlined } from '@mui/icons-material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -16,10 +18,10 @@ import { useTriggerDatagen } from './../../api/api'
 import { DEMO_MODE_THRESHOLD } from './constants'
 import { GenDatasetResponse, QuestionSolution, WorkflowType } from './types';
 import { Pages } from '../../types';
-import { isEmpty } from 'lodash';
 import CustomResultTable from './CustomResultTable';
 import SeedResultTable from './SeedResultTable';
 import { getFilesURL } from '../Evaluator/util';
+import FreeFormTable from './FreeFormTable';
 
 const { Title } = Typography;
 
@@ -126,8 +128,11 @@ const isDemoMode = (numQuestions: number, topics: [], form: FormInstance) => {
 
 const Finish = () => {
     const form = Form.useFormInstance();
-    const { data: genDatasetResp, loading, error: generationError, triggerPost } = useTriggerDatagen<GenDatasetResponse>();
-    const { num_questions, topics } = form.getFieldsValue(true)
+    const { num_questions, topics, workflow_type } = form.getFieldsValue(true);
+    console.log('Finish >> form:', form.getFieldsValue(true));
+    console.log('Finish >> workflow_type:', workflow_type);
+    const { data: genDatasetResp, loading, error: generationError, triggerPost } = useTriggerDatagen<GenDatasetResponse>(workflow_type);
+    
     const isDemo = isDemoMode(num_questions, topics, form)
 
     useEffect(() => { 
@@ -153,6 +158,8 @@ const Finish = () => {
             formValues.technique = 'sft';
         } else if (formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) {
             formValues.technique = 'custom_workflow';
+        } else if (formValues.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) {
+            formValues.technique = 'freeform';
         }
         // send examples as null when the array is empty
         if (isEmpty(formValues.examples)) {
@@ -192,13 +199,30 @@ const Finish = () => {
 
     let topicTabs = [];
     if (!hasDocSeeds && formValues.workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION && 
-        hasTopics(genDatasetResp)) {
-        topicTabs = genDatasetResp?.results && Object.keys(genDatasetResp.results).map((topic, i) => ({
+        hasTopics(genDatasetResp) && !isEmpty(genDatasetResp?.results)) {
+            console.log('Finish >> genDatasetResp:', genDatasetResp);
+            const values = Object.values(genDatasetResp?.results);
+            console.log('Finish >> values:', values);
+            
+
+        topicTabs = genDatasetResp?.results && Object.keys(genDatasetResp.results).map((topic, i) => {
+            console.log('Finish >> topic:', topic);
+            console.log('Finish >> genDatasetResp:', genDatasetResp);
+            console.log('Finish >> genDatasetResp.results:', get(genDatasetResp, `results.${topic}`));
+            console.log('Finish >> values:', values[i]);
+            
+            return ({
             key: `${topic}-${i}`,
             label: <Typography.Text style={{ maxWidth: '300px' }} ellipsis={true}>{topic}</Typography.Text>,
             value: topic,
-            children: <TopicsTable formData={genDatasetResp} topic={topic} />
-        }));
+            children: workflow_type !== WorkflowType.FREE_FORM_DATA_GENERATION ?
+            <TopicsTable formData={genDatasetResp} topic={topic} /> :
+            // <FreeFormTable data={get(genDatasetResp, `results.${topic}`)} />
+            <FreeFormTable data={values[i]} />
+
+            
+        })
+        });
     }
     
     const nextStepsListPreview = [

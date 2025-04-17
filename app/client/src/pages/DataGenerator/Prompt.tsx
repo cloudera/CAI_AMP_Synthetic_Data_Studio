@@ -72,12 +72,14 @@ const Prompt = () => {
     const inference_type = form.getFieldValue('inference_type');
     const doc_paths = form.getFieldValue('doc_paths');
     const workflow_type = form.getFieldValue('workflow_type');
+    console.log('workflow_type', workflow_type);
+    console.log('useCase', useCase);
     const input_key = form.getFieldValue('input_key');
     const input_value = form.getFieldValue('input_value');
     const output_key = form.getFieldValue('output_key');
     const caii_endpoint = form.getFieldValue('caii_endpoint');
     
-    const { data: defaultPrompt, loading: promptsLoading } = useFetchDefaultPrompt(useCase);
+    const { data: defaultPrompt, loading: promptsLoading } = useFetchDefaultPrompt(useCase, workflow_type);
 
     // Page Bootstrap requests and useEffect
     const { data: defaultTopics, loading: topicsLoading } = usefetchTopics(useCase);
@@ -266,7 +268,8 @@ const Prompt = () => {
                         </StyledFormItem>    
                     }
                     {isEmpty(doc_paths) && (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING ||
-                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) &&
+                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION ||
+                        workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) &&
                     <Flex gap={20} vertical>
                         <StyledFormItem
                             name={'topics'}

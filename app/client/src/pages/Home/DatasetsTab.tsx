@@ -86,7 +86,7 @@ const DatasetsTab: React.FC = () => {
         }
     }, [exportResult, notificationInstance])
 
-    const onSearch: SearchProps['onSearch'] = (value, _e, info) => {
+    const onSearch: SearchProps['onSearch'] = (value: any) => {
         throttle((value: string) => setSearchQuery(value), 500)(value);
     }
 
