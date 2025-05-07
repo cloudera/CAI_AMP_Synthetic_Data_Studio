@@ -1,3 +1,5 @@
+import { PaginatedResponse } from '../common/pagination';
+
 export type EvaluationResponse = { 
     id: string;
     timestamp: Date;
@@ -16,21 +18,24 @@ export type EvaluationResponse = {
     job_id: string;
     job_name: string;
     job_status: string;
- };
+};
 
- export type DeleteEvaluationResponse = {
+export type DeleteEvaluationResponse = {
    message: string;
- };
+};
 
- export type ModelParameters = {
+export type ModelParameters = {
     temperature: number;
     top_p: number;
     min_p: number;
     top_k: number;
     max_tokens: number;
- }
+};
 
- export type Example = {
+export type Example = {
     score: number;
     justification: string;
- }
+};
+
+// Add paginated response types
+export type PaginatedEvaluationsResponse = PaginatedResponse<EvaluationResponse>;

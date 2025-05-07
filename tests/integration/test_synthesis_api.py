@@ -48,14 +48,35 @@ def test_generate_endpoint_with_doc_paths():
         assert "export_path" in res_json
 
 def test_generation_history():
-    # Patch db_manager.get_all_generate_metadata to return dummy metadata.
-    db_manager.get_all_generate_metadata = lambda: [{"generate_file_name": "qa_pairs_claude_20250210T170521148_test.json", "timestamp": "2024-02-10T12:00:00", "model_id": "us.anthropic.claude-3-5-haiku-20241022-v1:0"}]
-    response = client.get("/generations/history")
+    # Patch db_manager.get_paginated_generate_metadata to return dummy metadata with pagination info
+    db_manager.get_paginated_generate_metadata = lambda page, page_size: (
+        1,  # total_count
+        [{"generate_file_name": "qa_pairs_claude_20250210T170521148_test.json", 
+          "timestamp": "2024-02-10T12:00:00", 
+          "model_id": "us.anthropic.claude-3-5-haiku-20241022-v1:0"}]
+    )
+    
+    # Since get_pending_generate_job_ids might be called, we should patch it too
+    db_manager.get_pending_generate_job_ids = lambda: []
+    
+    response = client.get("/generations/history?page=1&page_size=10")
     assert response.status_code == 200
     res_json = response.json()
-    assert len(res_json) > 0
+    
+    # Check that the response contains the expected structure
+    assert "data" in res_json
+    assert "pagination" in res_json
+    
+    # Check pagination metadata
+    assert res_json["pagination"]["total"] == 1
+    assert res_json["pagination"]["page"] == 1
+    assert res_json["pagination"]["page_size"] == 10
+    assert res_json["pagination"]["total_pages"] == 1
+    
+    # Check data contents
+    assert len(res_json["data"]) > 0
     # Instead of expecting exactly "test.json", assert the filename contains "_test.json"
-    assert "_test.json" in res_json[0]["generate_file_name"]
+    assert "_test.json" in res_json["data"][0]["generate_file_name"]
 
 def test_error_handling():
     request_data = {

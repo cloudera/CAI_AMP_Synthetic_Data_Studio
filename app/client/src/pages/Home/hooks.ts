@@ -2,98 +2,191 @@ import { notification } from 'antd';
 import isEmpty from 'lodash/isEmpty';
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-
+import { DatasetResponse } from '../api/Datasets/response';
+import { EvaluationResponse } from '../api/Evaluations/response';
+import { ExportResponse } from '../api/Export/response';
+import { PaginatedResponse } from '../api/common/pagination';
 
 const BASE_API_URL = import.meta.env.VITE_AMP_URL;
 
-const fetchDatasets = async () => {
-  const dataset_resp = await fetch(`${BASE_API_URL}/generations/history`, {
+// Updated to use pagination
+const fetchDatasets = async (page = 1, pageSize = 10) => {
+  const dataset_resp = await fetch(`${BASE_API_URL}/generations/history?page=${page}&page_size=${pageSize}`, {
     method: 'GET',
   });
-  const datasets = await dataset_resp.json();
-  
-  return {
-    datasets
-  };
+  return await dataset_resp.json();
 };
 
-const fetchEvaluations = async () => {
-    const evaluations_resp = await fetch(`${BASE_API_URL}/evaluations/history`, {
-      method: 'GET',
-    });
-    const evaluations = await evaluations_resp.json();
-    
-    return {
-        evaluations
-    };
+// Updated to use pagination
+const fetchEvaluations = async (page = 1, pageSize = 10) => {
+  const evaluations_resp = await fetch(`${BASE_API_URL}/evaluations/history?page=${page}&page_size=${pageSize}`, {
+    method: 'GET',
+  });
+  return await evaluations_resp.json();
+};
+
+// Updated to use pagination
+const fetchExports = async (page = 1, pageSize = 10) => {
+  const exports_resp = await fetch(`${BASE_API_URL}/exports/history?page=${page}&page_size=${pageSize}`, {
+    method: 'GET',
+  });
+  return await exports_resp.json();
 };
 
 export const useDatasets = () => {
-    const [searchQuery, setSearchQuery] = useState<string | null>(null);
-    const { data, isLoading, isError, refetch } = useQuery(
-        {
-         queryKey: ["fetchDatasets", fetchDatasets],
-        queryFn: () => fetchDatasets(),
-        refetchInterval: 15000
-      }
-    );
-    if (searchQuery !== null && !isEmpty(searchQuery))  {
-        const filteredData = data?.datasets.filter((dataset: any) => {
-            return dataset.display_name.toLowerCase().includes(searchQuery.toLowerCase());
-        });
-        
-        return {
-            data: { datasets: filteredData },
-            isLoading,
-            isError,
-            refetch,
-            searchQuery,
-            setSearchQuery
-        };
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });
+  
+  const { data, isLoading, isError, refetch } = useQuery<PaginatedResponse<DatasetResponse>>(
+    {
+      queryKey: ["fetchDatasets", pagination.page, pagination.pageSize],
+      queryFn: () => fetchDatasets(pagination.page, pagination.pageSize),
+      refetchInterval: 15000
     }
-    return {
-      data,
-      isLoading,
-      isError,
-      refetch,
-      searchQuery,
-      setSearchQuery   
+  );
+  
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setPagination({ 
+      page, 
+      pageSize: pageSize || pagination.pageSize 
+    });
+  };
+  
+  let filteredData = data;
+  
+  if (searchQuery !== null && !isEmpty(searchQuery) && data?.data) {
+    // If searching, we filter locally from the current page
+    const filtered = data.data.filter((dataset: DatasetResponse) => {
+      return dataset.display_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+    
+    filteredData = {
+      ...data,
+      data: filtered,
     };
-}
+  }
+  
+  return {
+    data: filteredData,
+    isLoading,
+    isError,
+    refetch,
+    searchQuery,
+    setSearchQuery,
+    pagination: {
+      current: pagination.page,
+      pageSize: pagination.pageSize,
+      total: data?.pagination?.total || 0,
+      onChange: handlePageChange,
+      showSizeChanger: true,
+      showQuickJumper: true
+    }
+  };
+};
 
 export const useEvaluations = () => {
-    const [searchQuery, setSearchQuery] = useState<string | null>(null);
-    const { data, isLoading, isError, refetch } = useQuery(
-        {
-          queryKey: ["fetchEvaluations", fetchEvaluations],
-          queryFn: () => fetchEvaluations(),
-          refetchInterval: 15000
-        }
-    );
-    if (searchQuery !== null && !isEmpty(searchQuery))  {
-        const filteredData = data?.evaluations.filter((evaluation: any) => {
-            return evaluation.display_name.toLowerCase().includes(searchQuery.toLowerCase());
-        });
-        
-        return {
-            data: { evaluations: filteredData },
-            isLoading,
-            isError,
-            refetch,
-            searchQuery,
-            setSearchQuery
-        };
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });
+  
+  const { data, isLoading, isError, refetch } = useQuery<PaginatedResponse<EvaluationResponse>>(
+    {
+      queryKey: ["fetchEvaluations", pagination.page, pagination.pageSize],
+      queryFn: () => fetchEvaluations(pagination.page, pagination.pageSize),
+      refetchInterval: 15000
     }
-    return {
-      data,
-      isLoading,
-      isError,
-      refetch,
-      searchQuery,
-      setSearchQuery   
+  );
+  
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setPagination({ 
+      page, 
+      pageSize: pageSize || pagination.pageSize 
+    });
+  };
+  
+  let filteredData = data;
+  
+  if (searchQuery !== null && !isEmpty(searchQuery) && data?.data) {
+    // If searching, we filter locally from the current page
+    const filtered = data.data.filter((evaluation: EvaluationResponse) => {
+      return evaluation.display_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+    
+    filteredData = {
+      ...data,
+      data: filtered,
     };
-}
+  }
+  
+  return {
+    data: filteredData,
+    isLoading,
+    isError,
+    refetch,
+    searchQuery,
+    setSearchQuery,
+    pagination: {
+      current: pagination.page,
+      pageSize: pagination.pageSize,
+      total: data?.pagination?.total || 0,
+      onChange: handlePageChange,
+      showSizeChanger: true,
+      showQuickJumper: true
+    }
+  };
+};
 
+export const useExports = () => {
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });
+  
+  const { data, isLoading, isError, refetch } = useQuery<PaginatedResponse<ExportResponse>>(
+    {
+      queryKey: ["fetchExports", pagination.page, pagination.pageSize],
+      queryFn: () => fetchExports(pagination.page, pagination.pageSize),
+      refetchInterval: 15000
+    }
+  );
+  
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setPagination({ 
+      page, 
+      pageSize: pageSize || pagination.pageSize 
+    });
+  };
+  
+  let filteredData = data;
+  
+  if (searchQuery !== null && !isEmpty(searchQuery) && data?.data) {
+    // If searching, we filter locally from the current page
+    const filtered = data.data.filter((exportItem: ExportResponse) => {
+      return exportItem.display_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+    
+    filteredData = {
+      ...data,
+      data: filtered,
+    };
+  }
+  
+  return {
+    data: filteredData,
+    isLoading,
+    isError,
+    refetch,
+    searchQuery,
+    setSearchQuery,
+    pagination: {
+      current: pagination.page,
+      pageSize: pagination.pageSize,
+      total: data?.pagination?.total || 0,
+      onChange: handlePageChange,
+      showSizeChanger: true,
+      showQuickJumper: true
+    }
+  };
+};
+
+// Rest of your hooks remain unchanged
 const fetchUpgradeStatus = async () => {
     const upgrade_resp = await fetch(`${BASE_API_URL}/synthesis-studio/check-upgrade`, {
       method: 'GET',

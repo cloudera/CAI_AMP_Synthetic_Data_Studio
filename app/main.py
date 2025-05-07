@@ -26,7 +26,10 @@ import sys
 import json
 import uuid 
 from fastapi.encoders import jsonable_encoder
-print(os.getcwd())
+from fastapi import Query
+
+
+#print(os.getcwd())
 # Setup absolute paths
 ROOT_DIR = Path(__file__).parent.parent  # Goes up one level from app/main.py to reach project root
 print("root: ", Path(__file__))
@@ -395,6 +398,8 @@ async def get_dataset_size(request:JsonDataSize):
                 )
             
     return {"dataset_size": len(inputs)}
+
+
 
 @app.post("/json/get_content", include_in_schema=True, responses = responses,
           description = "get json content")
@@ -1133,20 +1138,48 @@ async def customise_prompt():
         raise HTTPException(status_code=500, detail=str(e))
    
 @app.get("/generations/history", include_in_schema=True)
-async def get_generation_history():
-    """Get history of all generations"""
+async def get_generation_history(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page")
+):
+    """Get history of all generations with pagination"""
     pending_job_ids = db_manager.get_pending_generate_job_ids()
-
-    if not pending_job_ids:
-        return db_manager.get_all_generate_metadata()
-
-    job_status_map = {
-            job_id: get_job_status(job_id) 
+    
+    if pending_job_ids:
+        job_status_map = {
+            job_id: get_job_status(job_id)
             for job_id in pending_job_ids
         }
-    db_manager.update_job_statuses_generate(job_status_map)
+        db_manager.update_job_statuses_generate(job_status_map)
     
-    return db_manager.get_all_generate_metadata()
+    # Get paginated data
+    total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    
+    # Return in the structure expected by the frontend
+    return {
+        "data": results,  # Changed from "datasets" to "data" for consistency
+        "pagination": {
+            "total": total_count,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total_count + page_size - 1) // page_size
+        }
+    }
+# @app.get("/generations/history", include_in_schema=True)
+# async def get_generation_history():
+#     """Get history of all generations"""
+#     pending_job_ids = db_manager.get_pending_generate_job_ids()
+
+#     if not pending_job_ids:
+#         return db_manager.get_all_generate_metadata()
+
+#     job_status_map = {
+#             job_id: get_job_status(job_id) 
+#             for job_id in pending_job_ids
+#         }
+#     db_manager.update_job_statuses_generate(job_status_map)
+    
+#     return db_manager.get_all_generate_metadata()
 
 @app.get("/generations/{file_name}", include_in_schema=True)
 async def get_generation_by_filename(file_name: str):
@@ -1176,38 +1209,62 @@ async def get_dataset(file_path: str):
     elif 'qa_pairs' in file_path:
             return {'generation': data[0:100]}
 
-@app.get("/exports/history", include_in_schema =True)
-def get_exports_history():
+@app.get("/exports/history", include_in_schema=True)
+def get_exports_history(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page")
+):
+    """Get history of all exports with pagination"""
     pending_job_ids = db_manager.get_pending_export_job_ids()
-
-    if not pending_job_ids:
-        return db_manager.get_all_export_metadata()
-
-    job_status_map = {
-            job_id: get_job_status(job_id) 
+    
+    if pending_job_ids:
+        job_status_map = {
+            job_id: get_job_status(job_id)
             for job_id in pending_job_ids
         }
-    db_manager.update_job_statuses_export(job_status_map)
+        db_manager.update_job_statuses_export(job_status_map)
     
-    return db_manager.get_all_export_metadata()
+    # Get paginated data
+    total_count, results = db_manager.get_paginated_export_metadata(page, page_size)
+    
+    return {
+        "data": results,  # Keep the same response format for backward compatibility
+        "pagination": {
+            "total": total_count,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total_count + page_size - 1) // page_size
+        }
+    }
     
 
 @app.get("/evaluations/history", include_in_schema=True)
-async def get_evaluation_history():
-    """Get history of all generations"""
+async def get_evaluation_history(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page")
+):
+    """Get history of all evaluations with pagination"""
     pending_job_ids = db_manager.get_pending_evaluate_job_ids()
-
-    if not pending_job_ids:
-        return db_manager.get_all_evaluate_metadata()
-
-    job_status_map = {
-            job_id: get_job_status(job_id) 
+    
+    if pending_job_ids:
+        job_status_map = {
+            job_id: get_job_status(job_id)
             for job_id in pending_job_ids
         }
-    db_manager.update_job_statuses_evaluate(job_status_map)
+        db_manager.update_job_statuses_evaluate(job_status_map)
     
+    # Get paginated data
+    total_count, results = db_manager.get_paginated_evaluate_metadata(page, page_size)
     
-    return db_manager.get_all_evaluate_metadata()
+    return {
+        "data": results,  # Keep the same response format for backward compatibility
+        "pagination": {
+            "total": total_count,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total_count + page_size - 1) // page_size
+        }
+    }
 
 
 @app.get("/evaluations/{file_name}", include_in_schema=True)

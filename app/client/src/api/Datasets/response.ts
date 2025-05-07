@@ -1,3 +1,5 @@
+import { PaginatedResponse } from '../common/pagination';
+
 export type DatasetResponse = {
     id: number;
     timestamp: string;
@@ -37,14 +39,17 @@ export type Example = {
 
 export type DeleteDatasetResponse = {
    message: string;
- };
+};
 
- export type ExportDatasetResponse = {
+export type ExportDatasetResponse = {
     message: Partial<ExportMessageSuccessResponse>;
-  };
+};
 
-  export type ExportMessageSuccessResponse = {
+export type ExportMessageSuccessResponse = {
     job_name: string;
     job_id: string;
     hf_link: string;
-  };
+};
+
+// Add paginated response types
+export type PaginatedDatasetsResponse = PaginatedResponse<DatasetResponse>;

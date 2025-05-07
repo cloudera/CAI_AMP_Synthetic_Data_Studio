@@ -10,4 +10,7 @@ export interface ExportResponse {
     job_status: JobStatus;
     local_export_path: string;
     timestamp: string;
-}
+};
+
+// Add paginated response types
+export type PaginatedExportsResponse = PaginatedResponse<ExportResponse>;

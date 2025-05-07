@@ -55,12 +55,11 @@ const StyledParagraph = styled(Paragraph)`
 `;
 
 const DatasetsTab: React.FC = () => {
-    const { data, isLoading, isError, refetch, setSearchQuery } = useDatasets();
+    const { data, isLoading, isError, refetch, setSearchQuery, pagination } = useDatasets();
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [exportResult, setExportResult] = React.useState<ExportResult>();
     const [toggleDatasetExportModal, setToggleDatasetExportModal] = React.useState(false);
     const [datasetDetails, setDatasetDetails] = React.useState<Dataset>({} as Dataset);
-
 
     useEffect(() => {
         if (isError) {
@@ -91,7 +90,7 @@ const DatasetsTab: React.FC = () => {
     }
 
     const onChange = (event: SyntheticEvent) => {
-        const value = event.target?.value;
+        const value = (event.target as HTMLInputElement)?.value;
         throttle((value: string) => setSearchQuery(value), 500)(value);
     }
 
@@ -176,12 +175,9 @@ const DatasetsTab: React.FC = () => {
             <StyledTable
                 rowKey={(row: Dataset) => `${row?.display_name}_${row?.generate_file_name}`}
                 tableLayout="fixed"
-                pagination={{
-                    showSizeChanger: true,
-                    showQuickJumper: true
-                }}
+                pagination={pagination}
                 columns={columns}
-                dataSource={data?.datasets || [] as Dataset[]}
+                dataSource={data?.data || [] as Dataset[]}
                 onRow={(row: Dataset) =>
                 ({
                     onClick: () => {

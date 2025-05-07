@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "amp_synthetic_data_studio"
 version = "0.1.0"
 description = "Synthetic Data Studio Project"
-requires-python = ">=3.10"
+requires-python = "==3.10"
 dependencies = [
     # ── existing ─────────────────────────────────────────────
     "fastapi==0.109.2",

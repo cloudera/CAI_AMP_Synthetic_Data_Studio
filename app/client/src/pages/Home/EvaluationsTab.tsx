@@ -54,13 +54,13 @@ const StyledParagraph = styled(Paragraph)`
 
 
 const EvaluationsTab: React.FC = () => {
-    const {data, isLoading, isError, refetch, setSearchQuery } = useEvaluations();
+    const { data, isLoading, isError, refetch, setSearchQuery, pagination } = useEvaluations();
 
     useEffect(() => {
         if (isError) {
             notification.error({
                 message: 'Error',
-                description: 'An error occurred while fetching datasets'
+                description: 'An error occurred while fetching evaluations'
             });
         }
     }, [isError]);
@@ -70,7 +70,7 @@ const EvaluationsTab: React.FC = () => {
     }
     
     const onChange = (event: SyntheticEvent) => {
-        const value = event.target?.value;
+        const value = (event.target as HTMLInputElement)?.value;
         throttle((value: string) => setSearchQuery(value), 500)(value);
     }
 
@@ -136,19 +136,14 @@ const EvaluationsTab: React.FC = () => {
             </Row>
             {isLoading && <Loading />}
             <StyledTable
-                rowKey={(row: Evaluation) => `${row?.display_name}_${row?.evaluate_file_name
-                }`}
+                rowKey={(row: Evaluation) => `${row?.display_name}_${row?.evaluate_file_name}`}
                 tableLayout="fixed"
-                pagination={{
-                    showSizeChanger: true,
-                    showQuickJumper: true
-                }}
+                pagination={pagination}
                 columns={columns}
-                dataSource={data?.evaluations || [] as Evaluation[]} 
+                dataSource={data?.data || [] as Evaluation[]} 
             />
         </Container>
     )
 }
 
 export default EvaluationsTab;
-

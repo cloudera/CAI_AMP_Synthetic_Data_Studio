@@ -1,5 +1,5 @@
 import { Col, Flex, Input, Row, Table, TableProps, Tooltip, Typography } from 'antd';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import DateTime from '../../components/DateTime/DateTime';
 import { useGetExportJobs } from '../../api/Export/export';
 import { ExportResponse } from '../../api/Export/response';
@@ -7,6 +7,8 @@ import { sortItemsByKey } from '../../utils/sortutils';
 import styled from 'styled-components';
 import { JobStatus } from '../../types';
 import JobStatusIcon from '../../components/JobStatus/jobStatusIcon';
+import isEmpty from 'lodash/isEmpty';
+import throttle from 'lodash/throttle';
 
 const { Search } = Input;
 const { Text, Link, Paragraph } = Typography;
@@ -40,7 +42,6 @@ const StyledTable = styled(Table<ExportResponse>)`
     }
   }
 `;
-
 
 const StyledParagraph = styled(Paragraph)`
     font-size: 13px;
@@ -108,17 +109,24 @@ const columns: TableProps<ExportResponse>['columns'] = [
 ];
 
 const ExportsTab: React.FC<ExportsTabProps> = ({ refetchOnRender }) => {
-    const { isLoading, data, refetch } = useGetExportJobs();
-    const [searchTerm, setSearchTerm] = React.useState<string>('');
+    const [pagination, setPagination] = useState({ page: 1, pageSize: 20 });
+    const { isLoading, data, refetch } = useGetExportJobs(pagination.page, pagination.pageSize);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+
+    const handlePageChange = (page: number, pageSize?: number) => {
+        setPagination({ 
+            page, 
+            pageSize: pageSize || pagination.pageSize 
+        });
+    };
 
     const filteredData = React.useMemo(() => {
-        if (!data) return [];
-        return searchTerm
-            ? data.filter((job: ExportResponse) =>
+        if (!data?.data) return [];
+        return !isEmpty(searchTerm)
+            ? data.data.filter((job: ExportResponse) =>
                 job.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
             )
-            :
-            data;
+            : data.data;
     }, [data, searchTerm]);
 
     useEffect(() => {
@@ -133,7 +141,10 @@ const ExportsTab: React.FC<ExportsTabProps> = ({ refetchOnRender }) => {
                 <Col span={24}>
                     <Search
                         placeholder="Search Exports"
-                        onChange={(event) => setSearchTerm(event.target.value)}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            throttle((value: string) => setSearchTerm(value), 500)(value);
+                        }}
                         style={{ width: 350 }} />
                 </Col>
             </Row>
@@ -142,6 +153,10 @@ const ExportsTab: React.FC<ExportsTabProps> = ({ refetchOnRender }) => {
                 columns={columns}
                 tableLayout="fixed"
                 pagination={{
+                    current: pagination.page,
+                    pageSize: pagination.pageSize,
+                    total: data?.pagination?.total || 0,
+                    onChange: handlePageChange,
                     showSizeChanger: true,
                     showQuickJumper: true
                 }}

@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import json
 from datetime import datetime
 import os
@@ -785,6 +785,150 @@ class DatabaseManager:
                 raise
         
         raise Exception(f"Failed to update evaluation job after {max_retries} attempts")
+    
+    def get_all_generate_metadata(self) -> List[Dict]:
+        """Retrieve all metadata entries"""
+        try:
+            with self.get_connection() as conn:
+                conn.execute("BEGIN")
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                query = "SELECT * FROM generation_metadata ORDER BY timestamp DESC"
+                cursor.execute(query)
+                
+                results = []
+                json_fields = ['model_parameters', 'topics', 'examples', 'doc_paths', 'input_path', 'schema']
+                
+                for row in cursor.fetchall():
+                    result = dict(row)
+                    for field in json_fields:
+                        if field in result and result[field] is not None:
+                            try:
+                                result[field] = json.loads(result[field])
+                            except json.JSONDecodeError:
+                                print(f"Error decoding JSON for field {field}")
+                                result[field] = None
+                    results.append(result)
+                    
+                conn.rollback()
+                return results
+                
+        except Exception as e:
+            print(f"Error retrieving all metadata: {str(e)}")
+            return []
+    
+    def get_paginated_generate_metadata(self, page: int, page_size: int) -> Tuple[int, List[Dict]]:
+        """Retrieve paginated metadata entries for generations"""
+        try:
+            with self.get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                # Get total count
+                count_query = "SELECT COUNT(*) FROM generation_metadata"
+                cursor.execute(count_query)
+                total_count = cursor.fetchone()[0]
+                
+                # Get paginated records
+                offset = (page - 1) * page_size
+                query = "SELECT * FROM generation_metadata ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+                cursor.execute(query, (page_size, offset))
+                
+                results = []
+                json_fields = ['model_parameters', 'topics', 'examples', 'doc_paths', 'input_path', 'schema']
+                
+                for row in cursor.fetchall():
+                    result = dict(row)
+                    for field in json_fields:
+                        if field in result and result[field] is not None:
+                            try:
+                                result[field] = json.loads(result[field])
+                            except json.JSONDecodeError:
+                                print(f"Error decoding JSON for field {field}")
+                                result[field] = None
+                    results.append(result)
+                
+                return total_count, results
+                
+        except Exception as e:
+            print(f"Error retrieving paginated metadata: {str(e)}")
+            return 0, []
+    
+    def get_paginated_evaluate_metadata(self, page: int, page_size: int) -> Tuple[int, List[Dict]]:
+        """Retrieve paginated metadata entries for evaluations"""
+        try:
+            with self.get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                # Get total count
+                count_query = "SELECT COUNT(*) FROM evaluation_metadata"
+                cursor.execute(count_query)
+                total_count = cursor.fetchone()[0]
+                
+                # Get paginated records
+                offset = (page - 1) * page_size
+                query = "SELECT * FROM evaluation_metadata ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+                cursor.execute(query, (page_size, offset))
+                
+                # Process rows and deserialize JSON fields
+                results = []
+                for row in cursor:
+                    row_dict = dict(row)
+                    
+                    # Deserialize JSON fields
+                    for field in ['model_parameters', 'examples']:
+                        if row_dict.get(field) and isinstance(row_dict[field], str):
+                            try:
+                                row_dict[field] = json.loads(row_dict[field])
+                            except (json.JSONDecodeError, TypeError) as e:
+                                print(f"Error decoding JSON for field {field}: {e}")
+                                row_dict[field] = None
+                    
+                    results.append(row_dict)
+                
+                return total_count, results
+                
+        except Exception as e:
+            print(f"Error retrieving paginated metadata: {str(e)}")
+            return 0, []
+    
+    def get_paginated_export_metadata(self, page: int, page_size: int) -> Tuple[int, List[Dict]]:
+        """Retrieve paginated export metadata entries"""
+        try:
+            with self.get_connection() as conn:
+                conn.execute("BEGIN")
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                # Get total count
+                count_query = "SELECT COUNT(*) FROM export_metadata"
+                cursor.execute(count_query)
+                total_count = cursor.fetchone()[0]
+                
+                # Calculate offset
+                offset = (page - 1) * page_size
+                
+                # Get paginated data
+                query = """
+                SELECT * FROM export_metadata 
+                ORDER BY timestamp DESC
+                LIMIT ? OFFSET ?
+                """
+                cursor.execute(query, (page_size, offset))
+                
+                results = []
+                for row in cursor.fetchall():
+                    result = dict(row)
+                    # No JSON fields to parse in this table
+                    results.append(result)
+                conn.rollback()
+                return total_count, results
+                
+        except Exception as e:
+            print(f"Error retrieving paginated export metadata: {str(e)}")
+            return 0, []
                 
 
     def get_metadata_by_filename(self, file_name: str) -> Optional[Dict]:
