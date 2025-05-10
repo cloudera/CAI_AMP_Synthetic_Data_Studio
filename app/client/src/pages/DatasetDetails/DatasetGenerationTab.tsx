@@ -7,6 +7,7 @@ import CustomGenerationTable from './CustomGenerationTable';
 import DatasetGenerationTopics from './DatasetGenerationTopics';
 import { CustomResult } from "../DataGenerator/types";
 import { DatasetDetails, DatasetGeneration } from '../Home/types';
+import DatasetViewer from './DatasetViewer';
 
 
 
@@ -23,19 +24,19 @@ const Container = styled.div`
 
 
 const DatasetGenerationTab: React.FC<Props> = ({ dataset, datasetDetails }) => {
-    console.log(`DatasetGenerationTab > dataset`, dataset);
-    console.log(` datasetDetails`, datasetDetails);
+    console.log('datasetDetails', datasetDetails);
+    console.log('dataset', dataset);
     const topics = get(dataset, 'topics', []);
-    console.log(` topics`, topics);
+    const technique = get(dataset, 'technique');
     const hasCustomSeeds = !Array.isArray(datasetDetails?.generation) || isEmpty(topics) || topics !== null;
-    console.log(` hasCustomSeeds`, hasCustomSeeds);
 
     return (
         <Container>
             <Row>
                 <Col sm={24}>
-                    {hasCustomSeeds && <CustomGenerationTable results={datasetDetails?.generation as unknown as DatasetGeneration[]} />}
-                    {!hasCustomSeeds && <DatasetGenerationTopics data={datasetDetails?.generation} dataset={dataset} />}
+                    {technique === 'freeform' && <DatasetViewer dataset={dataset} />}
+                    {(technique !== 'freeform' && hasCustomSeeds) && <CustomGenerationTable results={datasetDetails?.generation as unknown as DatasetGeneration[]} />}
+                    {(technique !== 'freeform' &&  !hasCustomSeeds) && <DatasetGenerationTopics data={datasetDetails?.generation} dataset={dataset} />}
                 </Col>
             </Row>
 

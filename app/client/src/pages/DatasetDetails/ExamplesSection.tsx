@@ -8,6 +8,7 @@ import { Dataset } from "../../../pages/Evaluator/types";
 import PCModalContent from "../../../pages/DataGenerator/PCModalContent";
 
 import ExampleModal from "./ExampleModal";
+import FreeFormExampleTable from "../DataGenerator/FreeFormExampleTable";
 
 const { Text, Title } = Typography;
 const Panel = Collapse.Panel;
@@ -74,6 +75,8 @@ export type DatasetDetailProps = {
 }
 
 const ExamplesSection= ({ datasetDetails }: DatasetDetailProps)  => {
+    console.log('ExamplesSection >> datasetDetails', datasetDetails);
+    const { technique } = datasetDetails;
 
     const exampleCols = [
         {
@@ -99,6 +102,11 @@ const ExamplesSection= ({ datasetDetails }: DatasetDetailProps)  => {
                 style={{ padding: 0 }}
             >        
                 <Flex vertical gap="middle">
+                    {technique === 'freeform' ? (
+                        <FreeFormExampleTable
+                            data={datasetDetails.examples || []}
+                        />    
+                    ) : 
                     <StyledTable
                         bordered
                         columns={exampleCols}
@@ -114,34 +122,7 @@ const ExamplesSection= ({ datasetDetails }: DatasetDetailProps)  => {
                         })
                     })}
                     rowKey={(_record, index) => `summary-examples-table-${index}`}
-                />
-
-            {/* <Title level={4}>Model Parameters</Title>
-            <Descriptions
-                bordered
-                colon
-                column={1}
-                size='small'
-                style={{ maxWidth: 400 }}
-                items={
-                    datasetDetails?.model_parameters
-                        ? Object
-                            .keys(datasetDetails.model_parameters)
-                            .map(modelParameterKey => ({
-                                label: MODEL_PARAMETER_LABELS[modelParameterKey as ModelParameters],
-                                children: datasetDetails.model_parameters[modelParameterKey as ModelParameters],
-                            }))
-                        : []}></Descriptions>
-
-            {(datasetDetails.schema && datasetDetails.use_case === Usecases.TEXT2SQL) && (
-                <div>
-                    <Title level={4}>{'DB Schema'}</Title>
-                    <MarkdownWrapper>
-                        <Markdown text={datasetDetails.schema} />
-                    </MarkdownWrapper>
-                </div>
-            )} */}
-
+                />}
             </Flex>
             </Panel>
         </StyledCollapse>

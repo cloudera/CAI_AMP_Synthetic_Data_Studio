@@ -6,6 +6,7 @@ import { Col, Flex, Modal, Row, Space, Table, Tag, Typography } from 'antd';
 import ExampleModal from './ExampleModal';
 import { QuestionSolution } from '../DataGenerator/types';
 import styled from 'styled-components';
+import FreeFormExampleTable from '../DataGenerator/FreeFormExampleTable';
 
 const { Text } = Typography;
 
@@ -149,6 +150,8 @@ const ConfigurationTab: React.FC<Props> = ({ dataset }) => {
                 <Col sm={24}>
                     <Flex vertical>
                         <StyledTitle>Examples</StyledTitle>
+                        {dataset.technique === 'freeform' && <FreeFormExampleTable data={dataset.examples} />}
+                        {dataset.technique !== 'freeform' && 
                         <StyledTable
                             bordered
                             columns={exampleColummns}
@@ -164,7 +167,7 @@ const ConfigurationTab: React.FC<Props> = ({ dataset }) => {
                                 })
                              })}
                             rowKey={(_record, index) => `summary-examples-table-${index}`}
-                        />
+                        />}
                     </Flex>
                 </Col>
             </Row>

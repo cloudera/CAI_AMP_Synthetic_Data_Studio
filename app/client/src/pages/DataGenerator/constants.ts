@@ -19,7 +19,8 @@ export const USECASE_OPTIONS = [
 
 export const WORKFLOW_OPTIONS = [
     { label: 'Supervised Fine-Tuning', value: 'sft' },
-    { label: 'Custom Data Generation', value: 'custom' }
+    { label: 'Custom Data Generation', value: 'custom' },
+    { label: 'Freeform Data Generation', value: 'freeform' }
 ];
 
 export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
