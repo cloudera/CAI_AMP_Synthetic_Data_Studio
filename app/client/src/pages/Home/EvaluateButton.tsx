@@ -8,7 +8,6 @@ import { isEmpty } from "lodash";
 import { Dataset } from "../Evaluator/types";
 import { Pages } from "../../types";
 
-const { Option } = Select;
 
 const EvaluateButton: React.FC = () => {
     const [form] = Form.useForm();

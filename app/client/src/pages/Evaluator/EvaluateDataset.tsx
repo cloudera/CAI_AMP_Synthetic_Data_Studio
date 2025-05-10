@@ -56,6 +56,7 @@ const StyledCard = styled(Card)`
 
 
 const EvaluateDataset: React.FC<Props> = ({ form, loading, modelsMap, dataset, examples, viewType, onEvaluate, evaluate }) => {
+  console.log('EvaluateDataset', dataset, examples);
   const inference_type = get(dataset, 'inference_type', '');
   const [models, setModels] = useState<string[]>(get(modelsMap, inference_type, []));
   const selectedInferenceType = Form.useWatch('inference_type', form);

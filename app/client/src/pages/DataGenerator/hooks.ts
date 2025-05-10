@@ -89,6 +89,23 @@ export const fetchCustomPrompt = async (params: any) => {
     }
 }
 
+export const fetchFileContent = async (params: any) => {
+    const resp = await fetch(`${BASE_API_URL}/json/get_content`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+    });
+    if (resp.status !== 200) {
+        const error = await resp.json();
+        throw new Error(error.message || error.detail);
+    }
+    const body = await resp.json();
+    const content = get(body, 'data');
+    return content;
+}
+
 export const listModels = async (params: any) => {
     const resp = await fetch(`${BASE_API_URL}/model/model_ID`, {
         method: 'POST',
@@ -145,7 +162,7 @@ export const useGetProjectFiles = (paths: string[]) => {
     if (mutation.isError) {
         notification.error({
           message: 'Error',
-          description: `An error occurred while fetching the prompt.\n ${mutation.error}`
+          description: `An error occurred while fetching the list of project files.\n ${mutation.error}`
         });
     }
     return {

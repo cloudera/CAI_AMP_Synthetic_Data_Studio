@@ -221,7 +221,7 @@ const DatasetDetailsPage: React.FC = () => {
                     <Row style={{ marginTop: '16px' }}>
                         <Col sm={8}>
                           <Flex vertical>
-                            <StyledLabel>Files</StyledLabel>
+                            <StyledLabel>Context</StyledLabel>
                             {/* <StyledValue>{dataset?.custom_prompt}</StyledValue> */}
                             <TagsContainer>
                               <Space size={[0, 'small']} wrap>

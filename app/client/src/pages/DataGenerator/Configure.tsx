@@ -9,6 +9,8 @@ import { MODEL_PROVIDER_LABELS } from './constants';
 import { ModelProviders, ModelProvidersDropdownOpts } from './types';
 import { useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
+import first from 'lodash/first';
+import get from 'lodash/get';
 
 const StepContainer = styled(Flex)`
     background: white;
@@ -31,7 +33,8 @@ export const USECASE_OPTIONS = [
 
 export const WORKFLOW_OPTIONS = [
     { label: 'Supervised Fine-Tuning', value: 'supervised-fine-tuning' },
-    { label: 'Custom Data Generation', value: 'custom' }
+    { label: 'Custom Data Generation', value: 'custom' },
+    { label: 'Freefrom Data Generation', value: 'freeform' }
 ];
 
 export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
@@ -64,6 +67,13 @@ const Configure = () => {
     useEffect(() => {
         validateForm()
     }, [form, formData])
+
+    // keivan
+    useEffect(() => {
+        if (formData && formData?.inference_type === undefined) {
+            form.setFieldValue('inference_type', ModelProviders.CAII);
+        }
+    }, [formData]);
 
     const labelCol = {
       span: 8
@@ -106,7 +116,16 @@ const Configure = () => {
             setSelectedFiles([]);    
         }
     }
+
+    const onAddExampleFiles = (files: File[]) => {
+        console.log('onAddExampleFiles', files);
+        if (!isEmpty(files)) {
+            const file = first(files);
+            form.setFieldValue('example_path', get(file, '_path'));
+        }
+    }
     
+    console.log('formData', formData);
 
     return (
         <StepContainer justify='center'>
@@ -209,7 +228,8 @@ const Configure = () => {
                         )}
                     </Select>
                 </Form.Item>
-                {formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING && 
+                {(formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
+                 formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) && 
                 <Form.Item
                     name='use_case'
                     label='Template'
@@ -234,7 +254,7 @@ const Configure = () => {
                     formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) && 
                 <Form.Item
                     name='doc_paths'
-                    label='Files'
+                    label='Context'
                     labelCol={labelCol}
                     dependencies={['workflow_type']}
                     shouldUpdate
@@ -319,6 +339,23 @@ const Configure = () => {
                         <Input />
                     </Form.Item>
                 </>}
+                {/* {formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION || 
+                 <Form.Item
+                    name='example_path'
+                    label='Example File'
+                    labelCol={labelCol}
+                    dependencies={['workflow_type']}
+                    shouldUpdate
+                    validateTrigger="['onBlur','onChange']"
+                    validateFirst
+                    rules={[]}
+                 >
+                    <Flex>
+                        <Select placeholder={'Select example file'} value={selectedFiles || []} onChange={onFilesChange} allowClear/>
+                        <Input placeholder='Select example file' disabled />
+                        <FileSelectorButton onAddFiles={onAddExampleFiles} workflowType={form.getFieldValue('workflow_type')} />
+                    </Flex>
+                 </Form.Item>} */}
             </FormContainer>
         </StepContainer>
     )

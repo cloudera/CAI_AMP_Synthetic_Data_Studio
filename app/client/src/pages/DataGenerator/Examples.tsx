@@ -1,10 +1,21 @@
-import { Button, Form, Modal, Space, Table, Tooltip, Typography, Flex } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import first from 'lodash/first';
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
+import React, { useEffect } from 'react';
+import { Button, Form, Modal, Space, Table, Tooltip, Typography, Flex, Input, Empty, Alert } from 'antd';
+import { CloudUploadOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useMutation } from "@tanstack/react-query";
 import { useFetchExamples } from '../../api/api';
 import TooltipIcon from '../../components/TooltipIcon';
 import PCModalContent from './PCModalContent';
-import { QuestionSolution } from './types';
+import { File, QuestionSolution, WorkflowType } from './types';
+import FileSelectorButton from './FileSelectorButton';
+
+import { fetchFileContent } from './hooks';
+import { useState } from 'react';
+import FreeFormExampleTable from './FreeFormExampleTable';
+import { useWizardCtx } from './utils';
 
 const { Title } = Typography;
 const Container = styled.div`
@@ -25,20 +36,66 @@ const StyledTable = styled(Table)`
         cursor: pointer;
     }
 `
+
+const StyledContainer = styled.div`
+  margin-bottom: 24px;
+  height: 48px;
+  color: rgba(0, 0, 0, 0.45);
+  svg {
+    font-size: 48px;
+  } 
+
+`;
+
 const MAX_EXAMPLES = 5;
 
-const Examples = () => {
+enum ExampleType {
+  FREE_FORM = 'freeform',
+  PROMPT_COMPLETION = 'promptcompletion'
+}
+
+const Examples: React.FC = () => {
     const form = Form.useFormInstance();
-    // const { setIsStepValid } = useWizardCtx();
-    // const _values = Form.useWatch('examples', form);
-    // useEffect (() => {
-    //     const values = form.getFieldsValue();
-    //     if (isEmpty(values.examples)) {
-    //         setIsStepValid(false);
-    //     } else if (!isEmpty(values?.examples)) {
-    //         setIsStepValid(true);
-    //     }
-    // }, [_values]); 
+    const formData = Form.useWatch((values) => values, form);
+    const [exampleType, setExampleType] = useState(ExampleType.PROMPT_COMPLETION);
+    
+    const mutation = useMutation({
+        mutationFn: fetchFileContent
+    });
+    const values = form.getFieldsValue(true)
+
+    useEffect(() => {  
+        console.log('Examples >> form.getFieldValue(\'workflow_type\'):', form.getFieldValue('workflow_type'));
+        const example_path = form.getFieldValue('example_path');
+        console.log('Examples >> example_path:', example_path);
+
+        if (!isEmpty(example_path)) {
+            mutation.mutate({
+                path: example_path      
+            });
+        }
+
+        if (form.getFieldValue('workflow_type') === 'freeform') {
+            setExampleType(ExampleType.FREE_FORM);
+        }
+       
+        
+
+     }, [form.getFieldValue('example_path'), form.getFieldValue('workflow_type')]);
+
+    console.log('Examples >> mutation:', mutation);
+    const { setIsStepValid } = useWizardCtx();
+    const _values = Form.useWatch(['examples', 'example_path'], form);
+    useEffect (() => {
+        const values = form.getFieldsValue();
+        console.log('values:', values);
+        console.log(form.getFieldValue('example_path'));
+        if (isEmpty(values.examples) && isEmpty(form.getFieldValue('example_path'))) {
+            setIsStepValid(false);
+        } else {
+            setIsStepValid(true);
+        }
+    }, [_values, form.getFieldValue('example_path')]);
 
     const columns = [
         {
@@ -141,6 +198,33 @@ const Examples = () => {
         form.setFieldValue('examples', examples.examples)
     }
     const rowLimitReached = form.getFieldValue('examples')?.length === MAX_EXAMPLES;
+    const workflowType = form.getFieldValue('workflow_type');
+
+    const onAddFiles = (files: File[]) => {
+      if (!isEmpty (files)) {
+        const file = first(files);  
+        console.log('Examples >> file:', file);
+        mutation.mutate({
+            path: get(file, '_path'),      
+        });
+        const values = form.getFieldsValue();
+        form.setFieldsValue({
+            ...values,
+            example_path: get(file, '_path')
+        });
+        setExampleType(ExampleType.FREE_FORM);
+      }
+    }
+
+    const labelCol = {
+        span: 10
+    };
+
+    console.log('exampleType:', exampleType);
+    console.log('data:', mutation.data);
+    console.log('formData', formData);
+
+    
 
     return (
         <Container>
@@ -151,7 +235,26 @@ const Examples = () => {
                         <TooltipIcon message={'Provide up to 5 examples of prompt completion pairs to improve your output dataset'}/>
                     </Space>
                 </StyledTitle>
-                <Flex align='center' gap={15}>
+                <Flex align='center' gap={15}>       
+                    {workflowType === WorkflowType.FREE_FORM_DATA_GENERATION && 
+                      <>
+                        <Form.Item
+                            name="example_path"
+                            tooltip='Upload a JSAON file containing examples'
+                            labelCol={labelCol}
+                            style={{ display: 'none' }}
+                            shouldUpdate
+                            rules={[
+                               { required: true }
+                            ]}
+                        >
+                            <Input disabled />
+                        </Form.Item>
+                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={workflowType} label="Import"/>
+                      </>
+                    }
+                    
+                    {exampleType !== ExampleType.FREE_FORM && 
                     <Button
                         onClick={() => {
                             return Modal.warning({
@@ -178,7 +281,9 @@ const Examples = () => {
                         }}
                     >
                         {'Restore Defaults'}
-                    </Button>
+                    </Button>}
+                   
+                    {exampleType !== ExampleType.FREE_FORM && 
                     <Tooltip title={rowLimitReached ? `You can add up to ${MAX_EXAMPLES} examples. To add more, you must remove one.` : undefined}>
                         <Button
                             disabled={rowLimitReached}
@@ -207,9 +312,38 @@ const Examples = () => {
                         >
                             {'Add Example'}
                         </Button>
-                    </Tooltip>
+                    </Tooltip>}
                 </Flex>
             </Header>
+            {exampleType === ExampleType.FREE_FORM && !isEmpty(mutation.data) && 
+              <FreeFormExampleTable  data={mutation.data}/>}
+            {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && !isEmpty(values.examples) && 
+              <FreeFormExampleTable  data={values.examples}/>}  
+            {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && isEmpty(values.examples) &&
+                <Empty
+                image={
+                   <StyledContainer>
+                     <CloudUploadOutlined />
+                   </StyledContainer>
+                }
+                imageStyle={{
+                    height: 60,
+                    marginBottom: 24
+                }}
+                description={
+                  <>
+                    <h4>
+                    Upload a JSON file containing examples
+                    </h4>
+                    <p>
+                    {'Examples should be in the format of a JSON array containing array of key & value pairs. The key should be the column name and the value should be the cell value.'}
+                    </p>
+                  </>
+                }
+              >
+              </Empty>
+            }  
+            {exampleType !== ExampleType.FREE_FORM && 
             <Form.Item
                 name='examples'
             >
@@ -230,7 +364,7 @@ const Examples = () => {
                     rowClassName={() => 'hover-pointer'}
                     rowKey={(_record, index) => `examples-table-${index}`}
                 />
-            </Form.Item>
+            </Form.Item>}
             
         </Container>
     )

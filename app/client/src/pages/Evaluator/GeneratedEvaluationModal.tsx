@@ -2,13 +2,11 @@ import get from 'lodash/get';
 import isString from 'lodash/isString';
 import React from 'react';  
 import { EvaluatedPair } from "./types";
-import { Badge, Button, Flex, Layout, Modal, Tooltip } from 'antd';
+import { Badge, Button, Flex, Modal, Tooltip } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import Markdown from '../../components/Markdown';
 import { getColorCode } from './util';
-
-const { Content } = Layout;
 
 interface Props {
   evaluatedPair: EvaluatedPair;
