@@ -1,8 +1,6 @@
 import get from 'lodash/get';
-import set from 'lodash/set';
 import isEmpty from 'lodash/isEmpty';
 import React, { useEffect, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { ModelParameters } from '../../types';
 import { Button, Form, FormInstance, Result } from 'antd';
@@ -34,7 +32,7 @@ const EvaluatorPage: React.FC = () => {
         const values = form.getFieldsValue();
         form.setFieldsValue({
           ...values,
-          custom_prompt: '' || prompt,
+          custom_prompt: prompt || '',
           top_p: get(parameters, 'top_p'),
           top_k: get(parameters, 'top_k'),
           min_p: get(parameters, 'min_p'),
@@ -48,16 +46,18 @@ const EvaluatorPage: React.FC = () => {
       }
     }, [dataset]);
 
-const mutation = useMutation(async (formData) => {
-      const response = await fetch(`${BASE_API_URL}/synthesis/evaluate`, {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      });
-      return response.json();
-    });
+// const mutation = useMutation(async (formData) => {
+//       const response = await fetch(`${BASE_API_URL}/synthesis/evaluate`, {
+//         method: 'POST',
+//         body: JSON.stringify(formData),
+//       });
+//       return response.json();
+//     });
 
-const evaluateDataset = async (formData: any) => {
-      const response = await fetch(`${BASE_API_URL}/synthesis/evaluate`, {
+const evaluateDataset = async (formData: unknown) => {
+      const url = dataset.technique === 'freeforms' ? 
+        `${BASE_API_URL}/synthesis/evaluate` : `${BASE_API_URL}/synthesis/evaluate_freeform`;
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

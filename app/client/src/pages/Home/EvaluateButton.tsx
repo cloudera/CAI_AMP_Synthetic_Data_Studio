@@ -8,7 +8,6 @@ import { isEmpty } from "lodash";
 import { Dataset } from "../Evaluator/types";
 import { Pages } from "../../types";
 
-const { Option } = Select;
 
 const EvaluateButton: React.FC = () => {
     const [form] = Form.useForm();
@@ -40,7 +39,7 @@ const EvaluateButton: React.FC = () => {
         }
     }
 
-    const options = datasets.map((dataset: any) => ({
+    const options = datasets.map((dataset: unknown) => ({
         value: dataset.display_name,
         label: dataset.display_name,
         key: `${dataset?.display_name}-${dataset?.generate_file_name}`

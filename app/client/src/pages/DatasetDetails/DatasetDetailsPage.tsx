@@ -24,21 +24,6 @@ import { getFilesURL } from '../Evaluator/util';
 const { Content } = Layout;
 const { Title } = Typography;
 
-
-const StyledHeader = styled.div`
-  height: 28px;
-  flex-grow: 0;
-  font-family: Roboto, -apple-system, 'Segoe UI', sans-serif;
-  color:  #5a656d;
-  font-size: 24px;
-  font-weight: 300;
-  font-stretch: normal;
-  font-style: normal;
-  line-height: 1.4;
-  letter-spacing: normal;
-  text-align: left;
-`;
-
 const StyledLabel = styled.div`
   margin-bottom: 4px;
   font-family: Roboto, -apple-system, 'Segoe UI', sans-serif;
@@ -221,7 +206,7 @@ const DatasetDetailsPage: React.FC = () => {
                     <Row style={{ marginTop: '16px' }}>
                         <Col sm={8}>
                           <Flex vertical>
-                            <StyledLabel>Files</StyledLabel>
+                            <StyledLabel>Context</StyledLabel>
                             {/* <StyledValue>{dataset?.custom_prompt}</StyledValue> */}
                             <TagsContainer>
                               <Space size={[0, 'small']} wrap>

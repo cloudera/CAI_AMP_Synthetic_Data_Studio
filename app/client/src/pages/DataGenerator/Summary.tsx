@@ -6,6 +6,7 @@ import PCModalContent from './PCModalContent'
 import { MODEL_PROVIDER_LABELS } from './constants'
 import { ModelParameters } from '../../types';
 import { ModelProviders, QuestionSolution, Usecases } from './types';
+import FreeFormExampleTable from './FreeFormExampleTable';
 const { Title } = Typography;
 
 const MODEL_PARAMETER_LABELS: Record<ModelParameters, string> = {
@@ -46,10 +47,11 @@ const Summary= () => {
         num_questions,
         custom_prompt,
         model_parameters,
+        workflow_type,
         topics = [],
         schema,
         examples = []
-    } = form.getFieldsValue(true)
+    } = form.getFieldsValue(true);
 
     const cfgStepDataSource = [
         { label: 'Dataset Name', children: display_name },
@@ -72,7 +74,7 @@ const Summary= () => {
             ellipsis: true,
             render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.solution}</>
         },
-    ]
+    ];
 
     return (
         <Flex gap={20} vertical>
@@ -133,9 +135,11 @@ const Summary= () => {
                     </MarkdownWrapper>
                 </div>
             )}
-            {isEmpty(examples) && 
+            {!isEmpty(examples) && 
               <div>
                 <Title level={4}>{'Examples'}</Title>
+                {workflow_type === 'freeform' ?
+                <FreeFormExampleTable  data={examples} /> :
                 <StyledTable
                     bordered
                     columns={exampleCols}
@@ -151,7 +155,7 @@ const Summary= () => {
                         })
                     })}
                     rowKey={(_record, index) => `summary-examples-table-${index}`}
-                />
+                />}
             </div>}
         </Flex>
     )

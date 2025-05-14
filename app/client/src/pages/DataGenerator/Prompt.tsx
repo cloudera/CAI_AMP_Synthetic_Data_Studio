@@ -77,12 +77,12 @@ const Prompt = () => {
     const output_key = form.getFieldValue('output_key');
     const caii_endpoint = form.getFieldValue('caii_endpoint');
     
-    const { data: defaultPrompt, loading: promptsLoading } = useFetchDefaultPrompt(useCase);
+    const { data: defaultPrompt, loading: promptsLoading } = useFetchDefaultPrompt(useCase, workflow_type);
 
     // Page Bootstrap requests and useEffect
     const { data: defaultTopics, loading: topicsLoading } = usefetchTopics(useCase);
     const { data: defaultSchema, loading: schemaLoading } = useFetchDefaultSchema();
-    const { data: dataset_size, isLoading: datasetSizeLoadin, isError, error } = useDatasetSize(
+    const { data: dataset_size, isLoading: datasetSizeLoading, isError, error } = useDatasetSize(
         workflow_type,
         doc_paths,
         input_key,
@@ -266,7 +266,8 @@ const Prompt = () => {
                         </StyledFormItem>    
                     }
                     {isEmpty(doc_paths) && (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING ||
-                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) &&
+                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION ||
+                        workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) &&
                     <Flex gap={20} vertical>
                         <StyledFormItem
                             name={'topics'}
@@ -305,7 +306,7 @@ const Prompt = () => {
                                             <StyledFormItem
                                                 name={'customTopic'}
                                                 rules={[
-                                                    { validator: (_: any, value: string) => {
+                                                    { validator: (_: unknown, value: string) => {
                                                         if (items.includes(value)) {
                                                             return Promise.reject('This seed instruction already exists in the list')
                                                         }

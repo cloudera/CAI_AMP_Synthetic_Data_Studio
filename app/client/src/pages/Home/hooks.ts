@@ -38,7 +38,7 @@ export const useDatasets = () => {
       }
     );
     if (searchQuery !== null && !isEmpty(searchQuery))  {
-        const filteredData = data?.datasets.filter((dataset: any) => {
+        const filteredData = data?.datasets.filter((dataset: unknown) => {
             return dataset.display_name.toLowerCase().includes(searchQuery.toLowerCase());
         });
         
@@ -71,7 +71,7 @@ export const useEvaluations = () => {
         }
     );
     if (searchQuery !== null && !isEmpty(searchQuery))  {
-        const filteredData = data?.evaluations.filter((evaluation: any) => {
+        const filteredData = data?.evaluations.filter((evaluation: unknown) => {
             return evaluation.display_name.toLowerCase().includes(searchQuery.toLowerCase());
         });
         

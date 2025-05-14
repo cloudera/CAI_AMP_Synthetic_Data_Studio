@@ -1,8 +1,6 @@
 import { Badge, Col, Flex, Modal, Row, Table, Typography } from "antd";
 import { Evaluation } from "../Evaluator/types";
 import styled from "styled-components";
-import { QuestionSolution } from "../DataGenerator/types";
-import isEmpty from "lodash/isEmpty";
 import ExampleModal from "../DatasetDetails/ExampleModal";
 import { getColorCode } from "../Evaluator/util";
 

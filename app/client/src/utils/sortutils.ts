@@ -1,5 +1,5 @@
 type Key = string | number;
-type Item = { [x: string]: any };
+type Item = { [x: string]: unknown };
 
 /**
  * Helper function to use as a comparer when sorting an array of items based on a key in the item.

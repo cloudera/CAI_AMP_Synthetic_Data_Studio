@@ -1,4 +1,4 @@
-import { Flex, Form, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
 import Markdown from '../../components/Markdown';

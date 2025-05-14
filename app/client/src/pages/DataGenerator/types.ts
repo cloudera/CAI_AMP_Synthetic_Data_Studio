@@ -35,7 +35,7 @@ export interface GenDatasetRequest {
     topics?: string[];
     use_case?: Usecases
     is_demo?: boolean;
-    results?: any
+    results?: unknown
 }
 
 export interface GenDatasetResponse {
@@ -104,7 +104,8 @@ export interface File {
 
 export enum WorkflowType {
     SUPERVISED_FINE_TUNING = 'supervised-fine-tuning',
-    CUSTOM_DATA_GENERATION = "custom"
+    CUSTOM_DATA_GENERATION = "custom",
+    FREE_FORM_DATA_GENERATION = "freeform"
 }
 
 export interface CustomResult {
@@ -114,5 +115,6 @@ export interface CustomResult {
 
 export enum TechniqueType {
     SFT = 'sft',
-    CUSTOME_WORKFLOW = 'custom_workflow'
+    CUSTOME_WORKFLOW = 'custom_workflow',
+    FREE_FORM = 'freeform'
 }

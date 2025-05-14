@@ -27,8 +27,11 @@ export const useFetchModels = (): UseFetchApiReturn<FetchModelsResp> => {
     return useFetch(url);
 }
 
-export const useFetchDefaultPrompt = (useCase: string): UseFetchApiReturn<FetchDefaultPromptResp> => {
-    const url = `${baseUrl}/${isEmpty(useCase) ? 'custom' : useCase}/gen_prompt`;
+export const useFetchDefaultPrompt = (useCase: string, workflowType?: WorkerType): UseFetchApiReturn<FetchDefaultPromptResp> => {
+    let url = `${baseUrl}/${isEmpty(useCase) ? 'custom' : useCase}/gen_prompt`;
+    if (workflowType && workflowType === 'freeform') {
+        url = `${baseUrl}/${isEmpty(useCase) ? 'custom' : useCase}/gen_freeform_prompt`;
+    }
     return useFetch(url);
 }
 
@@ -42,7 +45,7 @@ export const useFetchDefaultModelParams = (): UseFetchApiReturn<FetchDefaultPara
     return useFetch(url);
 }
 
-export const useTriggerDatagen = <T>() => {
-    const genDatasetUrl = `${import.meta.env.VITE_AMP_URL}/synthesis/generate`;
+export const useTriggerDatagen = <T>(workflow_type: string) => {
+    const genDatasetUrl = `${import.meta.env.VITE_AMP_URL}/synthesis/${workflow_type === 'freeform' ? 'freeform' : 'generate'}`;
     return usePostApi<T>(genDatasetUrl);
 }

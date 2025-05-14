@@ -1,9 +1,8 @@
-import { Button, Flex, Form, Input, Modal, notification, Spin } from "antd";
+import { Button, Form, Input, Modal, notification } from "antd";
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import styled from "styled-components";
-import { LoadingOutlined } from '@ant-design/icons';
-import { fetchCustomPrompt, fetchPrompt } from "./hooks";
+import { fetchCustomPrompt } from "./hooks";
 import Loading from "../Evaluator/Loading";
 
 interface Props {
@@ -16,8 +15,29 @@ interface Props {
 
 export const StyledTextArea = styled(Input.TextArea)`
     margin-bottom: 10px !important;
-    min-height: 175px !important;
+    min-height: 275px !important;
+    margin-bottom: 10px !important;
+    padding: 15px 20px !important;
 `;
+
+const StyledModal = styled(Modal)`
+  .ant-modal-content {
+    max-height: 90vh;
+    // height: 760px;
+    height: 85vh;
+    width: 750px;
+    .ant-modal-body {
+      padding-top: 0;
+      min-height: 70vh;
+    }
+  }
+  // .ant-modal-content {
+  //       border-radius: 8px;
+  //       box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
+  //       background-color: #ffffff;
+  //       padding: 24px;
+  //  }
+`        
 
 const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_endpoint, use_case, setPrompt }) => {
   const [form] = Form.useForm();
@@ -39,7 +59,7 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
         setShowModal(false);
       }
   }, [mutation.error, mutation.isSuccess]);
-
+  
   const onFinish = async () => {
     const custom_prompt = form.getFieldValue('custom_prompt_instructions');
     try { 
@@ -67,7 +87,7 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
       <Button onClick={() => setShowModal(true)} style={{ marginLeft: '8px' }}>Generate Custom Prompt</Button>
       {showModal && 
         (
-            <Modal
+            <StyledModal
               visible={showModal}
               okText={`Generate`}
               title={`Generate Cutom Prompt`}
@@ -80,9 +100,9 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
                     initialValues={initialValues} 
                     onFinish={onSubmit}
                     style={{ marginTop: '24px' }}
-                    disabled={mutation.isLoading}
+                    disabled={mutation.isPending}
                 >
-                    {mutation.isLoading && 
+                    {mutation.isPending && 
                       <Loading />
                     }
 
@@ -90,6 +110,8 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
                         name='custom_prompt_instructions'
                         label='Custom Prompt Instructions'
                         rules={[{ required: true, message: "This field is required." }]}
+                        labelCol={{ span: 24 }}
+                        wrapperCol={{ span: 24 }}
                     >
                         <StyledTextArea 
                             autoSize 
@@ -98,7 +120,7 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
                     </Form.Item>
                 </Form>
 
-            </Modal>
+            </StyledModal>
         )
       }
     </>

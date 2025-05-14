@@ -31,11 +31,7 @@ const fetchEvaluationDetails = async (evaluate_file_name: string) => {
         queryKey: ['data', fetchEvaluationDetails],
         queryFn: () => fetchEvaluationDetails(generate_file_name),
         placeholderData: (previousData) => previousData
-  });
-  
-      // const dataset = get(data, 'dataset');
-      console.log('data:', data);  
-      console.log('error:', error);  
+      });
   
       if (error) {
         notification.error({

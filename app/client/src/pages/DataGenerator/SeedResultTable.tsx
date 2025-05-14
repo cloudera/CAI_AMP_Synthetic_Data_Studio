@@ -24,7 +24,7 @@ const SeedResultTable: React.FC<Props> = ({ results }) => {
     forEach(seeds, (seed: string) => {
         const pairs = get(results, `${seed}`);
         if (Array.isArray(pairs)) {
-            forEach(pairs, (pair: any) => {
+            forEach(pairs, (pair: unknown) => {
                 data.push({
                     seed,
                     question: get(pair, `question`),

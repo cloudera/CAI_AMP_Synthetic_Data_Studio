@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import Markdown from '../../components/Markdown';
 import TooltipIcon from '../../components/TooltipIcon';
-import { JustificationScore, QuestionSolution } from './types';
+import { QuestionSolution } from './types';
 
 const { Title } = Typography;
 const Container = styled(Flex)`

@@ -106,7 +106,7 @@ interface UsePostApiReturn<T> {
   data: T | null;
   loading: boolean;
   error: Error | null;
-  triggerPost: (body: Record<string, any>) => Promise<void>;
+  triggerPost: (body: Record<string, unknown>) => Promise<void>;
 }
 
 export function usePostApi<T>(url: string): UsePostApiReturn<T> {
@@ -114,7 +114,7 @@ export function usePostApi<T>(url: string): UsePostApiReturn<T> {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const triggerPost = async (body: Record<string, any>) => {
+  const triggerPost = async (body: Record<string, unknown>) => {
     setLoading(true);
     setError(null); // Reset error on each request
 

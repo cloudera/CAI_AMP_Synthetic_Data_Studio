@@ -21,8 +21,7 @@ const ReevaluatorPage: React.FC = () => {
     evaluate,
     dataset,
     prompt,
-    examples,
-    isLoading
+    examples
   } = useGetEvaluate(evaluate_file_name as string);
   
   const modelsReq = useModels();
@@ -33,9 +32,8 @@ const ReevaluatorPage: React.FC = () => {
   useEffect(() => {
     if (!isEmpty(evaluate)) {
       const parameters: ModelParameters = get(evaluate, 'model_parameters');
-      console.log('parameters', parameters);
       const values = form.getFieldsValue();
-      console.log('prompt', prompt);
+      
       form.setFieldsValue({
         ...values,
         display_name: get(evaluate, 'display_name'),
@@ -52,7 +50,7 @@ const ReevaluatorPage: React.FC = () => {
     }
   }, [evaluate]);
 
-  const evaluateDataset = async (formData: any) => {
+  const evaluateDataset = async (formData: unknown) => {
     const response = await fetch(`${BASE_API_URL}/synthesis/evaluate`, {
       method: 'POST',
       headers: {

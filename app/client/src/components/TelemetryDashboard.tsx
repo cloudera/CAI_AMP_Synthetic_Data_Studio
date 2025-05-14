@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, AreaChart, Area
+  LineChart, Line
 } from 'recharts';
 import axios from 'axios';
 import {
@@ -9,7 +9,7 @@ import {
 } from 'antd';
 import {
   DashboardOutlined, ApiOutlined, CloudServerOutlined, RocketOutlined, SyncOutlined,
-  PieChartOutlined, BarChartOutlined, CodeOutlined, WarningOutlined, CheckCircleOutlined, CloseCircleOutlined
+  CodeOutlined, WarningOutlined, CheckCircleOutlined, CloseCircleOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -19,7 +19,7 @@ const SUCCESS_COLOR = '#52c41a';
 const ERROR_COLOR = '#f5222d';
 const WARNING_COLOR = '#faad14';
 const INFO_COLOR = '#1890ff';
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#4CAF50', '#F44336', '#9C27B0'];
+// const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#4CAF50', '#F44336', '#9C27B0'];
 
 const TelemetryDashboard = () => {
   const [loading, setLoading] = useState(true);

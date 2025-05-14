@@ -1,5 +1,6 @@
 import endsWith from 'lodash/endsWith';
 import isEmpty from 'lodash/isEmpty';
+import isFunction from 'lodash/isFunction';
 import { useEffect, useState } from 'react';
 import { Flex, Form, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
@@ -9,6 +10,7 @@ import { MODEL_PROVIDER_LABELS } from './constants';
 import { ModelProviders, ModelProvidersDropdownOpts } from './types';
 import { useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
+
 
 const StepContainer = styled(Flex)`
     background: white;
@@ -31,7 +33,8 @@ export const USECASE_OPTIONS = [
 
 export const WORKFLOW_OPTIONS = [
     { label: 'Supervised Fine-Tuning', value: 'supervised-fine-tuning' },
-    { label: 'Custom Data Generation', value: 'custom' }
+    { label: 'Custom Data Generation', value: 'custom' },
+    { label: 'Freefrom Data Generation', value: 'freeform' }
 ];
 
 export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
@@ -55,15 +58,22 @@ const Configure = () => {
         delete values.output_value;
         
         const allFieldsFilled = Object.values(values).every(value => Boolean(value));
-        if (allFieldsFilled) {
-            setIsStepValid && setIsStepValid(true)
-        } else {
-            setIsStepValid && setIsStepValid(false)
+        if (allFieldsFilled && isFunction(setIsStepValid)) {
+            setIsStepValid(true)
+        } else if (isFunction(setIsStepValid)) {
+            setIsStepValid(false)
         }
     }
     useEffect(() => {
         validateForm()
     }, [form, formData])
+
+    // keivan
+    useEffect(() => {
+        if (formData && formData?.inference_type === undefined) {
+            form.setFieldValue('inference_type', ModelProviders.CAII);
+        }
+    }, [formData]);
 
     const labelCol = {
       span: 8
@@ -83,7 +93,7 @@ const Configure = () => {
         form.setFieldValue('doc_paths', paths);
     }
 
-    const onFilesChange = (selections: any) => {
+    const onFilesChange = (selections: unknown) => {
         if (Array.isArray(selections) && !isEmpty(selections)) {
             const paths = selections.map((file: File) => (
                 { 
@@ -106,7 +116,6 @@ const Configure = () => {
             setSelectedFiles([]);    
         }
     }
-    
 
     return (
         <StepContainer justify='center'>
@@ -209,7 +218,8 @@ const Configure = () => {
                         )}
                     </Select>
                 </Form.Item>
-                {formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING && 
+                {(formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
+                 formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) && 
                 <Form.Item
                     name='use_case'
                     label='Template'
@@ -234,7 +244,7 @@ const Configure = () => {
                     formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) && 
                 <Form.Item
                     name='doc_paths'
-                    label='Files'
+                    label='Context'
                     labelCol={labelCol}
                     dependencies={['workflow_type']}
                     shouldUpdate
@@ -319,6 +329,23 @@ const Configure = () => {
                         <Input />
                     </Form.Item>
                 </>}
+                {/* {formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION || 
+                 <Form.Item
+                    name='example_path'
+                    label='Example File'
+                    labelCol={labelCol}
+                    dependencies={['workflow_type']}
+                    shouldUpdate
+                    validateTrigger="['onBlur','onChange']"
+                    validateFirst
+                    rules={[]}
+                 >
+                    <Flex>
+                        <Select placeholder={'Select example file'} value={selectedFiles || []} onChange={onFilesChange} allowClear/>
+                        <Input placeholder='Select example file' disabled />
+                        <FileSelectorButton onAddFiles={onAddExampleFiles} workflowType={form.getFieldValue('workflow_type')} />
+                    </Flex>
+                 </Form.Item>} */}
             </FormContainer>
         </StepContainer>
     )

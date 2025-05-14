@@ -6,7 +6,7 @@ import { getColorCode } from './util';
 import { Badge, Table } from 'antd';
 
 interface Props {
-    results: any;
+    results: unknown;
 }
 
 const SeedEvaluateTable: React.FC<Props> = ({ results }) => {
@@ -17,10 +17,10 @@ const SeedEvaluateTable: React.FC<Props> = ({ results }) => {
     }
     const seeds = Object.values(result);
     const data = [];
-    forEach(seeds, (seed: any) => {
+    forEach(seeds, (seed: unknown) => {
         const pairs = get(seed, `evaluated_pairs`);
         if (Array.isArray(pairs)) {
-            forEach(pairs, (pair: any) => {
+            forEach(pairs, (pair: unknown) => {
                 data.push({
                     seed,
                     question: get(pair, `question`),

@@ -3,13 +3,12 @@ import get from 'lodash/get';
 import toNumber from 'lodash/toNumber';
 import isEmpty from 'lodash/isEmpty';
 import isString from 'lodash/isString';
-import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { WorkflowType } from './types';
 
 const BASE_API_URL = import.meta.env.VITE_AMP_URL;
 
-export const fetchPrompt = async (use_case: string, params: any) => {
+export const fetchPrompt = async (use_case: string, params: unknown) => {
     if (use_case !== 'custom') {
         const resp = await fetch(`${BASE_API_URL}/${use_case}/gen_prompt`, {
             method: 'GET'
@@ -63,7 +62,7 @@ export const useGetPromptByUseCase = (use_case: string, { model_id, inference_ty
     };
 }
 
-export const fetchCustomPrompt = async (params: any) => {
+export const fetchCustomPrompt = async (params: unknown) => {
     if (params.use_case !== 'custom') {
         const resp = await fetch(`${BASE_API_URL}/${params.use_case}/gen_prompt`, {
             method: 'GET'
@@ -89,7 +88,24 @@ export const fetchCustomPrompt = async (params: any) => {
     }
 }
 
-export const listModels = async (params: any) => {
+export const fetchFileContent = async (params: unknown) => {
+    const resp = await fetch(`${BASE_API_URL}/json/get_content`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+    });
+    if (resp.status !== 200) {
+        const error = await resp.json();
+        throw new Error(error.message || error.detail);
+    }
+    const body = await resp.json();
+    const content = get(body, 'data');
+    return content;
+}
+
+export const listModels = async (params: unknown) => {
     const resp = await fetch(`${BASE_API_URL}/model/model_ID`, {
         method: 'POST',
         headers: {
@@ -105,7 +121,7 @@ export const listModels = async (params: any) => {
     return body;
 }
 
-export const listFilesByPath = async (params: any) => {
+export const listFilesByPath = async (params: unknown) => {
     const resp = await fetch(`${BASE_API_URL}/get_project_files`, {
         method: 'POST',
         headers: {
@@ -119,7 +135,7 @@ export const listFilesByPath = async (params: any) => {
     }
     const body = await resp.json();
     const _files = get(body, '_files');
-    const files = _files.map((_file: any) => {
+    const files = _files.map((_file: unknown) => {
         const name = get(_file, '_path');
         const size = toNumber(get(_file, '_file_size'));
         const _is_dir = get(_file, '_is_dir')
@@ -135,9 +151,7 @@ export const listFilesByPath = async (params: any) => {
     return files;
 }
 
-export const useGetProjectFiles = (paths: string[]) => {
-    const [files, setFiles] = useState<File[]>([]);
-
+export const useGetProjectFiles = () => {
     const mutation = useMutation({
         mutationFn: listFilesByPath
     });
@@ -145,12 +159,12 @@ export const useGetProjectFiles = (paths: string[]) => {
     if (mutation.isError) {
         notification.error({
           message: 'Error',
-          description: `An error occurred while fetching the prompt.\n ${mutation.error}`
+          description: `An error occurred while fetching the list of project files.\n ${mutation.error}`
         });
     }
     return {
       listProjectFiles: mutation.mutate,
-      fetching: mutation.isLoading,
+      fetching: mutation.isPending,
       error: mutation.error,
       isError: mutation.isError,
       data: mutation.data
@@ -158,7 +172,7 @@ export const useGetProjectFiles = (paths: string[]) => {
   };
 
 
-  export const fetchDatasetSize = async (params: any) => {
+  export const fetchDatasetSize = async (params: unknown) => {
     const resp = await fetch(`${BASE_API_URL}/json/dataset_size`, {
         method: 'POST',
         headers: {

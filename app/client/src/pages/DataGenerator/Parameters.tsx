@@ -1,6 +1,6 @@
 import isEmpty from 'lodash/isEmpty';
 import { useEffect, useRef, useState } from 'react';
-import { Col, Divider, Form, InputNumber, Row, Slider, Spin, Typography } from 'antd';
+import { Col, Divider, Form, InputNumber, Row, Slider, Typography } from 'antd';
 import { merge } from 'lodash';
 import styled from 'styled-components';
 
@@ -58,7 +58,7 @@ const Parameters = () => {
     const formData = form.getFieldsValue(true);
     const [values, setValues] = useState(formData?.model_parameters);
 
-    const { data: defaultParams, loading: loadingDefaultParams } = useFetchDefaultModelParams();
+    const { data: defaultParams } = useFetchDefaultModelParams();
 
     useEffect(() => {
         if (!isEmpty(formData?.model_parameters)) {
@@ -185,7 +185,7 @@ const Parameters = () => {
                     </Col>
                 </Row>
             </StyledFormItem>
-            {/* <StyledFormItem
+            <StyledFormItem
                 name={['model_parameters', ModelParameters.MAX_TOKENS]}
                 label={<ParamLabel>{LABELS[ModelParameters.MAX_TOKENS]}</ParamLabel>}
                 labelCol={{ span: 24 }}
@@ -215,7 +215,7 @@ const Parameters = () => {
                         />
                     </Col>
                 </Row>
-            </StyledFormItem> */}
+            </StyledFormItem>
         </>
         
     )

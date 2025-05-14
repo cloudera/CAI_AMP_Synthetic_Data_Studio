@@ -10,7 +10,7 @@ import { Navigate, useLocation } from "react-router-dom";
  */
 interface RouteACProps{
   element: ReactNode;
-  validator: (state: any | null) => boolean;
+  validator: (state: unknown | null) => boolean;
   reroutePath?: string;
 }
 const RouteAccessControl: FC<RouteACProps> = ({ element, validator, reroutePath = '/' }) => {

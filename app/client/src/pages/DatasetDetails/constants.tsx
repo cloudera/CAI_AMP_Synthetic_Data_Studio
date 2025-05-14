@@ -1,6 +1,4 @@
-import { HomeOutlined, PageviewOutlined } from '@mui/icons-material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import GradingIcon from '@mui/icons-material/Grading';
 import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 

@@ -1,7 +1,5 @@
 import React, { SyntheticEvent, useEffect } from 'react';
-
 import { Col, Input, Row, Table } from 'antd';
-import { CustomResult } from '../DataGenerator/types';
 import { DatasetGeneration } from '../Home/types';
 import { sortItemsByKey } from '../../utils/sortutils';
 import { SearchProps } from 'antd/es/input/Search';
@@ -51,7 +49,7 @@ const CustomGenerationTable: React.FC<Props> = ({ results }) => {
         }
     ];
 
-     const onSearch: SearchProps['onSearch'] = (value, _e, info) => {
+     const onSearch: SearchProps['onSearch'] = (value) => {
         throttle((value: string) => setSearchQuery(value), 500)(value);
     }
         

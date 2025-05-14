@@ -5,7 +5,7 @@ import { Dataset, EvaluateExample, EvaluateExampleRecord } from "./types";
 
 
 import React, { useEffect, useState } from 'react';
-import { DeleteOutlined, EditOutlined, Add } from "@mui/icons-material";
+import { DeleteOutlined, EditOutlined } from "@mui/icons-material";
 import TooltipIcon from "../../components/TooltipIcon";
 import StyledTitle from "./StyledTitle";
 import styled from "styled-components";
@@ -79,7 +79,7 @@ const EvaluateExampleTable: React.FC<Props> = ({ examples, form }) => {
   }
 
   const onDelete = (index: number) => {
-    let _promptExamples = clone(evaluateExamples);
+    const _promptExamples = clone(evaluateExamples);
     pullAt(_promptExamples, index);
     setEvaluateExamples(_promptExamples);
   }
@@ -142,7 +142,7 @@ const EvaluateExampleTable: React.FC<Props> = ({ examples, form }) => {
         </div>
         </Flex>
         <Flex align='flex-end' gap={15} style={{ marginBottom: '6px' }}>
-          <Button type="link" onClick={onRestoreDefaults} style={{ paddingRight: 0 }}>
+          <Button type="link" disabled={disabled} onClick={onRestoreDefaults} style={{ paddingRight: 0 }}>
             {'Restore Defaults'}
           </Button>
           <Tooltip title={disabled ? `You can add up to ${MAX_PROMPT__EXAMPLES} examples. To add more, you must remove one.` : undefined}>

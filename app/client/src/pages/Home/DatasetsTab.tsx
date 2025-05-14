@@ -86,7 +86,7 @@ const DatasetsTab: React.FC = () => {
         }
     }, [exportResult, notificationInstance])
 
-    const onSearch: SearchProps['onSearch'] = (value, _e, info) => {
+    const onSearch: SearchProps['onSearch'] = (value: unknown) => {
         throttle((value: string) => setSearchQuery(value), 500)(value);
     }
 
@@ -116,12 +116,14 @@ const DatasetsTab: React.FC = () => {
             title: 'Dataset Name',
             dataIndex: 'generate_file_name',
             sorter: sortItemsByKey('generate_file_name'),
+            width: 250,
             render: (generate_file_name) => <Tooltip title={generate_file_name}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{generate_file_name}</StyledParagraph></Tooltip>
         }, {
             key: 'model_id',
             title: 'Model',
             dataIndex: 'model_id',
             sorter: sortItemsByKey('model_id'),
+            width: 250,
             render: (modelId) => <Tooltip title={modelId}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{modelId}</StyledParagraph></Tooltip>
         }, {
             key: 'num_questions',

@@ -1,6 +1,6 @@
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, Button, Card, Flex, Layout, List, Tabs, Typography } from 'antd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -13,13 +13,14 @@ import { getProjectJobsUrl } from './hooks';
 import { Dataset } from './types';
 import { WorkflowType } from '../DataGenerator/types';
 import SeedEvaluateTable from './SeedEvaluateTable';
+import FreeFromEvaluationTable from './FreeFromEvaluationTable';
 
 
 const { Content } = Layout;
 const { Title } = Typography;
 
 interface Props {
-  result: any;
+  result: unknown;
   demo: boolean;
   dataset: Dataset;
 }
@@ -40,9 +41,12 @@ const StyleContent = styled(Content)`
 
 
 const EvaluatorSuccess: React.FC<Props> = ({ result, dataset, demo }) => {
-  const hasTopics = (result: any) => {
-    return !Array.isArray(result?.results)
+  const hasTopics = (result: unknown) => {
+    return !Array.isArray(result?.results);
   }
+
+  const isFreeForm = (dataset: Dataset) => 
+    dataset?.technique === 'freeform';
 
   const hasCustomSeed = (_dataset: Dataset) => (_dataset?.technique === 'sft' && !isEmpty(_dataset?.doc_paths)) ||
       (_dataset?.technique === WorkflowType.CUSTOM_DATA_GENERATION && !isEmpty(_dataset?.input_path))
@@ -88,9 +92,14 @@ const EvaluatorSuccess: React.FC<Props> = ({ result, dataset, demo }) => {
             <Typography>
               {'Your dataset evaluation was successfully generated. You can review your evaluation in the table below.'}
             </Typography>
-            {!isCustom && !isEmpty(topicTabs) && <Card title={'Generated Evaluations'} style={{ marginTop: '36px' }}>
-              <Tabs tabPosition='left' items={topicTabs}/>
-            </Card>}
+            {!isCustom && !isEmpty(topicTabs) && !isFreeForm(dataset) &&
+              <Card title={'Generated Evaluations'} style={{ marginTop: '36px' }}>
+                <Tabs tabPosition='left' items={topicTabs}/>
+              </Card>}
+              {isFreeForm(dataset) &&
+              <Card title={'Generated Evaluations'} style={{ marginTop: '36px' }}>
+                  <FreeFromEvaluationTable data={get(result, 'result.evaluated_rows', [])} />
+              </Card>}  
           </>}
           {isCustom && 
           <>

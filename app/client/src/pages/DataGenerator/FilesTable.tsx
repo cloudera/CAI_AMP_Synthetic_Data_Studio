@@ -1,6 +1,8 @@
 import endsWith from 'lodash/endsWith';
 import filter from 'lodash/filter';
 import clone from 'lodash/clone';
+import set from 'lodash/set';
+import forEach from 'lodash/forEach';
 import React, { useEffect, useState } from 'react';
 import { Badge, Breadcrumb, Button, Col, Flex, List, Popover, Row, Table, Tooltip, Typography } from 'antd';
 import styled from 'styled-components';
@@ -9,7 +11,7 @@ import { getFileSize, isDirectory } from './utils';
 import { File, WorkflowType } from './types';
 import { useGetProjectFiles } from './hooks';
 import isEmpty from 'lodash/isEmpty';
-import { forEach, set, uniq } from 'lodash';
+import Loading from '../Evaluator/Loading';
 
 const DIRECTORY_MIME_TYPE = 'inode/directory';
 
@@ -81,12 +83,12 @@ const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType }) => {
   const [paths, setPaths] = useState<string[] | null>(null);
   const [path, setPath] = useState<string | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [selectedRows, setSelectedRows] = useState<File[]>([]);
+  const [, setSelectedRows] = useState<File[]>([]);
   // row selection map: path as key -> list of row keys
   const [rowSelectionMap, setRowSelectionMap] = useState<RowSelectionMap>({});
   // row selection map: path as key -> list of files
   const [fileSelectionMap, setFileSelectionMap] = useState<FileSelectionMap>({});
-  const { fetching, listProjectFiles, data } = useGetProjectFiles(paths || []);
+  const { fetching, listProjectFiles, data } = useGetProjectFiles();
 
   useEffect(() => {
     if (!isEmpty(path) || paths === null || isEmpty(paths)) {
@@ -151,7 +153,7 @@ const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType }) => {
       key: 'name',
       ellipsis: true,
       render: (file: File) => {
-        const { name, url } = file;
+        const { name } = file;
 
         if (file?.mime !== DIRECTORY_MIME_TYPE) {
           return (
@@ -205,6 +207,7 @@ const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType }) => {
             </Breadcrumb>
           )}
         </Col>
+        {fetching && <Loading />}
 
         <Col sm={4}>
           <Flex style={{ flexDirection: 'row-reverse' }}>

@@ -5,6 +5,7 @@ import { Dataset, Evaluation, EvaluationDetails } from '../Evaluator/types';
 import styled from 'styled-components';
 import { getTopicMap } from '../Evaluator/util';
 import EvaluateTopicTable from '../Evaluator/EvaluateTopicTable';
+import FreeFormEvaluationTable from '../Evaluator/FreeFromEvaluationTable';
 
 
 interface Props {
@@ -18,12 +19,13 @@ const Container = styled.div`
    background-color: #ffffff;
 `;
 
-const EvaluationGenerationTab: React.FC<Props> = ({ dataset, evaluation, evaluationDetails }) => {  
+const EvaluationGenerationTab: React.FC<Props> = ({ dataset, evaluationDetails }) => { 
     const result = get(evaluationDetails, 'evaluation');
+    const isFreeForm = get(dataset, 'technique' , false) === 'freeform';
 
-    let topicTabs: any[] = [];
+    let topicTabs: unknown[] = [];
     const { topics, topicMap } = getTopicMap({ result });
-    if (dataset.topics !== null && !isEmpty(dataset.topics)) {
+    if (dataset.topics !== null && !isEmpty(dataset.topics) && !isFreeForm) {
         topicTabs = topics.map((topicName: string, index: number) => ({
             key: `${topicName}-${index}`,
             label: topicName,
@@ -32,12 +34,22 @@ const EvaluationGenerationTab: React.FC<Props> = ({ dataset, evaluation, evaluat
         }));
     }
     
-    if (isEmpty(topicTabs)) {
+    if (isEmpty(topicTabs) && !isFreeForm) {
         const values = Object.values(topicMap);
         return (
             <Row>
                 <Col sm={24}>
                     <EvaluateTopicTable data={get(values, `[0].evaluated_pairs`, [])} topicResult={get(values, '[0]')} topic={'Evaluate'} />
+                </Col>
+            </Row>
+        );
+    }
+
+    if (isFreeForm) {
+        return (
+            <Row>
+                <Col sm={24}>
+                    <FreeFormEvaluationTable data={get(result, 'evaluated_rows', [])} />
                 </Col>
             </Row>
         );

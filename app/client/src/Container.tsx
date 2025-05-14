@@ -48,9 +48,6 @@ const PageHeader = styled(Header)`
   height: fit-content;
   padding: 5px 15px
 `;
-const StyledImg = styled.img`
-  height: ${props => props?.height && `${props.height}px`}
-`
 
 const StyledText = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
