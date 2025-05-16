@@ -1,0 +1,32 @@
+[
+  {
+    "Seeds": "Python Basics",
+    "question": "How do you create and use lists in Python?",
+    "solution": "Lists are ordered, mutable sequences in Python. Here's how to work with them:\n\n```python\n# Creating a list\nfruits = ['apple', 'banana', 'orange']\n\n# Adding elements\nfruits.append('grape')  # Adds to end\nfruits.insert(1, 'mango')  # Adds at index 1\n\n# Accessing elements\nprint(fruits[0])  # First element: apple\nprint(fruits[-1])  # Last element: grape\n\n# Slicing\nprint(fruits[1:3])  # Elements from index 1 to 2\n\n# List operations\nfruits.remove('banana')  # Removes specific element\npopped_fruit = fruits.pop()  # Removes and returns last element\nprint(len(fruits))  # Length of list\n```"
+  },
+  {
+    "Seeds": "Python Basics",
+    "question": "How do you use dictionaries in Python?",
+    "solution": "Dictionaries are key-value pairs in Python. Here's how to use them:\n\n```python\n# Creating a dictionary\nstudent = {\n    'name': 'John',\n    'age': 20,\n    'grades': [85, 90, 88]\n}\n\n# Adding/updating values\nstudent['email'] = 'john@example.com'\nstudent['age'] = 21\n\n# Accessing values\nprint(student['name'])  # Output: John\n\n# Safe access with get()\nprint(student.get('phone', 'Not found'))  # Default if key doesn't exist\n\n# Getting keys and values\nprint(student.keys())\nprint(student.values())\n\n# Checking if key exists\nif 'name' in student:\n    print('Name exists!')\n```"
+  },
+  {
+    "Seeds": "Data Manipulation",
+    "question": "How do you filter and sort a pandas DataFrame based on multiple conditions?",
+    "solution": "Here's how to filter and sort a DataFrame with multiple conditions:\n\n```python\nimport pandas as pd\n\n# Create sample DataFrame\ndf = pd.DataFrame({\n    'name': ['John', 'Alice', 'Bob', 'Sarah'],\n    'age': [25, 30, 22, 35],\n    'salary': [50000, 75000, 45000, 85000]\n})\n\n# Filter rows where age > 25 AND salary >= 75000\nfiltered_df = df[(df['age'] > 25) & (df['salary'] >= 75000)]\n\n# Sort the filtered results by age descending, then by name ascending\nresult = filtered_df.sort_values(['age', 'name'], ascending=[False, True])\n\nprint(result)\n```\n\nThis code demonstrates:\n1. Using boolean masks for filtering\n2. Combining conditions with & (AND) operator\n3. Sorting by multiple columns with different sort orders"
+  },
+  {
+    "Seeds": "Data Manipulation",
+    "question": "How do you perform group by operations with aggregation in pandas?",
+    "solution": "Here's how to group data and apply multiple aggregation functions:\n\n```python\nimport pandas as pd\n\n# Create sample DataFrame\ndf = pd.DataFrame({\n    'department': ['IT', 'Sales', 'IT', 'Sales', 'IT'],\n    'employee': ['John', 'Alice', 'Bob', 'Sarah', 'Mike'],\n    'salary': [60000, 75000, 65000, 85000, 70000],\n    'years': [3, 5, 2, 4, 3]\n})\n\n# Group by department and calculate multiple aggregations\nresult = df.groupby('department').agg({\n    'salary': ['mean', 'max', 'min'],\n    'years': 'sum',\n    'employee': 'count'\n}).round(2)\n\nprint(result)\n```\n\nThis code shows:\n1. Grouping data by a specific column\n2. Applying different aggregation functions to different columns\n3. Using multiple aggregations on the same column\n4. Rounding results for cleaner output"
+  },
+  {
+    "Seeds": "Web Development",
+    "question": "How do you create a responsive navigation menu using HTML and CSS?",
+    "solution": "Here's how to create a responsive navigation menu:\n\n```html\n<!-- HTML Structure -->\n<nav class=\"navbar\">\n  <ul class=\"nav-links\">\n    <li><a href=\"#\">Home</a></li>\n    <li><a href=\"#\">About</a></li>\n    <li><a href=\"#\">Services</a></li>\n    <li><a href=\"#\">Contact</a></li>\n  </ul>\n</nav>\n```\n\n```css\n/* CSS Styles */\n.navbar {\n  padding: 1rem;\n  background: #333;\n}\n\n.nav-links {\n  display: flex;\n  list-style: none;\n  gap: 2rem;\n}\n\n@media (max-width: 768px) {\n  .nav-links {\n    flex-direction: column;\n    padding: 1rem;\n  }\n}\n```\nThis creates a horizontal navigation menu that switches to vertical on mobile devices."
+  },
+  {
+    "Seeds": "Web Development",
+    "question": "How do you implement a dark mode toggle using JavaScript?",
+    "solution": "Here's how to create a dark mode toggle:\n\n```html\n<button id=\"darkModeToggle\">Toggle Dark Mode</button>\n```\n\n```javascript\n// JavaScript implementation\nconst toggleButton = document.getElementById('darkModeToggle');\nconst body = document.body;\n\ntoggleButton.addEventListener('click', () => {\n  body.classList.toggle('dark-mode');\n  \n  // Save preference to localStorage\n  const isDarkMode = body.classList.contains('dark-mode');\n  localStorage.setItem('darkMode', isDarkMode);\n});\n\n// Check for saved user preference\nconst savedDarkMode = localStorage.getItem('darkMode');\nif (savedDarkMode === 'true') {\n  body.classList.add('dark-mode');\n}\n```\n\n```css\n/* CSS for dark mode */\nbody.dark-mode {\n  background-color: #333;\n  color: #fff;\n}\n```\nThis code creates a toggle button that switches between light and dark modes and persists the user's preference."
+  }
+]
