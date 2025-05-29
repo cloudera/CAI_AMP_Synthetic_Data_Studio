@@ -2,7 +2,9 @@ import { ModelProviders, ModelProvidersDropdownOpts } from './types';
 
 export const MODEL_PROVIDER_LABELS = {
   [ModelProviders.BEDROCK]: 'AWS Bedrock',
-  [ModelProviders.CAII]: 'Cloudera AI Inference Service'
+  [ModelProviders.CAII]: 'Cloudera AI Inference Service',
+  [ModelProviders.GOOGLE_GEMINI]: 'Google Gemini',
+  [ModelProviders.AZURE_OPENAI]: 'Azure OpenAI',
 };
 
 export const MIN_SEED_INSTRUCTIONS = 1

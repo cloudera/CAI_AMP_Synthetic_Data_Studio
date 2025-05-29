@@ -16,7 +16,9 @@ export enum Usecases {
 
 export enum ModelProviders {
     BEDROCK = 'aws_bedrock',
-    CAII = 'CAII'
+    CAII = 'CAII',
+    AZURE_OPENAI = 'AZURE_OPENAI',
+    GOOGLE_GEMINI = 'GOOGLE_GEMINI',
 }
 
 export type ModelProvidersDropdownOpts = { label: string, value: ModelProviders }[];

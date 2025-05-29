@@ -26,9 +26,13 @@ export const StyledTextArea = styled(Input.TextArea)`
 `;
 
 export const USECASE_OPTIONS = [
+    { label: 'Lending Dataset', value: 'lending_dataset' },
+    { label: 'Credit Card History', value: 'credit_card_history' },
+    { label: 'Housing Dataset', value: 'housing_dataset' },
     { label: 'Code Generation', value: 'code_generation' },
     { label: 'Text to SQL', value: 'text2sql' },
-    { label: 'Custom', value: 'custom' }
+    { label: 'Custom', value: 'custom' },
+
 ];
 
 export const WORKFLOW_OPTIONS = [
@@ -40,6 +44,8 @@ export const WORKFLOW_OPTIONS = [
 export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
     { label: MODEL_PROVIDER_LABELS[ModelProviders.BEDROCK], value: ModelProviders.BEDROCK},
     { label: MODEL_PROVIDER_LABELS[ModelProviders.CAII], value: ModelProviders.CAII },
+    { label: MODEL_PROVIDER_LABELS[ModelProviders.AZURE_OPENAI], value: ModelProviders.AZURE_OPENAI},
+    { label: MODEL_PROVIDER_LABELS[ModelProviders.GOOGLE_GEMINI], value: ModelProviders.GOOGLE_GEMINI },
 ];
 
 const Configure = () => {
