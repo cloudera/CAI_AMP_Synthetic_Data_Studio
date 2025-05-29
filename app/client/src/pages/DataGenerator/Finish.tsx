@@ -8,7 +8,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import GradingIcon from '@mui/icons-material/Grading';
 import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
-import { Avatar, Button, Card, Divider, Flex, Form, List, Modal, Result, Spin, Tabs, Table, Typography, FormInstance } from 'antd';
+import { Avatar, Button, Card, Divider, Flex, Form, List, Modal, Result, Spin, Tabs, Table, Typography, FormInstance, Popover } from 'antd';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -206,9 +206,17 @@ const Finish = () => {
 
         topicTabs = genDatasetResp?.results && Object.keys(genDatasetResp.results).map((topic, i) => {
             return ({
-            key: `${topic}-${i}`,
-            label: <Typography.Text style={{ maxWidth: '300px' }} ellipsis={true}>{topic}</Typography.Text>,
-            value: topic,
+            key: `topic-${i}`,
+            label: (
+            <Popover content={topic} placement="right" trigger="hover" overlayStyle={{
+                width: "50vw",
+                maxHeight: '50vh',
+                overflowY: 'auto'
+              }}>
+                <Typography.Text style={{ maxWidth: '300px' }} ellipsis={true}>{topic}</Typography.Text>
+            </Popover>)
+            ,
+            value: topic.replace(/\n/g, ' '),
             children: workflow_type !== WorkflowType.FREE_FORM_DATA_GENERATION ?
             <TopicsTable formData={genDatasetResp} topic={topic} /> :
             // <FreeFormTable data={get(genDatasetResp, `results.${topic}`)} />

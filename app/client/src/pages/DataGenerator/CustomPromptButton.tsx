@@ -1,4 +1,4 @@
-import { Button, Form, Input, Modal, notification } from "antd";
+import { Button, Col, Flex, Form, Input, Modal, notification, Row } from "antd";
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -10,12 +10,13 @@ interface Props {
     use_case: string;
     inference_type: string;
     caii_endpoint: string;
+    example_path?: string | null;
     setPrompt: (prompt: string) => void
 }
 
 export const StyledTextArea = styled(Input.TextArea)`
     margin-bottom: 10px !important;
-    min-height: 275px !important;
+    height:  100% !important;
     margin-bottom: 10px !important;
     padding: 15px 20px !important;
 `;
@@ -29,6 +30,7 @@ const StyledModal = styled(Modal)`
     .ant-modal-body {
       padding-top: 0;
       min-height: 70vh;
+      yoverflow-y: auto;
     }
   }
   // .ant-modal-content {
@@ -39,7 +41,12 @@ const StyledModal = styled(Modal)`
   //  }
 `        
 
-const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_endpoint, use_case, setPrompt }) => {
+const StyledFlex = styled(Flex)`
+  flex-direction: row-reverse;
+`;
+
+
+const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_endpoint, use_case, example_path, setPrompt }) => {
   const [form] = Form.useForm();
   const [showModal, setShowModal] = useState(false);
 
@@ -69,7 +76,8 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
         inference_type,
         caii_endpoint,
         custom_prompt,
-        use_case
+        use_case,
+        example_path
       })
     } catch(e) {
       console.error(e);
@@ -90,9 +98,18 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
             <StyledModal
               visible={showModal}
               okText={`Generate`}
-              title={`Generate Cutom Prompt`}
-              onCancel={() => setShowModal(false)}
-              onOk={() => onFinish()}
+              title={`Generate Custom Prompt`}
+              footer={
+                <Row>
+                  <Col sm={12} />    
+                  <Col sm={12}>
+                    <StyledFlex key="footer-right">
+                      <Button type="primary" style={{ marginLeft: '12px' }} disabled={mutation.isPending} onClick={() => onFinish()}>{'Generate Custom Prompt'}</Button>
+                      <Button disabled={mutation.isPending} style={{ marginLeft: '12px' }} onClick={() => setShowModal(false)}>{'Cancel'}</Button>
+                    </StyledFlex>
+                  </Col>
+                </Row>
+              }
             >
                 <Form 
                     form={form} 
@@ -103,7 +120,9 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
                     disabled={mutation.isPending}
                 >
                     {mutation.isPending && 
-                      <Loading />
+                      <Flex justify='center' align='center' style={{ marginBottom: '16px' }}>
+                        <Loading />
+                      </Flex>
                     }
 
                     <Form.Item
@@ -113,7 +132,9 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
                         labelCol={{ span: 24 }}
                         wrapperCol={{ span: 24 }}
                     >
-                        <StyledTextArea 
+                        <StyledTextArea
+                            disabled={mutation.isPending} 
+                            rows={15}
                             autoSize 
                             placeholder={'Enter instructions for a custom prompt'}
                         />

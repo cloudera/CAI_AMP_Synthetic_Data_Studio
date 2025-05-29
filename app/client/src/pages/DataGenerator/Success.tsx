@@ -4,7 +4,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import GradingIcon from '@mui/icons-material/Grading';
 import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
-import { Avatar, Button, Card, Divider, Flex, List, Modal, Tabs, Table, Typography } from 'antd';
+import { Avatar, Button, Card, Divider, Flex, List, Modal, Tabs, Table, Typography, Popover } from 'antd';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -12,7 +12,7 @@ import PCModalContent from './PCModalContent'
 import { GenDatasetResponse, QuestionSolution } from './types';
 import { getFilesURL } from '../Evaluator/util';
 
-const { Title } = Typography;
+const { Text, Title } = Typography;
 
 const TabsContainer = styled(Card)`
     .ant-card-body {
@@ -88,9 +88,9 @@ interface SuccessProps {
 }
 const Success: FC<SuccessProps> = ({ formData, isDemo = true }) => {
     const topicTabs = formData?.results && Object.keys(formData.results).map((topic, i) => ({
-        key: `${topic}-${i}`,
-        label: topic,
-        value: topic,
+        key: `tab-${i}`,
+        label: <Popover content={topic}><Text>{topic}</Text></Popover>,
+        value: topic.replace(/\n/g, ' '),
         children: <TopicsTable formData={formData} topic={topic} />
     }));
     const nextStepsList = [

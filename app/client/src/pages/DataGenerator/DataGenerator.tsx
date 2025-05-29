@@ -68,14 +68,14 @@ const steps: WizardStepConfig[] = [
         required: true,
     },
     {
-        title: 'Prompt',
-        key: DataGenWizardSteps.PROMPT,
-        content: <Prompt/>,
-    },
-    {
         title: 'Examples',
         key: DataGenWizardSteps.EXAMPLES,
         content: <Examples/>
+    },
+    {
+        title: 'Prompt',
+        key: DataGenWizardSteps.PROMPT,
+        content: <Prompt/>,
     },
     {
         title: 'Summary',

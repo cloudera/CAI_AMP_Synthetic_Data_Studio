@@ -15,6 +15,7 @@ import { useWizardCtx } from './utils';
 import { useDatasetSize, useGetPromptByUseCase } from './hooks';
 import CustomPromptButton from './CustomPromptButton';
 import get from 'lodash/get';
+import TextArea from 'antd/es/input/TextArea';
 
 const { Title } = Typography;
 
@@ -153,7 +154,8 @@ const Prompt = () => {
         
     }, [selectedTopics, numQuestions, datasetSize]);
 
-    const onTopicTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const onTopicTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        console.log('onTopicTextChange:', event.target.value);
         setCustomTopic(event.target.value);
     };
 
@@ -163,6 +165,7 @@ const Prompt = () => {
 
     const addItem = (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
         e.preventDefault();
+        console.log('Adding custom topic:', customTopic);
         if (!customTopic || items.includes(customTopic)) {
             return; // Prevent adding duplicate or empty topics
         }
@@ -237,6 +240,7 @@ const Prompt = () => {
                                 inference_type={inference_type}
                                 caii_endpoint={caii_endpoint}
                                 use_case={useCase}
+                                example_path={form.getFieldValue('example_path') || null}
                                 setPrompt={setPrompt}
                             />
                         }
@@ -315,9 +319,10 @@ const Prompt = () => {
                                                 ]}
                                             >
                                                 <Space.Compact block>
-                                                    <Input
+                                                    <TextArea
                                                         disabled={selectedTopics?.length === MAX_SEED_INSTRUCTIONS}
                                                         placeholder="Enter custom seed instruction"
+                                                        rows={4}
                                                         ref={customTopicRef}
                                                         value={customTopic}
                                                         onChange={onTopicTextChange}
@@ -330,6 +335,7 @@ const Prompt = () => {
                                                         }
                                                     >
                                                         <Button
+                                                            style={{ marginLeft: '12px' }}
                                                             disabled={items.includes(customTopic) ||
                                                                 selectedTopics?.length === MAX_SEED_INSTRUCTIONS ||
                                                                 customTopic.length === 0}
