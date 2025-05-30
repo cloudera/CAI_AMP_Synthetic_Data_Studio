@@ -889,7 +889,7 @@ async def customise_prompt(use_case: UseCase):
 async def customise_prompt(use_case: UseCase):
     """Allow users to customize prompt. Only part of the prompt which can be customized"""
     try:
-        return PromptHandler.get_freeform_default_custom_prompt(use_case, custom_prompt=None)
+        return USE_CASE_CONFIGS[use_case].prompt
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1087,18 +1087,18 @@ async def delete_evaluation(file_name: str, file_path: Optional[str] = None):
 @app.get("/use-cases/{use_case}/topics")
 async def get_topics(use_case: UseCase):
     """Get available topics for a specific use case"""
-    uc_topics = {"code_generation": ["Algorithms", "Async Programming", 
-                                     "Data Structures", "Database Operations", 
-                                     "Python Basics", "Web Development"],
+    # uc_topics = {"code_generation": ["Algorithms", "Async Programming", 
+    #                                  "Data Structures", "Database Operations", 
+    #                                  "Python Basics", "Web Development"],
 
-        "text2sql":["Aggregations", "Basic Queries", "Data Manipulation", 
-                    "Joins", "Subqueries", "Window Functions"],
-        "custom": []
-    }
+    #     "text2sql":["Aggregations", "Basic Queries", "Data Manipulation", 
+    #                 "Joins", "Subqueries", "Window Functions"],
+    #     "custom": []
+    # }
     
-    topics = uc_topics[use_case]
+    # topics = uc_topics[use_case]
 
-    return {"topics":topics}
+    return {"topics":USE_CASE_CONFIGS[use_case].topics}
 
 @app.get("/{use_case}/gen_examples")
 async def get_gen_examples(use_case: UseCase):
@@ -1157,56 +1157,58 @@ async def get_eval_examples(use_case: UseCase):
     
     return {"examples": examples}
 
-@app.get("/{use_case}/custom_gen_examples")
-async def get_custom_gen_examples(use_case: UseCase):
+# @app.get("/{use_case}/custom_gen_examples")
+# async def get_custom_gen_examples(use_case: UseCase):
     
                 
-    if use_case == UseCase.CODE_GENERATION:
-        examples = [
-        """#Here's how to create and modify a list in Python:
-        # Create an empty list\n
-        my_list = []
-        #  Add elements using append\n
-        my_list.append(1)\n
-        my_list.append(2)\n\n
-        # # Create a list with initial elements
-        my_list = [1, 2, 3]
-        """,
+#     if use_case == UseCase.CODE_GENERATION:
+#         examples = [
+#         """#Here's how to create and modify a list in Python:
+#         # Create an empty list\n
+#         my_list = []
+#         #  Add elements using append\n
+#         my_list.append(1)\n
+#         my_list.append(2)\n\n
+#         # # Create a list with initial elements
+#         my_list = [1, 2, 3]
+#         """,
 
-        """#Here's how to implement a basic stack:class Stack:
-        def __init__(self):
-        self.items = []
-        def push(self, item):
-        self.items.append(item)
-        def pop(self):
-        if not self.is_empty():
-        return self.items.pop()
-        def is_empty(self):
-        return len(self.items) == 0"""
-    ]
+#         """#Here's how to implement a basic stack:class Stack:
+#         def __init__(self):
+#         self.items = []
+#         def push(self, item):
+#         self.items.append(item)
+#         def pop(self):
+#         if not self.is_empty():
+#         return self.items.pop()
+#         def is_empty(self):
+#         return len(self.items) == 0"""
+#     ]
         
         
     
-    elif use_case == UseCase.TEXT2SQL:
+#     elif use_case == UseCase.TEXT2SQL:
 
-        examples = [ """
-                    SELECT e.name, d.department_name
-                    FROM employees e
-                    JOIN departments d ON 
-                    e.department_id = d.id;""",
+#         examples = [ """
+#                     SELECT e.name, d.department_name
+#                     FROM employees e
+#                     JOIN departments d ON 
+#                     e.department_id = d.id;""",
 
-                    """SELECT *
-                        FROM employees
-                        WHERE salary > 50000;"""
-        ]
+#                     """SELECT *
+#                         FROM employees
+#                         WHERE salary > 50000;"""
+#         ]
         
         
-    elif use_case == UseCase.CUSTOM:
-        examples = []
+#     elif use_case == UseCase.CUSTOM:
+#         examples = []
+#     else:
+#         examples = []
         
                    
         
-    return {"examples": examples}
+#     return {"examples": examples}
 
 @app.get("/health")
 async def health_check():
@@ -1214,7 +1216,7 @@ async def health_check():
     #return {"status": "healthy"}
     return synthesis_service.get_health_check()
 
-@app.get("/{use_case}/example_payloads")
+@app.get("/ /example_payloads")
 async def get_example_payloads(use_case:UseCase):
     """Get example payloads for different use cases"""
     if use_case == UseCase.CODE_GENERATION:

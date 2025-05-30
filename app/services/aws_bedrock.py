@@ -22,7 +22,7 @@ def get_bedrock_client():
             "mode": "standard",
         },
         connect_timeout=5,
-        read_timeout=60
+        read_timeout=3600
     )
     bedrock_client = boto3.client(service_name="bedrock-runtime", region_name=region, config=retry_config)
 

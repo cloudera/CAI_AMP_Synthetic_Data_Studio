@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Request, status
 import requests
@@ -14,6 +14,7 @@ class UseCase(str, Enum):
     CODE_GENERATION = "code_generation"
     TEXT2SQL = "text2sql"
     CUSTOM = "custom"
+    LENDING_DATA = "lending_data"
 
 class Technique(str, Enum):
     SFT = "sft"
@@ -46,8 +47,9 @@ class UseCaseMetadata(BaseModel):
     """Metadata for each use case"""
     name: str
     description: str
-    topics: Dict[str, TopicMetadata]
-    default_examples: List[Dict[str, str]]
+    topics: list[str]
+    default_examples: List[Dict[str, Any]]
+    prompt: Optional[str] = None
     schema: Optional[str] = None
 
 
@@ -77,29 +79,7 @@ USE_CASE_CONFIGS = {
     UseCase.CODE_GENERATION: UseCaseMetadata(
         name="Code Generation",
         description="Generate programming questions and solutions with code examples",
-        topics={
-            "python_basics": TopicMetadata(
-                name="Python Basics",
-                description="Fundamental Python programming concepts",
-                example_questions=[
-                    {
-                        "question": "How do you create a list in Python and add elements to it?",
-                        "solution": "Here's how to create and modify a list in Python:\n\n```python\n# Create an empty list\nmy_list = []\n\n# Add elements using append\nmy_list.append(1)\nmy_list.append(2)\n\n# Create a list with initial elements\nmy_list = [1, 2, 3]\n```"
-                    }
-                ]
-            ),
-            "data_structures": TopicMetadata(
-                name="Data Structures",
-                description="Common data structures implementation and usage",
-                example_questions=[
-                    {
-                        "question": "How do you implement a stack using a list in Python?",
-                        "solution": "Here's how to implement a basic stack:\n\n```python\nclass Stack:\n    def __init__(self):\n        self.items = []\n    \n    def push(self, item):\n        self.items.append(item)\n    \n    def pop(self):\n        if not self.is_empty():\n            return self.items.pop()\n    \n    def is_empty(self):\n        return len(self.items) == 0\n```"
-                    }
-                ]
-            ),
-            # Add more topics...
-        },
+        topics=["Python Basics", "Data Manipulation", "Web Development", "Machine Learning", "Algorithms"],
         default_examples=[
             {
                 "question": "How do you read a CSV file into a pandas DataFrame?",
@@ -110,36 +90,29 @@ USE_CASE_CONFIGS = {
                 "solution": "Here's how to define a function:\n\n```python\ndef greet(name):\n    return f'Hello, {name}!'\n\n# Example usage\nresult = greet('Alice')\nprint(result)  # Output: Hello, Alice!\n```"
             }
         ],
-        
-        schema=None 
+        prompt= """
+            Requirements:
+            - Each solution must include working code examples
+            - Include explanations with the code
+            - Follow the same format as the examples
+            - Ensure code is properly formatted with appropriate indentation
+            - Each object MUST have exactly these two fields:
+                - "question"
+                - "solution"
+            """,
+        schema=None
     ),
-    
+
     UseCase.TEXT2SQL: UseCaseMetadata(
         name="Text to SQL",
         description="Generate natural language to SQL query pairs",
-        topics={
-            "basic_queries": TopicMetadata(
-                name="Basic Queries",
-                description="Simple SELECT, INSERT, UPDATE, and DELETE operations",
-                example_questions=[
-                    {
-                        "question": "How do you select all employees from the employees table?",
-                        "solution": "Here's the SQL query:\n```sql\nSELECT *\nFROM employees;\n```"
-                    }
-                ]
-            ),
-            "joins": TopicMetadata(
-                name="Joins",
-                description="Different types of JOIN operations",
-                example_questions=[
-                    {
-                        "question": "How do you join employees and departments tables to get employee names with their department names?",
-                        "solution": "Here's the SQL query:\n```sql\nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.id;\n```"
-                    }
-                ]
-            ),
-            # Add more topics...
-        },
+        topics=[
+            "Basic Queries",
+            "Joins",
+            "Aggregations",
+            "Subqueries",
+            "Windows Functions"
+        ],
         default_examples=[
             {
                 "question": "Find all employees with salary greater than 50000",
@@ -150,8 +123,187 @@ USE_CASE_CONFIGS = {
                 "solution": "```\nSELECT department_id, AVG(salary) as avg_salary\nFROM employees\nGROUP BY department_id;\n```"
             }
         ],
-       
-        schema= DEFAULT_SQL_SCHEMA
+        prompt = """
+            Requirements:
+            - Each solution must be a working SQL query
+            - Include explanations where needed
+            - Follow the same format as the examples
+            - Ensure queries are properly formatted
+            - Each object MUST have exactly these two fields:
+                - "question"
+                - "solution"
+            """,
+        schema=DEFAULT_SQL_SCHEMA
+    ),
+
+    UseCase.CUSTOM: UseCaseMetadata(
+        name="Custom",
+        description="Custom use case for user-defined data generation",
+        topics=[],
+        default_examples=[],
+        prompt = " ",
+        schema=None
+    ),
+
+    UseCase.LENDING_DATA: UseCaseMetadata(
+        name="Lending Data",
+        description="Generate synthetic lending data",
+        topics=['Business loans', 'Personal loans', 'Auto loans', 'Home equity loans', "Asset-backed loans"],
+        default_examples=[
+            {
+                "loan_amnt": 10000.00,
+                "term": "36 months",
+                "int_rate": 11.44,
+                "installment": 329.48,
+                "grade": "B",
+                "sub_grade": "B4",
+                "emp_title": "Marketing",
+                "emp_length": "10+ years",
+                "home_ownership": "RENT",
+                "annual_inc": 117000.00,
+                "verification_status": "Not Verified",
+                "issue_d": "Jan-2015",
+                "loan_status": "Fully Paid",
+                "purpose": "vacation",
+                "title": "Vacation",
+                "dti": 26.24,
+                "earliest_cr_line": "Jun-1990",
+                "open_acc": 16.00,
+                "pub_rec": 0.00,
+                "revol_bal": 36369.00,
+                "revol_util": 41.80,
+                "total_acc": 25.00,
+                "initial_list_status": "w",
+                "application_type": "INDIVIDUAL",
+                "mort_acc": 0.00,
+                "pub_rec_bankruptcies": 0.00,
+                "address": "0185 Michelle Gateway\r\nMendozaberg, OK 22690"
+            },
+            {
+                "loan_amnt": 8000.00,
+                "term": "36 months",
+                "int_rate": 11.99,
+                "installment": 265.68,
+                "grade": "B",
+                "sub_grade": "B5",
+                "emp_title": "Credit analyst",
+                "emp_length": "4 years",
+                "home_ownership": "MORTGAGE",
+                "annual_inc": 65000.00,
+                "verification_status": "Not Verified",
+                "issue_d": "Jan-2015",
+                "loan_status": "Fully Paid",
+                "purpose": "debt_consolidation",
+                "title": "Debt consolidation",
+                "dti": 22.05,
+                "earliest_cr_line": "Jul-2004",
+                "open_acc": 17.00,
+                "pub_rec": 0.00,
+                "revol_bal": 20131.00,
+                "revol_util": 53.30,
+                "total_acc": 27.00,
+                "initial_list_status": "f",
+                "application_type": "INDIVIDUAL",
+                "mort_acc": 3.00,
+                "pub_rec_bankruptcies": 0.00,
+                "address": "1040 Carney Fort Apt. 347\r\nLoganmouth, SD 05113"
+            },
+            {
+                "loan_amnt": 15600.00,
+                "term": "36 months",
+                "int_rate": 10.49,
+                "installment": 506.97,
+                "grade": "B",
+                "sub_grade": "B3",
+                "emp_title": "Statistician",
+                "emp_length": "< 1 year",
+                "home_ownership": "RENT",
+                "annual_inc": 43057.00,
+                "verification_status": "Source Verified",
+                "issue_d": "Feb-2015",
+                "loan_status": "Fully Paid",
+                "purpose": "credit_card",
+                "title": "Credit card refinancing",
+                "dti": 12.79,
+                "earliest_cr_line": "Aug-2007",
+                "open_acc": 13.00,
+                "pub_rec": 0.00,
+                "revol_bal": 11987.00,
+                "revol_util": 92.20,
+                "total_acc": 26.00,
+                "initial_list_status": "f",
+                "application_type": "INDIVIDUAL",
+                "mort_acc": 0.00,
+                "pub_rec_bankruptcies": 0.00,
+                "address": "87000 Mark Dale Apt. 269\r\nNew Sabrina, WV 05113"
+            },
+            {
+                "loan_amnt": 24375.00,
+                "term": "60 months",
+                "int_rate": 17.27,
+                "installment": 609.33,
+                "grade": "C",
+                "sub_grade": "C5",
+                "emp_title": "Destiny Management Inc.",
+                "emp_length": "9 years",
+                "home_ownership": "MORTGAGE",
+                "annual_inc": 55000.00,
+                "verification_status": "Verified",
+                "issue_d": "Apr-2013",
+                "loan_status": "Charged Off",
+                "purpose": "credit_card",
+                "title": "Credit Card Refinance",
+                "dti": 33.95,
+                "earliest_cr_line": "Mar-1999",
+                "open_acc": 13.00,
+                "pub_rec": 0.00,
+                "revol_bal": 24584.00,
+                "revol_util": 69.80,
+                "total_acc": 43.00,
+                "initial_list_status": "f",
+                "application_type": "INDIVIDUAL",
+                "mort_acc": 1.00,
+                "pub_rec_bankruptcies": 0.00,
+                "address": "512 Luna Roads\r\nGreggshire, VA 11650"
+            }
+        ],
+        prompt = """
+ You need to create profile data for the LendingClub company which specialises in lending various types of loans to urban customers.
+ 
+
+You need to generate the data in the same order for the following  fields (description of each field is followed after the colon):
+
+loan_amnt: The listed amount of the loan applied for by the borrower. If at some point in time, the credit department reduces the loan amount, then it will be reflected in this value.
+term: The number of payments on the loan. Values are in months and can be either 36 months or 60 months.
+int_rate: Interest Rate on the loan
+installment: The monthly payment owed by the borrower if the loan originates.
+grade: LC assigned loan grade (Possible values: A, B, C, D, E, F, G)
+sub_grade: LC assigned loan subgrade (Possible sub-values: 1-5 i.e A5)
+emp_title: The job title supplied by the Borrower when applying for the loan.
+emp_length: Employment length in years. Possible values are between 0 and 10 where 0 means less than one year and 10 means ten or more years.
+home_ownership: The home ownership status provided by the borrower during registration or obtained from the credit report. Our values are: RENT, OWN, MORTGAGE, OTHER
+annual_inc: The self-reported annual income provided by the borrower during registration.
+verification_status: Indicates if income was verified by LC, not verified, or if the income source was verified
+issue_d: The month which the loan was funded
+loan_status: Current status of the loan
+purpose: A category provided by the borrower for the loan request.
+title: The loan title provided by the borrower
+dti: A ratio calculated using the borrower’s total monthly debt payments on the total debt obligations, excluding mortgage and the requested LC loan, divided by the borrower’s self-reported monthly income.
+earliest_cr_line: The month the borrower's earliest reported credit line was opened
+open_acc: The number of open credit lines in the borrower's credit file.
+pub_rec: Number of derogatory public records
+revol_bal: Total credit revolving balance
+revol_util: Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit.
+total_acc: The total number of credit lines currently in the borrower's credit file
+initial_list_status: The initial listing status of the loan. Possible values are – W, F
+application_type: Indicates whether the loan is an individual application or a joint application with two co-borrowers
+mort_acc: Number of mortgage accounts.
+pub_rec_bankruptcies: Number of public record bankruptcies
+address: The physical address of the person
+
+Ensure PII from examples such as addresses are not used in the generated data to minimize any privacy concerns.
+""",
+        schema=None
     )
 }
 
@@ -284,7 +436,7 @@ responses = {
         }
     }
 }
-
+from pathlib import Path
 JWT_PATH = Path("/tmp/jwt")
 
 def _get_caii_token() -> str:

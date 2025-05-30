@@ -73,6 +73,8 @@ CREATE TABLE order_items (
 );
 """
 
+
+
 DEFAULT_freeform_TEXT2SQL_PROMPT = """Requirements:
 - Each solution must be a working SQL query
 - Include explanations where needed
@@ -91,6 +93,43 @@ DEFAULT_freeform_CODE_GENERATION_PROMPT = """Requirements:
 - Each object MUST have exactly these two fields:
     - "question"
     - "solution"""
+
+Default_freeform_lending_data_prompt = """
+ You need to create profile data for the LendingClub company which specialises in lending various types of loans to urban customers.
+ 
+
+You need to generate the data in the same order for the following  fields (description of each field is followed after the colon):
+
+loan_amnt: The listed amount of the loan applied for by the borrower. If at some point in time, the credit department reduces the loan amount, then it will be reflected in this value.
+term: The number of payments on the loan. Values are in months and can be either 36 months or 60 months.
+int_rate: Interest Rate on the loan
+installment: The monthly payment owed by the borrower if the loan originates.
+grade: LC assigned loan grade (Possible values: A, B, C, D, E, F, G)
+sub_grade: LC assigned loan subgrade (Possible sub-values: 1-5 i.e A5)
+emp_title: The job title supplied by the Borrower when applying for the loan.
+emp_length: Employment length in years. Possible values are between 0 and 10 where 0 means less than one year and 10 means ten or more years.
+home_ownership: The home ownership status provided by the borrower during registration or obtained from the credit report. Our values are: RENT, OWN, MORTGAGE, OTHER
+annual_inc: The self-reported annual income provided by the borrower during registration.
+verification_status: Indicates if income was verified by LC, not verified, or if the income source was verified
+issue_d: The month which the loan was funded
+loan_status: Current status of the loan
+purpose: A category provided by the borrower for the loan request.
+title: The loan title provided by the borrower
+dti: A ratio calculated using the borrower’s total monthly debt payments on the total debt obligations, excluding mortgage and the requested LC loan, divided by the borrower’s self-reported monthly income.
+earliest_cr_line: The month the borrower's earliest reported credit line was opened
+open_acc: The number of open credit lines in the borrower's credit file.
+pub_rec: Number of derogatory public records
+revol_bal: Total credit revolving balance
+revol_util: Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit.
+total_acc: The total number of credit lines currently in the borrower's credit file
+initial_list_status: The initial listing status of the loan. Possible values are – W, F
+application_type: Indicates whether the loan is an individual application or a joint application with two co-borrowers
+mort_acc: Number of mortgage accounts.
+pub_rec_bankruptcies: Number of public record bankruptcies
+address: The physical address of the person
+
+Ensure PII from examples such as addresses are not used in the generated data to minimize any privacy concerns.
+"""
 
 DEFAULT_TEXT2SQL_PROMPT = """Requirements:
 - Each solution must be a working SQL query
@@ -1003,11 +1042,15 @@ class ModelPrompts:
                 examples_str = json.dumps(example_custom, indent=2)
         
             else:
-                if use_case == UseCase.CODE_GENERATION or use_case == UseCase.TEXT2SQL:
+                if use_case == UseCase.CODE_GENERATION or use_case == UseCase.TEXT2SQL or use_case == UseCase.LENDING_DATA:
                     examples_str = json.dumps(USE_CASE_CONFIGS[use_case].default_examples)
                 else:
-                    examples_str = None        
-        custom_prompt_default = PromptHandler.get_freeform_default_custom_prompt(use_case, custom_prompt)
+                    examples_str = None 
+        if custom_prompt is None:
+            custom_prompt_default = USE_CASE_CONFIGS[use_case].prompt
+        else:
+            custom_prompt_default = custom_prompt              
+        #custom_prompt_default = PromptHandler.get_freeform_default_custom_prompt(use_case, custom_prompt)
         schema_str = PromptHandler.get_default_schema(use_case, schema)
         if use_case ==UseCase.TEXT2SQL:
             custom_prompt_str = f"""Using this database schema:
