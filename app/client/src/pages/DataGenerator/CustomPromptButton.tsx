@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import styled from "styled-components";
 import { fetchCustomPrompt } from "./hooks";
 import Loading from "../Evaluator/Loading";
+import AiAssistantIcon from "./AiAssistantIcon";
 
 interface Props {
     model_id: string;
@@ -43,6 +44,12 @@ const StyledModal = styled(Modal)`
 
 const StyledFlex = styled(Flex)`
   flex-direction: row-reverse;
+`;
+
+const StyledIcon = styled.div`
+  svg {
+    font-size: 20px;
+  }
 `;
 
 
@@ -92,13 +99,19 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
 
   return (
     <>
-      <Button onClick={() => setShowModal(true)} style={{ marginLeft: '8px' }}>Generate Custom Prompt</Button>
+      <Button type="link" 
+        onClick={() => setShowModal(true)} 
+        style={{ marginLeft: '8px' }} 
+        icon={
+          <StyledIcon><AiAssistantIcon /></StyledIcon>
+        }>Generate Prompt</Button>
       {showModal && 
         (
             <StyledModal
               visible={showModal}
               okText={`Generate`}
               title={`Generate Custom Prompt`}
+              onClose={() => setShowModal(false)}
               footer={
                 <Row>
                   <Col sm={12} />    

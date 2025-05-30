@@ -51,7 +51,9 @@ const ReevaluatorPage: React.FC = () => {
   }, [evaluate]);
 
   const evaluateDataset = async (formData: unknown) => {
-    const response = await fetch(`${BASE_API_URL}/synthesis/evaluate`, {
+    const url = dataset.technique === 'freeforms' ? 
+        `${BASE_API_URL}/synthesis/evaluate` : `${BASE_API_URL}/synthesis/evaluate_freeform`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

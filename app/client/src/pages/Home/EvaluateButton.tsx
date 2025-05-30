@@ -17,8 +17,8 @@ const EvaluateButton: React.FC = () => {
     const {data, isLoading} = useDatasets();
 
     useEffect(() => {
-        if(!isEmpty(data?.datasets)) {
-            setDatasets(data?.datasets);
+        if(!isEmpty(data?.data)) {
+            setDatasets(data?.data);
         }
     }, [data]);
 

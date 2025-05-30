@@ -26,6 +26,13 @@ const FormLabel = styled(Title)`
 const StyledFormItem = styled(Form.Item)`
     margin-bottom: 0px;
 `;
+
+const StyledPromptFormItem = styled(StyledFormItem)`
+    label {
+        width: 100%;
+    }
+`;
+
 const RestoreDefaultBtn = styled(Button)`
     max-width: fit-content;
 `;
@@ -191,22 +198,37 @@ const Prompt = () => {
             <LeftCol span={17}>
                 <Flex vertical gap={14}>
                     <div>
-                        <StyledFormItem
+                        <StyledPromptFormItem
                             name='custom_prompt'
                             label={
-                                <FormLabel level={4}>
+                                <div style={{ width: '100%', height: '32px', display: 'flex' }}>
+                                <FormLabel level={4} style={{ width: '240px'}}>
                                     <Space>
                                         <>{'Prompt'}</>
                                         <TooltipIcon message={'Enter a prompt to describe your dataset'}/>
                                     </Space>
                                 </FormLabel>
+                                <Flex style={{ flexDirection: 'row-reverse', width: '100%' }}>
+                                    {(form.getFieldValue('use_case') === Usecases.CUSTOM.toLowerCase() ||
+                                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) &&  
+                                        <CustomPromptButton 
+                                            model_id={model_id}
+                                            inference_type={inference_type}
+                                            caii_endpoint={caii_endpoint}
+                                            use_case={useCase}
+                                            example_path={form.getFieldValue('example_path') || null}
+                                            setPrompt={setPrompt}
+                                        />
+                                    }
+                                    </Flex>
+                                </div>
                             }
                             labelCol={{ span: 24 }}
                             wrapperCol={{ span: 24 }}
                             shouldUpdate
                         >
                             <StyledTextArea autoSize placeholder={'Enter a prompt'}/>
-                        </StyledFormItem>
+                        </StyledPromptFormItem>
                         <RestoreDefaultBtn
                             onClick={() => {
                                 return Modal.warning({
@@ -229,21 +251,10 @@ const Prompt = () => {
                                     ),
                                     maskClosable: true,
                                 })
-                            }}
-                        >
-                            {'Restore'}
+                            }}>
+                                {'Restore'}
                         </RestoreDefaultBtn>
-                        {(form.getFieldValue('use_case') === Usecases.CUSTOM.toLowerCase() ||
-                            workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) &&  
-                            <CustomPromptButton 
-                                model_id={model_id}
-                                inference_type={inference_type}
-                                caii_endpoint={caii_endpoint}
-                                use_case={useCase}
-                                example_path={form.getFieldValue('example_path') || null}
-                                setPrompt={setPrompt}
-                            />
-                        }
+                        
                     </div>
                     {((workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && !isEmpty(doc_paths)) ||
                     (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING && !isEmpty(doc_paths))) && 
