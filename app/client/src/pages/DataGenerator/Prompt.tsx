@@ -12,10 +12,13 @@ import { usefetchTopics, useFetchDefaultSchema, useFetchDefaultPrompt } from '..
 import { MAX_NUM_QUESTION, MIN_SEED_INSTRUCTIONS,  MAX_SEED_INSTRUCTIONS } from './constants'
 import { Usecases, WorkflowType } from './types';
 import { useWizardCtx } from './utils';
-import { useDatasetSize, useGetPromptByUseCase } from './hooks';
+import { fetchFileContent, useDatasetSize, useGetPromptByUseCase } from './hooks';
 import CustomPromptButton from './CustomPromptButton';
 import get from 'lodash/get';
 import TextArea from 'antd/es/input/TextArea';
+import FileSelectorButton from './FileSelectorButton';
+import { useMutation } from '@tanstack/react-query';
+import first from 'lodash/first';
 
 const { Title } = Typography;
 
@@ -97,6 +100,16 @@ const Prompt = () => {
         input_value,
         output_key
     );
+    const mutation = useMutation({
+        mutationFn: fetchFileContent
+    });
+
+    useEffect(() => {   
+        if (!isEmpty(mutation.data)) {
+            setItems(mutation.data)
+        }
+    }, [mutation.data]);
+
 
     useEffect(() => {  
         if (isError) {
@@ -192,6 +205,16 @@ const Prompt = () => {
 
         setCustomTopic('');
     };
+
+    const onAddFiles = (files: File[]) => {
+        console.log('onAddFiles', files);
+        if (!isEmpty (files)) {
+            const file = first(files);
+            mutation.mutate({
+                path: get(file, '_path'),      
+            });
+        };
+    }
 
     return (
         <Row gutter={[50,0]}>
@@ -302,6 +325,7 @@ const Prompt = () => {
                             shouldUpdate
                             // validateTrigger='onBlur'
                         >
+                            <Flex>
                             <Select
                                 allowClear
                                 mode="multiple"
@@ -368,6 +392,8 @@ const Prompt = () => {
                                     disabled: selectedTopics?.length === MAX_SEED_INSTRUCTIONS
                                 }))}
                             />
+                            <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} />
+                            </Flex>
                         </StyledFormItem>
                         <StyledFormItem
                             name='num_questions'
