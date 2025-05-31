@@ -26,7 +26,7 @@ import sys
 import json
 import uuid 
 from fastapi.encoders import jsonable_encoder
-
+import os, json, csv
 from fastapi import Query
 
 
@@ -407,36 +407,63 @@ async def get_dataset_size(request:JsonDataSize):
           description = "get json content")
 async def get_dataset_size(request: RelativePath):
 
-    if request.path:
-        path = path_manager.get_str_path(request.path)
-      
-        try:
+    MAX_ROWS = 20
+
+    def _truncate(rows: List[Dict]) -> List[Dict]:
+        return rows[:MAX_ROWS]
+    
+    def _flatten(d: dict, parent_key:str = "", sep:str=".") -> dict:
+        flat = {}
+        for k, v in d.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, dict):
+                flat.update(_flatten(v, new_key, sep=sep))
+            else:
+                flat[new_key] = v
+        return flat
+
+
+    if not request.path:
+        return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
+
+    path = path_manager.get_str_path(request.path)
+    if not os.path.exists(path):
+        return JSONResponse(status_code=404, content={"status": "failed", "error": "file not found"})
+
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        if ext == ".json":
             with open(path) as f:
-                data = json.load(f)
-                
-                    
-        except json.JSONDecodeError as e:
-            error_msg = f"Invalid JSON format in file {path}: {str(e)}"
-            print(error_msg)
-            return JSONResponse(
-                status_code=400,
-                content={"status": "failed", "error": error_msg}
-            )
-        except (KeyError, ValueError) as e:
-            print(str(e))
-            return JSONResponse(
-                status_code=400,
-                content={"status": "failed", "error": str(e)}
-            )
-        except Exception as e:
-            error_msg = f"Error processing {path}: {str(e)}"
-            print(error_msg)
-            return JSONResponse(
-                status_code=400,
-                content={"status": "failed", "error": error_msg}
-            )
-            
-    return {"data": data}
+                raw = json.load(f)
+
+            if isinstance(raw, list):
+                data = _truncate(raw)
+
+            elif isinstance(raw, dict):      # flatten & wrap
+                data = _truncate([_flatten(raw)])
+
+            else:
+                raise ValueError("Unsupported JSON structure")
+
+
+        elif ext == ".csv":
+            with open(path, newline="") as f:
+                reader = csv.DictReader(f)
+                data = _truncate([row for row in reader])
+
+        else:
+            return JSONResponse(status_code=400, content={"status": "failed", "error": "unsupported file type"})
+
+        return {"data": data}
+    
+    except json.JSONDecodeError as e:
+        err = f"Invalid JSON in {path}: {e}"
+    except ValueError as e:
+        err = str(e)
+    except Exception as e:
+        err = f"Error processing {path}: {e}"
+
+    return JSONResponse(status_code=400, content={"status": "failed", "error": err})
 
 
 @app.post("/synthesis/generate", include_in_schema=True,
@@ -516,7 +543,6 @@ async def generate_freeform_data(request: SynthesisRequest):
                 return JSONResponse(
                     status_code=413,  # Payload Too Large
                     content={
-                        "status": "failed",
                         "error": f"Total dataset size ({data_size:} GB) exceeds limit of 10 GB. Please select smaller datasets."
                     }
                 )
