@@ -1,7 +1,7 @@
 import isEmpty from 'lodash/isEmpty';
 import isString from 'lodash/isString';
-import { useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import { Button, Flex, Form, Layout, Steps } from 'antd';
 import type { FormInstance } from 'antd';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -99,10 +99,27 @@ const DataGenerator = () => {
     const [isStepValid, setIsStepValid] = useState<boolean>(false);
     // Data passed from listing table to prepopulate form
     const location = useLocation();
-    console.log('location?.state?.data:', location?.state?.data);
+    const { generate_file_name } = useParams();
     const initialData = location?.state?.data;
+    const datasetDetailsReq = generate_file_name &&  useGetDatasetDetails(generate_file_name);
+    console.log('datasetDetailsReq', datasetDetailsReq);
 
-    const datasetDetailsReq = location?.state?.data &&  useGetDatasetDetails(location?.state?.data?.generate_file_name)
+
+    useEffect(() => {
+        if (
+            datasetDetailsReq &&
+            typeof datasetDetailsReq === 'object' &&
+            'dataset' in datasetDetailsReq &&
+            !isEmpty(datasetDetailsReq.dataset)
+        ) {
+            console.log('setting initial dataset....')
+            form.setFieldsValue({
+                ...initialData,
+                ...(datasetDetailsReq.dataset as any)
+            });
+        }
+    }, [datasetDetailsReq]);
+
     if (initialData?.technique) {
         initialData.workflow_type = initialData?.technique === 'sft' ? 
         WorkflowType.SUPERVISED_FINE_TUNING :

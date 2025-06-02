@@ -178,6 +178,7 @@ const Finish = () => {
         }
 
         if (formValues.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) {
+            formValues.example_custom = formValues.examples;
             delete formValues.examples;
         }
 

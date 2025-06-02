@@ -71,21 +71,14 @@ const DatasetActions: React.FC<DatasetActionsProps> = ({ dataset, refetch, setTo
         // await datasetHistoryAPI.triggerGet();
         refetch();
       }
-
-    // dataset/:generate_file_name  
+    
     const menuActions: MenuProps['items'] = [
         {
           key: '1',
-          // label: (
-          //   <Text>
-          //     View Dataset Details
-          //   </Text>
-          // ),
           label: 
             <Link disabled={isEmpty(dataset?.generate_file_name)} to={`/dataset/${dataset?.generate_file_name}`}>
               View Dataset Details
             </Link>,
-          // onClick: () => setShowModal(true),
           icon: <FindInPageIcon />
         },
         {
@@ -100,7 +93,7 @@ const DatasetActions: React.FC<DatasetActionsProps> = ({ dataset, refetch, setTo
         {
           key: '3',
           label: (
-            <Link to={`/${Pages.GENERATOR}`} state={{
+            <Link to={`/${Pages.REGENERATE}/${dataset.generate_file_name}`} state={{
               data: dataset,
               internalRedirect: true,
             }}>

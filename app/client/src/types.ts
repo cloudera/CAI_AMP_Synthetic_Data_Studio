@@ -1,5 +1,6 @@
 export enum Pages {
     GENERATOR = 'data-generator',
+    REGENERATE = 're-generate',
     EVALUATOR = 'evaluator',
     HISTORY = 'history',
     HOME = 'home',
