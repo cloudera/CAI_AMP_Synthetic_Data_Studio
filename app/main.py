@@ -465,6 +465,39 @@ async def get_dataset_size(request: RelativePath):
 
     return JSONResponse(status_code=400, content={"status": "failed", "error": err})
 
+@app.post("/json/get_seeds_list", include_in_schema=True, responses = responses,
+          description = "get json content")
+async def get_dataset_size(request: RelativePath):
+
+    
+
+
+
+    if not request.path:
+        return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
+
+    path = path_manager.get_str_path(request.path)
+    if not os.path.exists(path):
+        return JSONResponse(status_code=404, content={"status": "failed", "error": "file not found"})
+
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        if ext == ".json":
+            with open(path) as f:
+                raw = json.load(f)
+
+
+        return {"data": raw}
+    
+    except json.JSONDecodeError as e:
+        err = f"Invalid JSON in {path}: {e}"
+    except ValueError as e:
+        err = str(e)
+    except Exception as e:
+        err = f"Error processing {path}: {e}"
+
+    return JSONResponse(status_code=400, content={"status": "failed", "error": err})
+
 
 @app.post("/synthesis/generate", include_in_schema=True,
     responses=responses,
