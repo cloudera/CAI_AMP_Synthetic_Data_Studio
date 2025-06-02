@@ -12,10 +12,13 @@ import { usefetchTopics, useFetchDefaultSchema, useFetchDefaultPrompt } from '..
 import { MAX_NUM_QUESTION, MIN_SEED_INSTRUCTIONS,  MAX_SEED_INSTRUCTIONS } from './constants'
 import { Usecases, WorkflowType } from './types';
 import { useWizardCtx } from './utils';
-import { useDatasetSize, useGetPromptByUseCase } from './hooks';
+import { fetchFileContent, fetchSeedList, useDatasetSize, useGetPromptByUseCase } from './hooks';
 import CustomPromptButton from './CustomPromptButton';
 import get from 'lodash/get';
 import TextArea from 'antd/es/input/TextArea';
+import FileSelectorButton from './FileSelectorButton';
+import { useMutation } from '@tanstack/react-query';
+import first from 'lodash/first';
 
 const { Title } = Typography;
 
@@ -63,6 +66,13 @@ const AddTopicContainer = styled(Space)`
     width: 100% !important;
 `;
 
+const SeedsFormItem = styled(StyledFormItem)`
+  .ant-form-item-control {
+    width: 45vw;
+  }
+
+`
+
 const Prompt = () => {
     const form = Form.useFormInstance();
     const selectedTopics = Form.useWatch('topics');
@@ -97,6 +107,17 @@ const Prompt = () => {
         input_value,
         output_key
     );
+    const mutation = useMutation({
+        mutationFn: fetchSeedList
+    });
+
+    useEffect(() => {  
+        if (!isEmpty(mutation.data)) {
+            setItems(mutation.data);
+            form.setFieldValue('topics', mutation.data);
+        }
+    }, [mutation.data]);
+
 
     useEffect(() => {  
         if (isError) {
@@ -193,6 +214,16 @@ const Prompt = () => {
         setCustomTopic('');
     };
 
+    const onAddFiles = (files: File[]) => {
+        if (!isEmpty (files)) {
+            const file = first(files);
+            const path = get(file, '_path');
+            if (path) {
+                mutation.mutate({ path });
+            }
+        };
+    }
+
     return (
         <Row gutter={[50,0]}>
             <LeftCol span={17}>
@@ -284,7 +315,8 @@ const Prompt = () => {
                         workflow_type === WorkflowType.CUSTOM_DATA_GENERATION ||
                         workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) &&
                     <Flex gap={20} vertical>
-                        <StyledFormItem
+                        <Flex>
+                        <SeedsFormItem
                             name={'topics'}
                             label={
                                 <FormLabel level={4}>
@@ -302,6 +334,7 @@ const Prompt = () => {
                             shouldUpdate
                             // validateTrigger='onBlur'
                         >
+                            
                             <Select
                                 allowClear
                                 mode="multiple"
@@ -368,7 +401,12 @@ const Prompt = () => {
                                     disabled: selectedTopics?.length === MAX_SEED_INSTRUCTIONS
                                 }))}
                             />
-                        </StyledFormItem>
+                            
+                        </SeedsFormItem>
+                        <div style={{ marginTop: '40px'}}>
+                            <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} />
+                        </div>
+                        </Flex>
                         <StyledFormItem
                             name='num_questions'
                             label={<FormLabel level={4}>{'Entries Per Seed'}</FormLabel>}
