@@ -105,6 +105,23 @@ export const fetchFileContent = async (params: unknown) => {
     return content;
 }
 
+export const fetchSeedList = async (params: unknown) => {
+    const resp = await fetch(`${BASE_API_URL}/json/get_seeds_list`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+    });
+    if (resp.status !== 200) {
+        const error = await resp.json();
+        throw new Error(error.message || error.detail);
+    }
+    const body = await resp.json();
+    const content = get(body, 'data');
+    return content;
+}
+
 export const listModels = async (params: unknown) => {
     const resp = await fetch(`${BASE_API_URL}/model/model_ID`, {
         method: 'POST',

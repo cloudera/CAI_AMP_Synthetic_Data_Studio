@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { fetchCustomPrompt } from "./hooks";
 import Loading from "../Evaluator/Loading";
 import AiAssistantIcon from "./AiAssistantIcon";
+import { isEmpty } from "lodash";
 
 interface Props {
     model_id: string;
@@ -56,10 +57,17 @@ const StyledIcon = styled.div`
 const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_endpoint, use_case, example_path, setPrompt }) => {
   const [form] = Form.useForm();
   const [showModal, setShowModal] = useState(false);
+  const [disabled, setDisabled] = useState(false);
+  const custom_prompt_instructions = Form.useWatch('custom_prompt_instructions', { form, preserve: true });
+  console.log('custom_prompt_instructions', custom_prompt_instructions);
 
   const mutation = useMutation({
     mutationFn: fetchCustomPrompt
   });
+
+  useEffect(() => {
+    setDisabled(isEmpty(custom_prompt_instructions));
+  }, [custom_prompt_instructions]);
 
   useEffect(() => {
       if (mutation.isError) {
@@ -112,12 +120,13 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
               okText={`Generate`}
               title={`Generate Custom Prompt`}
               onClose={() => setShowModal(false)}
+              onCancel={() => setShowModal(false)}
               footer={
                 <Row>
                   <Col sm={12} />    
                   <Col sm={12}>
                     <StyledFlex key="footer-right">
-                      <Button type="primary" style={{ marginLeft: '12px' }} disabled={mutation.isPending} onClick={() => onFinish()}>{'Generate Custom Prompt'}</Button>
+                      <Button type="primary" style={{ marginLeft: '12px' }} disabled={mutation.isPending || disabled} onClick={() => onFinish()}>{'Generate Custom Prompt'}</Button>
                       <Button disabled={mutation.isPending} style={{ marginLeft: '12px' }} onClick={() => setShowModal(false)}>{'Cancel'}</Button>
                     </StyledFlex>
                   </Col>

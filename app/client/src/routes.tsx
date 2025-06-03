@@ -33,6 +33,12 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
         loader: async () => null
       },
+      { 
+        path: `${Pages.REGENERATE}/:generate_file_name`, 
+        element: <DataGenerator key={Pages.GENERATOR}/>, 
+        errorElement: <ErrorPage />,
+        loader: async () => null
+      },
       {
         path: `${Pages.EVALUATOR}/create/:generate_file_name`,
         element: <EvaluatorPage />,

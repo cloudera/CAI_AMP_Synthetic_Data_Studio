@@ -69,3 +69,39 @@ export const sampleExamplesData = [
     "address": "0185 Michelle Gateway\r\nMendozaberg, OK 22690"
   }
 ];
+
+export enum HttpStatusCodeType {
+  ClientErrorBadRequest = 'Bad Request',
+  ClientErrorForbidden = 'Forbidden.',
+  ClientErrorNotFound = 'Not Found',
+  ClientErrorMethodNotAllowed = 'Method Not Allowed',
+  ClientErrorUnauthorized = 'Unauthorized',
+  ServerErrorInternal = 'Internal Server Error',
+  ServerErrorServiceUnavailable = 'Service Unavailable',
+  ServerErrorGatewayTimeout = 'Gateway Timeout'
+}
+
+
+export const getHttpStatusCodeVerb = (statusCode: number) => {
+  switch (statusCode) {
+    case 400:
+      return HttpStatusCodeType.ClientErrorBadRequest;
+    case 401:
+      return HttpStatusCodeType.ClientErrorUnauthorized;  
+    case 403:
+      return HttpStatusCodeType.ClientErrorForbidden;
+    case 404:
+      return HttpStatusCodeType.ClientErrorNotFound;
+    case 405:
+      return HttpStatusCodeType.ClientErrorMethodNotAllowed;
+    case 500:
+      return HttpStatusCodeType.ServerErrorInternal;
+    case 503:
+      return HttpStatusCodeType.ServerErrorServiceUnavailable;
+    case 504:
+      return HttpStatusCodeType.ServerErrorGatewayTimeout;
+
+    default:
+      return null;
+  }
+};
