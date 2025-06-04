@@ -2,12 +2,13 @@ from typing import List, Dict, Optional, Any, Union
 import os
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from enum import Enum
-from app.core.config import USE_CASE_CONFIGS
+from app.core.config import USE_CASE_CONFIGS, UseCase
 
-class UseCase(str, Enum):
-    CODE_GENERATION = "code_generation"
-    TEXT2SQL = "text2sql"
-    CUSTOM = "custom"
+
+# class UseCase(str, Enum):
+#     CODE_GENERATION = "code_generation"
+#     TEXT2SQL = "text2sql"
+#     CUSTOM = "custom"
 
 class Technique(str, Enum):
     SFT = "sft"

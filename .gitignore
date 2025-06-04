@@ -74,4 +74,13 @@ app/frontend/
 app/launch_streamlit.py
 
 # Virtual environment
-.venv/
+.venv/freeform_data_claude_*
+row_data_claude_*
+freeform_data_claude_*
+housing_example.json
+seeds_test.json
+test.csv
+sample_200x100.csv
+Raw_Web_Visit_sample.csv
+Raw_Web_Visit_Sample.csv
+Raw_Web_Visit_Sample.csv

@@ -47,7 +47,7 @@ from app.services.synthesis_service import SynthesisService
 from app.services.export_results import Export_Service
 
 from app.core.prompt_templates import PromptBuilder, PromptHandler
-from app.core.config import UseCase, USE_CASE_CONFIGS
+from app.core.config import UseCase, USE_CASE_CONFIGS, USE_CASE_CONFIGS_EVALS
 from app.core.database import DatabaseManager
 from app.core.exceptions import APIError, InvalidModelError, ModelHandlerError
 from app.services.model_alignment import ModelAlignment
@@ -468,10 +468,6 @@ async def get_dataset_size(request: RelativePath):
 @app.post("/json/get_seeds_list", include_in_schema=True, responses = responses,
           description = "get json content")
 async def get_dataset_size(request: RelativePath):
-
-    
-
-
 
     if not request.path:
         return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
@@ -948,7 +944,7 @@ async def customise_prompt(use_case: UseCase):
 async def customise_prompt(use_case: UseCase):
     """Allow users to customize prompt. Only part of the prompt which can be customized"""
     try:
-        return PromptHandler.get_freeform_default_custom_prompt(use_case, custom_prompt=None)
+        return USE_CASE_CONFIGS[use_case].prompt
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -956,7 +952,7 @@ async def customise_prompt(use_case: UseCase):
 async def customise_prompt(use_case: UseCase):
     """Allow users to customize prompt. Only part of the prompt which can be customized"""
     try:
-        return PromptHandler.get_default_custom_eval_prompt(use_case, custom_prompt=None)
+        return USE_CASE_CONFIGS_EVALS[use_case].prompt
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1146,16 +1142,8 @@ async def delete_evaluation(file_name: str, file_path: Optional[str] = None):
 @app.get("/use-cases/{use_case}/topics")
 async def get_topics(use_case: UseCase):
     """Get available topics for a specific use case"""
-    uc_topics = {"code_generation": ["Algorithms", "Async Programming", 
-                                     "Data Structures", "Database Operations", 
-                                     "Python Basics", "Web Development"],
-
-        "text2sql":["Aggregations", "Basic Queries", "Data Manipulation", 
-                    "Joins", "Subqueries", "Window Functions"],
-        "custom": []
-    }
-    
-    topics = uc_topics[use_case]
+   
+    topics = USE_CASE_CONFIGS[use_case].topics
 
     return {"topics":topics}
 
@@ -1168,50 +1156,12 @@ async def get_gen_examples(use_case: UseCase):
 
 @app.get("/{use_case}/eval_examples")
 async def get_eval_examples(use_case: UseCase):
-    if use_case == UseCase.CODE_GENERATION:
-        examples = [
-                    {
-        "score": 3,
-        "justification": """The code achieves 3 points by implementing core functionality correctly (1), 
-        showing generally correct implementation with proper syntax (2), 
-        and being suitable for professional use with good Python patterns and accurate functionality (3). 
-        While it demonstrates competent development practices, it lacks the robust error handling 
-        and type hints needed for point 4, and could benefit from better efficiency optimization and code organization."""
-    },
-    {
-        "score": 4,
-        "justification": """
-        The code earns 4 points by implementing basic functionality (1), showing correct implementation (2), 
-        being production-ready (3), and demonstrating high efficiency with Python best practices 
-        including proper error handling, type hints, and clear documentation (4). 
-        It exhibits experienced developer qualities with well-structured code and maintainable design, though 
-        it lacks the comprehensive testing and security considerations needed for a perfect score."""
-    }
-            ]
-    elif use_case == UseCase.TEXT2SQL:
-
-        examples = [ {
-                    "score": 3,
-                    "justification": """The query earns 3 points by successfully retrieving basic data (1), 
-                    showing correct logical implementation (2), and being suitable for
-                    professional use with accurate data retrieval and good SQL pattern understanding (3). 
-                    However, it lacks efficiency optimizations and consistent style conventions needed for
-                    point 4, using basic JOINs without considering indexing or performance implications. 
-                    While functional, the query would benefit from better organization and efficiency improvements."""
-                            },
-
-                    {
-                "score": 4,
-                "justification": """The query merits 4 points by retrieving basic data correctly (1), implementing proper 
-                logic (2), being production-ready (3), and demonstrating high efficiency with proper
-                indexing considerations, well-structured JOINs, and consistent formatting (4). It 
-                shows experienced developer qualities with appropriate commenting and performant SQL 
-                features, though it lacks the comprehensive NULL handling and execution plan optimization needed for a 
-                perfect score."""
-                    }
-                    ]
-    elif use_case ==UseCase.CUSTOM:
+    
+    if use_case ==UseCase.CUSTOM:
         examples = []
+
+    else:
+        examples = USE_CASE_CONFIGS_EVALS[use_case].default_examples
     
     
     return {"examples": examples}
