@@ -469,7 +469,7 @@ async def get_dataset_size(request: RelativePath):
           description = "get json content")
 async def get_dataset_size(request: RelativePath):
 
-   if not request.path:
+    if not request.path:
         return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
 
     path = path_manager.get_str_path(request.path)
