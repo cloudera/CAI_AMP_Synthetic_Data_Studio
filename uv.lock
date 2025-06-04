@@ -143,8 +143,10 @@ dependencies = [
     { name = "nest-asyncio" },
     { name = "numpy" },
     { name = "openai" },
+
     { name = "openpyxl" },
     { name = "pandas" },
+
     { name = "psutil" },
     { name = "pydantic" },
     { name = "pyflakes" },

@@ -467,9 +467,9 @@ async def get_dataset_size(request: RelativePath):
 
 @app.post("/json/get_seeds_list", include_in_schema=True, responses = responses,
           description = "get json content")
-async def seeds_list(request: RelativePath):
+async def get_dataset_size(request: RelativePath):
 
-    if not request.path:
+   if not request.path:
         return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
 
     path = path_manager.get_str_path(request.path)

@@ -34,9 +34,6 @@ environment_variables:
     default: null
     description: >-
      API key for Cloudera AI Inference
-    
-  
-
 
 # runtimes
 runtimes:
