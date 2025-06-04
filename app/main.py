@@ -768,7 +768,9 @@ async def get_use_cases():
         "usecases": [
             {"id": UseCase.CODE_GENERATION, "name": "Code Generation"},
             {"id": UseCase.TEXT2SQL, "name": "Text to SQL"},
-            {"id": UseCase.CUSTOM, "name": "Custom"}
+            {"id": UseCase.CUSTOM, "name": "Custom"},
+            {"id": UseCase.LENDING_DATA, "name": "Lending Data"},
+            {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data"},
         ]
     }
 
