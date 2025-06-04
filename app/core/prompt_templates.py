@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import numpy as np
 from app.models.request_models import Example, Example_eval
-from app.core.config import UseCase, Technique, ModelFamily, get_model_family,USE_CASE_CONFIGS, LENDING_DATA_PROMPT
+from app.core.config import UseCase, Technique, ModelFamily, get_model_family,USE_CASE_CONFIGS, LENDING_DATA_PROMPT, USE_CASE_CONFIGS_EVALS
 from app.core.data_loader import DataLoader
 from app.core.data_analyser import DataAnalyser
 from app.core.summary_formatter import SummaryFormatter
@@ -174,9 +174,10 @@ class PromptHandler:
     def format_examples(examples: List[Example]) -> str:
         """Format examples as JSON string"""
         return [
-                        {"question": example.question, "solution": example.solution}
-                        for example in (examples)
-                    ]
+            {"question": example.question, "solution": example.solution}
+            for example in (examples)
+        ]
+
     @staticmethod
     def format_examples_eval(examples: List[Example_eval]) -> str:
         """Format examples as JSON string"""
@@ -235,17 +236,7 @@ class PromptHandler:
     @staticmethod
     def get_default_custom_eval_prompt(use_case:UseCase, custom_prompt):
         if custom_prompt == None:
-            if use_case == UseCase.TEXT2SQL:
-                custom_prompt = DEFAULT_TEXT2SQL_EVAL_PROMPT
-                
-                return custom_prompt
-            elif use_case == UseCase.CODE_GENERATION:
-                custom_prompt = DEFAULT_CODE_GENERATION_EVAL_PROMPT
-                return custom_prompt
-            
-            elif use_case == UseCase.CUSTOM:
-                custom_prompt = " "
-                return custom_prompt
+            return USE_CASE_CONFIGS_EVALS[use_case].prompt
         else:
             return custom_prompt
     @staticmethod
@@ -575,7 +566,13 @@ class ModelPrompts:
         custom_prompt = Optional[str]
     ) -> str:
         custom_prompt_str = PromptHandler.get_default_custom_eval_prompt(use_case, custom_prompt)   
-        examples_str = PromptHandler.get_default_eval_example(use_case, examples)
+        #examples_str = PromptHandler.get_default_eval_example(use_case, examples)
+        
+        if examples:
+            examples_str = PromptHandler.format_examples_eval(examples)
+        
+        elif examples == [] or examples == None:
+            examples_str = PromptHandler.format_examples_eval(USE_CASE_CONFIGS_EVALS[use_case].default_examples)
         
         base_prompt = """ You are a brilliant judge on evaluating a set of data with fields and corresponding values
           Follow the given instructions to understand the structure of given data and evaluate it based on parameters defined for you."""
@@ -1042,10 +1039,9 @@ class ModelPrompts:
                 examples_str = json.dumps(example_custom, indent=2)
         
             else:
-                if use_case == UseCase.CODE_GENERATION or use_case == UseCase.TEXT2SQL or use_case == UseCase.LENDING_DATA:
-                    examples_str = json.dumps(USE_CASE_CONFIGS[use_case].default_examples)
-                else:
-                    examples_str = None 
+                #if use_case == UseCase.CODE_GENERATION or use_case == UseCase.TEXT2SQL or use_case == UseCase.LENDING_DATA:
+                examples_str = json.dumps(USE_CASE_CONFIGS[use_case].default_examples)
+                
         if custom_prompt is None:
             custom_prompt_default = USE_CASE_CONFIGS[use_case].prompt
         else:
