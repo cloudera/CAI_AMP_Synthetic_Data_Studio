@@ -426,7 +426,7 @@ async def get_dataset_size(request: RelativePath):
     if not request.path:
         return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
 
-    path = path_manager.get_str_path(request.path)
+    path = request.path
     if not os.path.exists(path):
         return JSONResponse(status_code=404, content={"status": "failed", "error": "file not found"})
 
@@ -472,7 +472,7 @@ async def get_dataset_size(request: RelativePath):
     if not request.path:
         return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
 
-    path = path_manager.get_str_path(request.path)
+    path = request.path
     if not os.path.exists(path):
         return JSONResponse(status_code=404, content={"status": "failed", "error": "file not found"})
 
