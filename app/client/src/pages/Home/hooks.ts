@@ -203,7 +203,7 @@ export const useUpgradeStatus = () => {
     {
       queryKey: ["fetchUpgradeStatus", fetchUpgradeStatus],
       queryFn: () => fetchUpgradeStatus(),
-      refetchInterval: 60000
+      refetchInterval: 10 * 60000
     }
   );
 

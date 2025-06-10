@@ -132,8 +132,9 @@ const Finish = () => {
     
     const isDemo = isDemoMode(num_questions, topics, form);
 
-    useEffect(() => { 
+    useEffect(() => {
         const formValues = form.getFieldsValue(true);
+        
         const doc_paths = formValues.doc_paths;
         if (Array.isArray(doc_paths) && !isEmpty(doc_paths)) {
             if (formValues.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING) {
