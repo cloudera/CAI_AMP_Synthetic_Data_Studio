@@ -183,6 +183,7 @@ const Finish = () => {
         }
 
         const args = {...formValues, is_demo: isDemo, model_params: formValues.model_parameters }
+        console.log('Triggering data generation with args:', args);
         triggerPost(args)
     }, []);
     
