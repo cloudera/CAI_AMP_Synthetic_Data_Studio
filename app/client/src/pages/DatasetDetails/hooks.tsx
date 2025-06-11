@@ -9,7 +9,7 @@ const BASE_API_URL = import.meta.env.VITE_AMP_URL;
 
 
 
-const fetchDatasetDetails = async (generate_file_name: string) => {
+export const fetchDatasetDetails = async (generate_file_name: string) => {
   const dataset_details__resp = await fetch(`${BASE_API_URL}/dataset_details/${generate_file_name}`, {
     method: 'GET',
   });

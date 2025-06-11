@@ -112,9 +112,10 @@ const Prompt = () => {
     });
 
     useEffect(() => {  
-        if (!isEmpty(mutation.data)) {
-            setItems(mutation.data);
-            form.setFieldValue('topics', mutation.data);
+        if (!isEmpty(mutation.data && !mutation.isError)) {
+            const seeds = mutation.data.map((item: string) => item.trim());
+            setItems(seeds);
+            form.setFieldValue('topics', seeds);
         }
     }, [mutation.data]);
 
@@ -214,6 +215,7 @@ const Prompt = () => {
         setCustomTopic('');
     };
 
+
     const onAddFiles = (files: File[]) => {
         if (!isEmpty (files)) {
             const file = first(files);
@@ -223,6 +225,7 @@ const Prompt = () => {
             }
         };
     }
+    console.log('mutation data:', mutation);
 
     return (
         <Row gutter={[50,0]}>
@@ -315,6 +318,14 @@ const Prompt = () => {
                         workflow_type === WorkflowType.CUSTOM_DATA_GENERATION ||
                         workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) &&
                     <Flex gap={20} vertical>
+                        {mutation.isError &&
+                            <Alert
+                                message='Error fetching seed instructions'
+                                description={get(mutation.error, 'message', 'An error occurred while fetching seed instructions.')}
+                                type='error'
+                            />
+                        }
+                        {mutation.isPending && <Alert message='Loading seed instructions...' type='info' />}
                         <Flex>
                         <SeedsFormItem
                             name={'topics'}
