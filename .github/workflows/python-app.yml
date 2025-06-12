@@ -28,7 +28,7 @@ jobs:
     # ---------- reproduce locked env --------------------------------------
     - name: Sync project dependencies from uv.lock
       run: |
-        uv pip install --system -r uv.lock
+        uv sync --all-extras
     
   # ---------- run test suite -----------------------------------
     - name: Run tests and generate coverage report
