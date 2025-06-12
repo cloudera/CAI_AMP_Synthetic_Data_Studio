@@ -11,11 +11,11 @@ date: "2024-10-30"
 
 environment_variables:
   AWS_ACCESS_KEY_ID:
-    default: "your access key"
+    default: null
     description: >-
       AWS Key ID. Check the Amazon Bedrock documentation for information about role access
   AWS_SECRET_ACCESS_KEY:
-    default: "your secret access key"
+    default: null
     description: >-
       AWS Secret Key
   AWS_DEFAULT_REGION:
@@ -23,18 +23,25 @@ environment_variables:
     description: >-
       AWS region
   hf_token:
-    default: "hf_token"
+    default: null
     description: >-
       your huggingface token
   hf_username:
-    default: "hf_username"
+    default: null
     description: >-
       your huggingface username
   CDP_TOKEN:
     default: null
     description: >-
      API key for Cloudera AI Inference
-
+  OPENAI_API_KEY:
+    default: null
+    description: >-
+      OpenAI API Key. Check the OpenAI documentation for information about role access
+  GEMINI_API_KEY:
+    default: null
+    description: >-
+      Gemini API Key. Check the Google Gemini documentation for information about role access
 # runtimes
 runtimes:
   - editor: JupyterLab
