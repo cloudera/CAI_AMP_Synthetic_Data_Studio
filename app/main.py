@@ -731,7 +731,9 @@ async def get_model_id():
 
     models = {
         "aws_bedrock": bedrock_list,
-        "CAII": []
+        "CAII": [],
+        "OpenAI" : [],
+        "Google Gemini" : []
     }
 
     return {"models": models}
