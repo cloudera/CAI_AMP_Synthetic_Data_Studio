@@ -20,6 +20,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
     # ---------- install uv -------------------------------------------------
     - name: Install uv (fast dependency resolver)
       run: |
@@ -30,10 +31,10 @@ jobs:
       run: |
         uv sync
     
-  # ---------- run test suite -----------------------------------
+    # ---------- run test suite -----------------------------------
     - name: Run tests and generate coverage report
       run: |
-        pytest tests/ --cov=app --cov-report=xml
+        uv run pytest tests/ --cov=app --cov-report=xml
 
     - name: Upload coverage report as an artifact
       uses: actions/upload-artifact@v4
