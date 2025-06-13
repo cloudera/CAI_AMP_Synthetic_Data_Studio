@@ -19,6 +19,7 @@ import TextArea from 'antd/es/input/TextArea';
 import FileSelectorButton from './FileSelectorButton';
 import { useMutation } from '@tanstack/react-query';
 import first from 'lodash/first';
+import ResetIcon from './ResetIcon';
 
 const { Title } = Typography;
 
@@ -254,6 +255,33 @@ const Prompt = () => {
                                             setPrompt={setPrompt}
                                         />
                                     }
+                                    <RestoreDefaultBtn
+                                        icon={<ResetIcon />}
+                                        type="link"
+                                        onClick={() => {
+                                            return Modal.warning({
+                                                title: 'Restore Default Prompt',
+                                                closable: true,
+                                                content: <>{'Are you sure you want to restore to the default prompt? Your current prompt will be lost.'}</>,
+                                                footer: (
+                                                    <ModalButtonGroup gap={8} justify='end'>
+                                                        <Button onClick={() => Modal.destroyAll()}>{'Cancel'}</Button>
+                                                        <Button
+                                                            onClick={() => {
+                                                                form.setFieldValue('custom_prompt', defaultPromptRef.current)
+                                                                Modal.destroyAll()
+                                                            }}
+                                                            type='primary'
+                                                        >
+                                                            {'Confirm'}
+                                                        </Button>
+                                                    </ModalButtonGroup>
+                                                ),
+                                                maskClosable: true,
+                                            })
+                                        }}>
+                                            {'Restore'}
+                                        </RestoreDefaultBtn>    
                                     </Flex>
                                 </div>
                             }
@@ -263,31 +291,7 @@ const Prompt = () => {
                         >
                             <StyledTextArea autoSize placeholder={'Enter a prompt'}/>
                         </StyledPromptFormItem>
-                        <RestoreDefaultBtn
-                            onClick={() => {
-                                return Modal.warning({
-                                    title: 'Restore Default Prompt',
-                                    closable: true,
-                                    content: <>{'Are you sure you want to restore to the default prompt? Your current prompt will be lost.'}</>,
-                                    footer: (
-                                        <ModalButtonGroup gap={8} justify='end'>
-                                            <Button onClick={() => Modal.destroyAll()}>{'Cancel'}</Button>
-                                            <Button
-                                                onClick={() => {
-                                                    form.setFieldValue('custom_prompt', defaultPromptRef.current)
-                                                    Modal.destroyAll()
-                                                }}
-                                                type='primary'
-                                            >
-                                                {'Confirm'}
-                                            </Button>
-                                        </ModalButtonGroup>
-                                    ),
-                                    maskClosable: true,
-                                })
-                            }}>
-                                {'Restore'}
-                        </RestoreDefaultBtn>
+                        
                         
                     </div>
                     {((workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && !isEmpty(doc_paths)) ||
