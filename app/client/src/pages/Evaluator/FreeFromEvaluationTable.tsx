@@ -18,7 +18,7 @@ import {
  import { themeMaterial } from "ag-grid-community";
 import get from 'lodash/get';
 import { getColorCode } from './util';
-import { Badge, Popover, Tooltip } from 'antd';
+import { Badge, Popover } from 'antd';
 import styled from 'styled-components';
 
 interface Props {
