@@ -110,14 +110,10 @@ const pages: MenuItem[] = [
           </div>
           <Flex justify='center' align='center' vertical style={{ marginTop: '12px' }}>
             <StyledSection>
-              {`1.0.2`}
+              {`SDS-1.0.2`}
             </StyledSection>
           </Flex>
-
           </Flex>
-
-        
-        
           <br/>
         </div>
         </>        
