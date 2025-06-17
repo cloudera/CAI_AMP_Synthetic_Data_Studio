@@ -58,6 +58,15 @@ const StyledText = styled.div`
   font-weight: normal;
 `;
 
+const StyledSection = styled.div`
+  margin-left: 24px;
+  color: #adb2b6;
+  flex-grow: 1;
+  font-family: Roboto Mono, monospace;
+  font-size: 12px;
+  overflow: hidden;
+`;
+
 const pages: MenuItem[] = [
   {
     key: Pages.HOME,
@@ -99,7 +108,16 @@ const pages: MenuItem[] = [
               <span style={{ marginLeft: '4px' }}>Join the discussion on GitHub</span>
             </a>
           </div>
+          <Flex justify='center' align='center' vertical style={{ marginTop: '12px' }}>
+            <StyledSection>
+              {`1.0.2`}
+            </StyledSection>
           </Flex>
+
+          </Flex>
+
+        
+        
           <br/>
         </div>
         </>        
