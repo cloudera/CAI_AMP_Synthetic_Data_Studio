@@ -112,8 +112,8 @@ const Prompt = () => {
         mutationFn: fetchSeedList
     });
 
-    useEffect(() => {  
-        if (!isEmpty(mutation.data && !mutation.isError)) {
+    useEffect(() => {
+        if (!isEmpty(mutation.data) && !mutation.isError) {
             const seeds = mutation.data.map((item: string) => item.trim());
             setItems(seeds);
             form.setFieldValue('topics', seeds);
