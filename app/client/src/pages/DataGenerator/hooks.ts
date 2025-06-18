@@ -245,3 +245,27 @@ export const useDatasetSize = (
       error    
     };
  }
+
+ export const fetchUseCases = async () => {
+    const resp = await fetch(`${BASE_API_URL}/use-cases`, {
+        method: 'GET'
+    });
+    const body = await resp.json();
+    return body;
+}
+
+export const useGetUseCases = () => {
+    const { data, isLoading, isError, error, isFetching } = useQuery(
+        {
+            queryKey: ['fetchUseCases', fetchUseCases],
+            queryFn: () => fetchUseCases(),
+            refetchOnWindowFocus: false,
+        }
+    );
+    return {
+      data,
+      isLoading: isLoading || isFetching,
+      isError,
+      error    
+    };
+}

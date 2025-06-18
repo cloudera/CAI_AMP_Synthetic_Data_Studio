@@ -10,6 +10,7 @@ import { MODEL_PROVIDER_LABELS } from './constants';
 import { ModelProviders, ModelProvidersDropdownOpts } from './types';
 import { useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
+import UseCaseSelector from './UseCaseSelector';
 
 
 const StepContainer = styled(Flex)`
@@ -234,13 +235,14 @@ const Configure = () => {
                     labelCol={labelCol}
                     shouldUpdate
                 >
-                    <Select placeholder={'Select a template'}>
+                    <UseCaseSelector />
+                    {/* <Select placeholder={'Select a template'}>
                         {USECASE_OPTIONS.map(option => 
                             <Select.Option key={option.value} value={option.value}>
                                 {option.label}
                             </Select.Option>
                         )}
-                    </Select>
+                    </Select> */}
                 </Form.Item>}
 
                 {(

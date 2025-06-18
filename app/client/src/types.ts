@@ -46,3 +46,10 @@ export type JobStatus = 'ENGINE_STOPPED' | 'ENGINE_SUCCEEDED' | 'ENGINE_TIMEDOUT
 
 
 export const HuggingFaceIconUrl = "https://huggingface.co/front/assets/huggingface_logo-noborder.svg";
+
+export interface UseCase {
+    name: string;
+    id: string;
+    label: string;
+    value: string;
+}
