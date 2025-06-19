@@ -34,10 +34,7 @@ from app.models.request_models import SynthesisRequest
 from app.services.synthesis_service import SynthesisService
 import asyncio
 import nest_asyncio  # Add this import
-import json, pandas as pd, numpy as np, os
-from app.agents.schema import GenerationPlan
 
-plan = GenerationPlan.model_validate_json(os.environ.get("JOB_PARAMS"))
 # Enable nested event loop
 nest_asyncio.apply()
 
