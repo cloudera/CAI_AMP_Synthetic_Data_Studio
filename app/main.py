@@ -433,7 +433,7 @@ async def get_dataset_size(request: RelativePath):
     ext = os.path.splitext(path)[1].lower()
     try:
         if ext == ".json":
-            with open(path) as f:
+          with open(path) as f:
                 raw = json.load(f)
 
             if isinstance(raw, list):
