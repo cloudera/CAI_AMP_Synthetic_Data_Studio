@@ -12,6 +12,10 @@ from openai import OpenAI
 from app.core.exceptions import APIError, InvalidModelError, ModelHandlerError, JSONParsingError
 from app.core.telemetry_integration import track_llm_operation
 from app.core.config import  _get_caii_token
+import os
+from dotenv import load_dotenv
+load_dotenv() 
+import google.generativeai as genai 
 
 
 
@@ -154,11 +158,21 @@ class UnifiedModelHandler:
 
 
     #@track_llm_operation("generate")
-    def generate_response(self, prompt: str, retry_with_reduced_tokens: bool = True, request_id = None) -> List[Dict[str, str]]:
+    def generate_response(
+        self,
+        prompt: str,
+        retry_with_reduced_tokens: bool = True,
+        request_id: Optional[str] = None,
+    ):
         if self.inference_type == "aws_bedrock":
             return self._handle_bedrock_request(prompt, retry_with_reduced_tokens)
-        elif self.inference_type == "CAII":
+        if self.inference_type == "CAII":
             return self._handle_caii_request(prompt)
+        if self.inference_type == "openai":
+            return self._handle_openai_request(prompt)
+        if self.inference_type == "gemini":
+            return self._handle_gemini_request(prompt)
+        raise ModelHandlerError(f"Unsupported inference_type={self.inference_type}", 400)
 
     def _handle_bedrock_request(self, prompt: str, retry_with_reduced_tokens: bool):
         """Handle Bedrock requests with retry logic"""
@@ -276,6 +290,50 @@ class UnifiedModelHandler:
             if isinstance(last_exception, (InvalidModelError, ModelHandlerError)):
                 raise last_exception
             raise ModelHandlerError(f"Failed after {self.MAX_RETRIES} retries: {str(last_exception)}", status_code=500)
+
+
+    # ---------- OpenAI -------------------------------------------------------
+    def _handle_openai_request(self, prompt: str):
+        try:
+            client = OpenAI(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                base_url=os.getenv("OPENAI_API_BASE", None) or None,
+            )
+            completion = client.chat.completions.create(
+                model=self.model_id,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=self.model_params.max_tokens,
+                temperature=self.model_params.temperature,
+                top_p=self.model_params.top_p,
+                stream=False,
+            )
+            text = completion.choices[0].message.content
+            return self._extract_json_from_text(text) if not self.custom_p else text
+        except Exception as e:
+            raise ModelHandlerError(f"OpenAI request failed: {e}", 500)
+
+    # ---------- Gemini -------------------------------------------------------
+    def _handle_gemini_request(self, prompt: str):
+        if genai is None:
+            raise ModelHandlerError(
+                "google-generativeai library not installed — `pip install google-generativeai`",
+                500,
+            )
+        try:
+            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+            model = genai.GenerativeModel(self.model_id)  # e.g. 'gemini-1.5-pro-latest'
+            resp = model.generate_content(
+                prompt,
+                generation_config={
+                    "max_output_tokens": self.model_params.max_tokens,
+                    "temperature": self.model_params.temperature,
+                    "top_p": self.model_params.top_p,
+                },
+            )
+            text = resp.text
+            return self._extract_json_from_text(text) if not self.custom_p else text
+        except Exception as e:
+            raise ModelHandlerError(f"Gemini request failed: {e}", 500)
 
 
     def _handle_caii_request(self, prompt: str):

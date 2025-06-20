@@ -12,10 +12,14 @@ import { usefetchTopics, useFetchDefaultSchema, useFetchDefaultPrompt } from '..
 import { MAX_NUM_QUESTION, MIN_SEED_INSTRUCTIONS,  MAX_SEED_INSTRUCTIONS } from './constants'
 import { Usecases, WorkflowType } from './types';
 import { useWizardCtx } from './utils';
-import { useDatasetSize, useGetPromptByUseCase } from './hooks';
+import { fetchFileContent, fetchSeedList, useDatasetSize, useGetPromptByUseCase } from './hooks';
 import CustomPromptButton from './CustomPromptButton';
 import get from 'lodash/get';
 import TextArea from 'antd/es/input/TextArea';
+import FileSelectorButton from './FileSelectorButton';
+import { useMutation } from '@tanstack/react-query';
+import first from 'lodash/first';
+import ResetIcon from './ResetIcon';
 
 const { Title } = Typography;
 
@@ -63,6 +67,13 @@ const AddTopicContainer = styled(Space)`
     width: 100% !important;
 `;
 
+const SeedsFormItem = styled(StyledFormItem)`
+  .ant-form-item-control {
+    width: 45vw;
+  }
+
+`
+
 const Prompt = () => {
     const form = Form.useFormInstance();
     const selectedTopics = Form.useWatch('topics');
@@ -97,6 +108,18 @@ const Prompt = () => {
         input_value,
         output_key
     );
+    const mutation = useMutation({
+        mutationFn: fetchSeedList
+    });
+
+    useEffect(() => {
+        if (!isEmpty(mutation.data) && !mutation.isError) {
+            const seeds = mutation.data.map((item: string) => item.trim());
+            setItems(seeds);
+            form.setFieldValue('topics', seeds);
+        }
+    }, [mutation.data]);
+
 
     useEffect(() => {  
         if (isError) {
@@ -193,6 +216,18 @@ const Prompt = () => {
         setCustomTopic('');
     };
 
+
+    const onAddFiles = (files: File[]) => {
+        if (!isEmpty (files)) {
+            const file = first(files);
+            const path = get(file, '_path');
+            if (path) {
+                mutation.mutate({ path });
+            }
+        };
+    }
+    console.log('mutation data:', mutation);
+
     return (
         <Row gutter={[50,0]}>
             <LeftCol span={17}>
@@ -220,6 +255,33 @@ const Prompt = () => {
                                             setPrompt={setPrompt}
                                         />
                                     }
+                                    <RestoreDefaultBtn
+                                        icon={<ResetIcon />}
+                                        type="link"
+                                        onClick={() => {
+                                            return Modal.warning({
+                                                title: 'Restore Default Prompt',
+                                                closable: true,
+                                                content: <>{'Are you sure you want to restore to the default prompt? Your current prompt will be lost.'}</>,
+                                                footer: (
+                                                    <ModalButtonGroup gap={8} justify='end'>
+                                                        <Button onClick={() => Modal.destroyAll()}>{'Cancel'}</Button>
+                                                        <Button
+                                                            onClick={() => {
+                                                                form.setFieldValue('custom_prompt', defaultPromptRef.current)
+                                                                Modal.destroyAll()
+                                                            }}
+                                                            type='primary'
+                                                        >
+                                                            {'Confirm'}
+                                                        </Button>
+                                                    </ModalButtonGroup>
+                                                ),
+                                                maskClosable: true,
+                                            })
+                                        }}>
+                                            {'Restore'}
+                                        </RestoreDefaultBtn>    
                                     </Flex>
                                 </div>
                             }
@@ -229,31 +291,7 @@ const Prompt = () => {
                         >
                             <StyledTextArea autoSize placeholder={'Enter a prompt'}/>
                         </StyledPromptFormItem>
-                        <RestoreDefaultBtn
-                            onClick={() => {
-                                return Modal.warning({
-                                    title: 'Restore Default Prompt',
-                                    closable: true,
-                                    content: <>{'Are you sure you want to restore to the default prompt? Your current prompt will be lost.'}</>,
-                                    footer: (
-                                        <ModalButtonGroup gap={8} justify='end'>
-                                            <Button onClick={() => Modal.destroyAll()}>{'Cancel'}</Button>
-                                            <Button
-                                                onClick={() => {
-                                                    form.setFieldValue('custom_prompt', defaultPromptRef.current)
-                                                    Modal.destroyAll()
-                                                }}
-                                                type='primary'
-                                            >
-                                                {'Confirm'}
-                                            </Button>
-                                        </ModalButtonGroup>
-                                    ),
-                                    maskClosable: true,
-                                })
-                            }}>
-                                {'Restore'}
-                        </RestoreDefaultBtn>
+                        
                         
                     </div>
                     {((workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && !isEmpty(doc_paths)) ||
@@ -284,7 +322,16 @@ const Prompt = () => {
                         workflow_type === WorkflowType.CUSTOM_DATA_GENERATION ||
                         workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) &&
                     <Flex gap={20} vertical>
-                        <StyledFormItem
+                        {mutation.isError &&
+                            <Alert
+                                message='Error fetching seed instructions'
+                                description={get(mutation.error, 'message', 'An error occurred while fetching seed instructions.')}
+                                type='error'
+                            />
+                        }
+                        {mutation.isPending && <Alert message='Loading seed instructions...' type='info' />}
+                        <Flex>
+                        <SeedsFormItem
                             name={'topics'}
                             label={
                                 <FormLabel level={4}>
@@ -302,6 +349,7 @@ const Prompt = () => {
                             shouldUpdate
                             // validateTrigger='onBlur'
                         >
+                            
                             <Select
                                 allowClear
                                 mode="multiple"
@@ -368,7 +416,12 @@ const Prompt = () => {
                                     disabled: selectedTopics?.length === MAX_SEED_INSTRUCTIONS
                                 }))}
                             />
-                        </StyledFormItem>
+                            
+                        </SeedsFormItem>
+                        <div style={{ marginTop: '40px'}}>
+                            <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} />
+                        </div>
+                        </Flex>
                         <StyledFormItem
                             name='num_questions'
                             label={<FormLabel level={4}>{'Entries Per Seed'}</FormLabel>}

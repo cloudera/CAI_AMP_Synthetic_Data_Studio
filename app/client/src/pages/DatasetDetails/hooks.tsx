@@ -1,13 +1,15 @@
 import get from 'lodash/get';
 import { notification } from 'antd';
 import { useQuery } from '@tanstack/react-query';
+import { getHttpStatusCodeVerb } from '../DataGenerator/utils';
+import toNumber from 'lodash/toNumber';
 
 
 const BASE_API_URL = import.meta.env.VITE_AMP_URL;
 
 
 
-const fetchDatasetDetails = async (generate_file_name: string) => {
+export const fetchDatasetDetails = async (generate_file_name: string) => {
   const dataset_details__resp = await fetch(`${BASE_API_URL}/dataset_details/${generate_file_name}`, {
     method: 'GET',
   });
@@ -19,7 +21,8 @@ const fetchDatasetDetails = async (generate_file_name: string) => {
   
   return {
     dataset,
-    datasetDetails
+    datasetDetails,
+    statusCode: dataset__resp.status
   };
 };
 
@@ -36,11 +39,17 @@ export const useGetDatasetDetails = (generate_file_name: string) => {
     );
 
     const dataset = get(data, 'dataset'); 
+    const statusCode = get(data, 'statusCode'); 
 
     if (error) {
+      const statusVerb = getHttpStatusCodeVerb(toNumber(statusCode));
+      let description = `An error occurred while fetching the dataset details:\n ${error}`;
+      if (statusVerb !== null) {
+          description = `An error occurred while fetching the dataset details (Status Code: ${statusCode} - ${statusVerb} ):\n ${error}`;
+      }
       notification.error({
         message: 'Error',
-        description: `An error occurred while fetching the dataset details:\n ${error}`
+        description
       });
     }
 

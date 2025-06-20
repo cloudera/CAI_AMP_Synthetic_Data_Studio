@@ -53,6 +53,8 @@ const Summary= () => {
         examples = []
     } = form.getFieldsValue(true);
 
+    console.log('Summary form values:', form.getFieldsValue(true));
+
     const cfgStepDataSource = [
         { label: 'Dataset Name', children: display_name },
         { label: 'Usecase', children: use_case },

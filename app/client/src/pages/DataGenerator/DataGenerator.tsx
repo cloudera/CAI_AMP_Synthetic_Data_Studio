@@ -1,7 +1,8 @@
 import isEmpty from 'lodash/isEmpty';
 import isString from 'lodash/isString';
-import { useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
+
 import { Button, Flex, Form, Layout, Steps } from 'antd';
 import type { FormInstance } from 'antd';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -17,7 +18,8 @@ import Finish from './Finish';
 
 import { DataGenWizardSteps, WizardStepConfig, WorkflowType } from './types';
 import { WizardCtx } from './utils';
-import { useGetDatasetDetails } from '../DatasetDetails/hooks';
+import { fetchDatasetDetails, useGetDatasetDetails } from '../DatasetDetails/hooks';
+import { useMutation } from '@tanstack/react-query';
 
 const { Content } = Layout;
 // const { Title } = Typography;
@@ -97,12 +99,30 @@ const DataGenerator = () => {
     const [current, setCurrent] = useState(0);
     const [maxStep, setMaxStep] = useState(0);
     const [isStepValid, setIsStepValid] = useState<boolean>(false);
+    
     // Data passed from listing table to prepopulate form
     const location = useLocation();
-    console.log('location?.state?.data:', location?.state?.data);
+    const { generate_file_name } = useParams();
     const initialData = location?.state?.data;
+    const mutation = useMutation({
+        mutationFn: fetchDatasetDetails
+    });
 
-    const datasetDetailsReq = location?.state?.data &&  useGetDatasetDetails(location?.state?.data?.generate_file_name)
+
+    useEffect(() => {
+        if (generate_file_name && !mutation.data) {
+            mutation.mutate(generate_file_name);
+        }
+        if (mutation.data && mutation?.data?.dataset) {
+            form.setFieldsValue({
+                ...initialData,
+                ...(mutation?.data?.dataset as any)
+            });
+        }
+
+    }, [generate_file_name]);
+    
+
     if (initialData?.technique) {
         initialData.workflow_type = initialData?.technique === 'sft' ? 
         WorkflowType.SUPERVISED_FINE_TUNING :

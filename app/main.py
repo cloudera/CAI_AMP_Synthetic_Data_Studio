@@ -26,7 +26,7 @@ import sys
 import json
 import uuid 
 from fastapi.encoders import jsonable_encoder
-
+import os, json, csv
 from fastapi import Query
 
 
@@ -47,7 +47,7 @@ from app.services.synthesis_service import SynthesisService
 from app.services.export_results import Export_Service
 
 from app.core.prompt_templates import PromptBuilder, PromptHandler
-from app.core.config import UseCase, USE_CASE_CONFIGS
+from app.core.config import UseCase, USE_CASE_CONFIGS, USE_CASE_CONFIGS_EVALS
 from app.core.database import DatabaseManager
 from app.core.exceptions import APIError, InvalidModelError, ModelHandlerError
 from app.services.model_alignment import ModelAlignment
@@ -407,36 +407,92 @@ async def get_dataset_size(request:JsonDataSize):
           description = "get json content")
 async def get_dataset_size(request: RelativePath):
 
-    if request.path:
-        path = request.path
-      
-        try:
+    MAX_ROWS = 20
+
+    def _truncate(rows: List[Dict]) -> List[Dict]:
+        return rows[:MAX_ROWS]
+    
+    def _flatten(d: dict, parent_key:str = "", sep:str=".") -> dict:
+        flat = {}
+        for k, v in d.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, dict):
+                flat.update(_flatten(v, new_key, sep=sep))
+            else:
+                flat[new_key] = v
+        return flat
+
+
+    if not request.path:
+        return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
+
+    path = request.path
+    if not os.path.exists(path):
+        return JSONResponse(status_code=404, content={"status": "failed", "error": "file not found"})
+
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        if ext == ".json":
             with open(path) as f:
-                data = json.load(f)
-                
-                    
-        except json.JSONDecodeError as e:
-            error_msg = f"Invalid JSON format in file {path}: {str(e)}"
-            print(error_msg)
-            return JSONResponse(
-                status_code=400,
-                content={"status": "failed", "error": error_msg}
-            )
-        except (KeyError, ValueError) as e:
-            print(str(e))
-            return JSONResponse(
-                status_code=400,
-                content={"status": "failed", "error": str(e)}
-            )
-        except Exception as e:
-            error_msg = f"Error processing {path}: {str(e)}"
-            print(error_msg)
-            return JSONResponse(
-                status_code=400,
-                content={"status": "failed", "error": error_msg}
-            )
-            
-    return {"data": data}
+                raw = json.load(f)
+
+            if isinstance(raw, list):
+                data = _truncate(raw)
+
+            elif isinstance(raw, dict):      # flatten & wrap
+                data = _truncate([_flatten(raw)])
+
+            else:
+                raise ValueError("Unsupported JSON structure")
+
+
+        elif ext == ".csv":
+            with open(path, newline="") as f:
+                reader = csv.DictReader(f)
+                data = _truncate([row for row in reader])
+
+        else:
+            return JSONResponse(status_code=400, content={"status": "failed", "error": "unsupported file type"})
+
+        return {"data": data}
+    
+    except json.JSONDecodeError as e:
+        err = f"Invalid JSON in {path}: {e}"
+    except ValueError as e:
+        err = str(e)
+    except Exception as e:
+        err = f"Error processing {path}: {e}"
+
+    return JSONResponse(status_code=400, content={"status": "failed", "error": err})
+
+@app.post("/json/get_seeds_list", include_in_schema=True, responses = responses,
+          description = "get json content")
+async def get_dataset_size(request: RelativePath):
+
+    if not request.path:
+        return JSONResponse(status_code=400, content={"status": "failed", "error": "path missing"})
+
+    path = request.path
+    if not os.path.exists(path):
+        return JSONResponse(status_code=404, content={"status": "failed", "error": "file not found"})
+
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        if ext == ".json":
+            with open(path) as f:
+                raw = json.load(f)
+
+
+        return {"data": raw}
+    
+    except json.JSONDecodeError as e:
+        err = f"Invalid JSON in {path}: {e}"
+    except ValueError as e:
+        err = str(e)
+    except Exception as e:
+        err = f"Error processing {path}: {e}"
+
+    return JSONResponse(status_code=400, content={"status": "failed", "error": err})
 
 
 @app.post("/synthesis/generate", include_in_schema=True,
@@ -516,7 +572,6 @@ async def generate_freeform_data(request: SynthesisRequest):
                 return JSONResponse(
                     status_code=413,  # Payload Too Large
                     content={
-                        "status": "failed",
                         "error": f"Total dataset size ({data_size:} GB) exceeds limit of 10 GB. Please select smaller datasets."
                     }
                 )
@@ -676,7 +731,9 @@ async def get_model_id():
 
     models = {
         "aws_bedrock": bedrock_list,
-        "CAII": []
+        "CAII": [],
+        "OpenAI" : [],
+        "Google Gemini" : []
     }
 
     return {"models": models}
@@ -713,7 +770,9 @@ async def get_use_cases():
         "usecases": [
             {"id": UseCase.CODE_GENERATION, "name": "Code Generation"},
             {"id": UseCase.TEXT2SQL, "name": "Text to SQL"},
-            {"id": UseCase.CUSTOM, "name": "Custom"}
+            {"id": UseCase.CUSTOM, "name": "Custom"},
+            {"id": UseCase.LENDING_DATA, "name": "Lending Data"},
+            {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data"},
         ]
     }
 
@@ -889,7 +948,7 @@ async def customise_prompt(use_case: UseCase):
 async def customise_prompt(use_case: UseCase):
     """Allow users to customize prompt. Only part of the prompt which can be customized"""
     try:
-        return PromptHandler.get_freeform_default_custom_prompt(use_case, custom_prompt=None)
+        return USE_CASE_CONFIGS[use_case].prompt
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -897,7 +956,7 @@ async def customise_prompt(use_case: UseCase):
 async def customise_prompt(use_case: UseCase):
     """Allow users to customize prompt. Only part of the prompt which can be customized"""
     try:
-        return PromptHandler.get_default_custom_eval_prompt(use_case, custom_prompt=None)
+        return USE_CASE_CONFIGS_EVALS[use_case].prompt
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1087,16 +1146,8 @@ async def delete_evaluation(file_name: str, file_path: Optional[str] = None):
 @app.get("/use-cases/{use_case}/topics")
 async def get_topics(use_case: UseCase):
     """Get available topics for a specific use case"""
-    uc_topics = {"code_generation": ["Algorithms", "Async Programming", 
-                                     "Data Structures", "Database Operations", 
-                                     "Python Basics", "Web Development"],
-
-        "text2sql":["Aggregations", "Basic Queries", "Data Manipulation", 
-                    "Joins", "Subqueries", "Window Functions"],
-        "custom": []
-    }
-    
-    topics = uc_topics[use_case]
+   
+    topics = USE_CASE_CONFIGS[use_case].topics
 
     return {"topics":topics}
 
@@ -1109,50 +1160,12 @@ async def get_gen_examples(use_case: UseCase):
 
 @app.get("/{use_case}/eval_examples")
 async def get_eval_examples(use_case: UseCase):
-    if use_case == UseCase.CODE_GENERATION:
-        examples = [
-                    {
-        "score": 3,
-        "justification": """The code achieves 3 points by implementing core functionality correctly (1), 
-        showing generally correct implementation with proper syntax (2), 
-        and being suitable for professional use with good Python patterns and accurate functionality (3). 
-        While it demonstrates competent development practices, it lacks the robust error handling 
-        and type hints needed for point 4, and could benefit from better efficiency optimization and code organization."""
-    },
-    {
-        "score": 4,
-        "justification": """
-        The code earns 4 points by implementing basic functionality (1), showing correct implementation (2), 
-        being production-ready (3), and demonstrating high efficiency with Python best practices 
-        including proper error handling, type hints, and clear documentation (4). 
-        It exhibits experienced developer qualities with well-structured code and maintainable design, though 
-        it lacks the comprehensive testing and security considerations needed for a perfect score."""
-    }
-            ]
-    elif use_case == UseCase.TEXT2SQL:
-
-        examples = [ {
-                    "score": 3,
-                    "justification": """The query earns 3 points by successfully retrieving basic data (1), 
-                    showing correct logical implementation (2), and being suitable for
-                    professional use with accurate data retrieval and good SQL pattern understanding (3). 
-                    However, it lacks efficiency optimizations and consistent style conventions needed for
-                    point 4, using basic JOINs without considering indexing or performance implications. 
-                    While functional, the query would benefit from better organization and efficiency improvements."""
-                            },
-
-                    {
-                "score": 4,
-                "justification": """The query merits 4 points by retrieving basic data correctly (1), implementing proper 
-                logic (2), being production-ready (3), and demonstrating high efficiency with proper
-                indexing considerations, well-structured JOINs, and consistent formatting (4). It 
-                shows experienced developer qualities with appropriate commenting and performant SQL 
-                features, though it lacks the comprehensive NULL handling and execution plan optimization needed for a 
-                perfect score."""
-                    }
-                    ]
-    elif use_case ==UseCase.CUSTOM:
+    
+    if use_case ==UseCase.CUSTOM:
         examples = []
+
+    else:
+        examples = USE_CASE_CONFIGS_EVALS[use_case].default_examples
     
     
     return {"examples": examples}
