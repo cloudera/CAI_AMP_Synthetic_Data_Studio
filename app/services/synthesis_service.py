@@ -241,11 +241,9 @@ class SynthesisService:
                                         self.logger.warning(error_msg)
                                         topic_errors.append(error_msg)
                                         
-                                except ModelHandlerError:
-                                    # Re-raise ModelHandlerError to propagate up
-                                    raise
-                                except Exception as e:
-                                    error_msg = f"Error in single processing for topic {topic}: {str(e)}"
+                                except ModelHandlerError as e:
+                                    # Don't raise - add to errors and continue
+                                    error_msg = f"ModelHandlerError in single processing for topic {topic}: {str(e)}"
                                     self.logger.error(error_msg)
                                     topic_errors.append(error_msg)
                                     continue
@@ -686,9 +684,6 @@ class SynthesisService:
             - list of generated data items
             - list of error messages
             - list of output dictionaries with topic information
-        
-        Raises:
-            ModelHandlerError: When there's an error in model generation that should stop processing
         """
         topic_results = []
         topic_output = []
@@ -729,8 +724,11 @@ class SynthesisService:
                             self.logger.info("JSON parsing failed, falling back to single processing")
                             continue
                         else:
-                            # For other model errors, propagate up
-                            raise
+                            # Don't raise - add to errors and continue
+                            error_msg = f"ModelHandlerError in batch processing for topic {topic}: {str(e)}"
+                            self.logger.error(error_msg)
+                            topic_errors.append(error_msg)
+                            continue
                     
                     if batch_items:
                         # Process batch results
@@ -816,8 +814,11 @@ class SynthesisService:
                                         self.logger.info("JSON parsing failed in single processing")
                                         continue
                                     else:
-                                        # For other model errors, propagate up
-                                        raise
+                                        # Don't raise - add to errors and continue
+                                        error_msg = f"ModelHandlerError in single processing for topic {topic}: {str(e)}"
+                                        self.logger.error(error_msg)
+                                        topic_errors.append(error_msg)
+                                        continue
                                 
                                 if single_items and len(single_items) > 0:
                                     item = single_items[0]
@@ -864,32 +865,36 @@ class SynthesisService:
                                     self.logger.warning(error_msg)
                                     topic_errors.append(error_msg)
                                     
-                            except ModelHandlerError:
-                                # Re-raise ModelHandlerError to propagate up
-                                raise
-                            except Exception as e:
-                                error_msg = f"Error in single processing for topic {topic}: {str(e)}"
+                            except ModelHandlerError as e:
+                                # Don't raise - add to errors and continue
+                                error_msg = f"ModelHandlerError in single processing for topic {topic}: {str(e)}"
                                 self.logger.error(error_msg)
                                 topic_errors.append(error_msg)
-                                raise
+                                continue
                                 
-                except ModelHandlerError:
-                    # Re-raise ModelHandlerError to propagate up
-                    raise
+                except ModelHandlerError as e:
+                    # Don't raise - add to errors and continue
+                    error_msg = f"ModelHandlerError in batch processing for topic {topic}: {str(e)}"
+                    self.logger.error(error_msg)
+                    topic_errors.append(error_msg)
+                    continue
                 except Exception as e:
                     error_msg = f"Error processing batch for topic {topic}: {str(e)}"
                     self.logger.error(error_msg)
                     topic_errors.append(error_msg)
-                    raise
+                    continue
                     
-        except ModelHandlerError:
-            # Re-raise ModelHandlerError to propagate up
-            raise
-        except Exception as e:
-            error_msg = f"Critical error processing topic {topic}: {str(e)}"
+        except ModelHandlerError as e:
+            # Don't raise - add to errors and return partial results
+            error_msg = f"ModelHandlerError in topic {topic}: {str(e)}"
             self.logger.error(error_msg)
             topic_errors.append(error_msg)
-            raise
+            
+        except Exception as e:
+            # Don't raise - add to errors and return partial results  
+            error_msg = f"Error processing topic {topic}: {str(e)}"
+            self.logger.error(error_msg)
+            topic_errors.append(error_msg)
             
         return topic, topic_results, topic_errors, topic_output
 
@@ -968,13 +973,9 @@ class SynthesisService:
                     for topic in topics
                 ]
                 
-                # Wait for all futures to complete
-                try:
-                    completed_topics = await asyncio.gather(*topic_futures)
-                except ModelHandlerError as e:
-                    self.logger.error(f"Model generation failed: {str(e)}")
-                    raise APIError(f"Failed to generate content: {str(e)}")
-                
+                # Wait for all futures to complete (no exceptions now since process_single_freeform doesn't raise)
+                completed_topics = await asyncio.gather(*topic_futures)
+
             # Process results
             for topic, topic_results, topic_errors, topic_output in completed_topics:
                 if topic_errors:
@@ -987,34 +988,39 @@ class SynthesisService:
             generation_time = time.time() - st
             self.logger.info(f"Generation completed in {generation_time:.2f} seconds")
 
+            # Initialize variables outside conditional blocks to fix scope issues
             timestamp = datetime.now(timezone.utc).isoformat()
             time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
             mode_suffix = "test" if is_demo else "final"
             model_name = get_model_family(request.model_id).split('.')[-1]
             file_path = f"freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
             
-            # Transform output based on document paths
-            if request.doc_paths:
-                final_output = [{
-                                'Generated_From': item['Topic'],
-                                **{k: v for k, v in item.items() if k != 'Topic'}
-                            } for item in final_output]
-            else:
-                final_output = [{
-                                'Seeds': item['Topic'],
-                                **{k: v for k, v in item.items() if k != 'Topic'}
-                            } for item in final_output]
-            
-            output_path = {}
-            try:
+            # Save partial results if we have any data
+            if final_output:
+                # Transform output
+                if request.doc_paths:
+                    final_output = [{'Generated_From': item['Topic'], **{k: v for k, v in item.items() if k != 'Topic'}} for item in final_output]
+                else:
+                    final_output = [{'Seeds': item['Topic'], **{k: v for k, v in item.items() if k != 'Topic'}} for item in final_output]
+                
                 with open(file_path, "w") as f:
                     json.dump(final_output, indent=2, fp=f)
-            except Exception as e:
-                self.logger.error(f"Error saving results: {str(e)}", exc_info=True)
-                
-            output_path['local'] = file_path
-            
-            
+                self.logger.info(f"Saved {len(final_output)} results to {file_path}")
+
+            # Check if we have any critical model errors across all topics
+            has_critical_model_error = any(
+                topic_errors and any("ModelHandlerError" in error for error in topic_errors)
+                for _, _, topic_errors, _ in completed_topics
+            )
+
+            # After saving (or if no data), check for critical errors
+            if has_critical_model_error:
+                if final_output:
+                    self.logger.info(f"Saved {len(final_output)} results before failing due to model errors")
+                else:
+                    self.logger.info("No results to save before failing due to model errors")
+                raise APIError("Critical model errors encountered during generation")
+
             # Handle custom prompt, examples and schema
             custom_prompt_str = PromptHandler.get_default_custom_prompt(request.use_case, request.custom_prompt)
             
@@ -1075,9 +1081,9 @@ class SynthesisService:
                 'use_case': request.use_case,
                 'final_prompt': custom_prompt_str,
                 'model_parameters': json.dumps(model_params.model_dump()) if model_params else None,
-                'generate_file_name': os.path.basename(output_path['local']),
+                'generate_file_name': os.path.basename(file_path),
                 'display_name': request.display_name,
-                'output_path': output_path,
+                'output_path': {'local': file_path},
                 'num_questions': getattr(request, 'num_questions', None),
                 'topics': topic_str,
                 'examples': examples_str,
@@ -1096,32 +1102,69 @@ class SynthesisService:
                     "status": "completed" if results else "failed",
                     "results": results,
                     "errors": all_errors if all_errors else None,
-                    "export_path": output_path
+                    "export_path": {'local': file_path}
                 }
             else:
-                job_status = "ENGINE_SUCCEEDED"
-                generate_file_name = os.path.basename(output_path['local'])
+                job_status = "ENGINE_SUCCEEDED" if final_output else "ENGINE_FAILED"
+                generate_file_name = os.path.basename(file_path) if final_output else ''
+                final_output_path = file_path if final_output else ''
                 
-                self.db.update_job_generate(job_name, generate_file_name, output_path['local'], timestamp, job_status)
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
                 self.db.backup_and_restore_db()
                 return {
                     "status": "completed" if final_output else "failed",
-                    "export_path": output_path
+                    "export_path": {'local': file_path}
                 }
         except APIError:
             raise
             
         except Exception as e:
+            # Initialize variables for exception handling if they don't exist
+            if 'timestamp' not in locals():
+                timestamp = datetime.now(timezone.utc).isoformat()
+            if 'time_file' not in locals():
+                time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
+            if 'mode_suffix' not in locals():
+                mode_suffix = "test" if is_demo else "final"
+            if 'model_name' not in locals():
+                model_name = get_model_family(request.model_id).split('.')[-1]
+            if 'file_path' not in locals():
+                file_path = f"freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
+            
+            # Try to save partial results if any exist before failing
+            saved_partial_results = False
+            if 'final_output' in locals() and final_output:
+                try:
+                    # Transform output
+                    if request.doc_paths:
+                        final_output = [{'Generated_From': item['Topic'], **{k: v for k, v in item.items() if k != 'Topic'}} for item in final_output]
+                    else:
+                        final_output = [{'Seeds': item['Topic'], **{k: v for k, v in item.items() if k != 'Topic'}} for item in final_output]
+                    
+                    with open(file_path, "w") as f:
+                        json.dump(final_output, indent=2, fp=f)
+                    saved_partial_results = True
+                    self.logger.info(f"Saved {len(final_output)} partial results to {file_path} before failing")
+                except Exception as save_error:
+                    self.logger.error(f"Failed to save partial results: {str(save_error)}")
+            
+            # Continue with original error handling
             self.logger.error(f"Generation failed: {str(e)}", exc_info=True)
             if is_demo:
-                raise APIError(str(e))  # Let middleware decide status code
+                raise APIError(str(e))
             else:
-                time_stamp = datetime.now(timezone.utc).isoformat()
                 job_status = "ENGINE_FAILED"
-                file_name = ''
-                output_path = ''
-                self.db.update_job_generate(job_name, file_name, output_path, time_stamp, job_status)
-                raise  # Just re-raise the original exception
+                if saved_partial_results:
+                    # Update with actual file information for partial results
+                    generate_file_name = os.path.basename(file_path)
+                    final_output_path = file_path
+                else:
+                    # No results saved, use empty values
+                    generate_file_name = ''
+                    final_output_path = ''
+                
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
+                raise
 
     def get_health_check(self) -> Dict:
         """Get service health status"""

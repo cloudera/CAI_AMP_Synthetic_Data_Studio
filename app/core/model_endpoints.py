@@ -1,4 +1,4 @@
-import os, json, asyncio, requests, boto3
+import os, json, asyncio, requests, boto3, re, datetime as dt
 from typing import List, Tuple, Dict
 from typing import TypedDict
 from botocore.config import Config
@@ -40,6 +40,134 @@ def sort_unique_models(models: List[str]) -> List[str]:
         if base not in seen:
             seen.add(base); out.append(m)
     return sorted(out, key=key, reverse=True)
+
+
+# ────────────────────────────────────────────────────────────────
+# OpenAI helpers
+# ────────────────────────────────────────────────────────────────
+def list_openai_models() -> List[str]:
+    """Return curated list of latest OpenAI text generation models, sorted by release date (newest first)."""
+    # Based on research - only most relevant latest text-to-text models
+    models = [
+        "gpt-4.1",               # Latest GPT-4.1 series (April 2025)
+        "gpt-4.1-mini", 
+        "gpt-4.1-nano",
+        "o3",                    # Latest reasoning models (April 2025) 
+        "o4-mini",
+        "o3-mini",               # January 2025
+        "o1",                    # December 2024
+        "gpt-4o",                # November 2024
+        "gpt-4o-mini",           # July 2024
+        "gpt-4-turbo",           # April 2024
+        "gpt-3.5-turbo"          # Legacy but still widely used
+    ]
+    return models
+
+
+async def _probe_openai(model_name: str) -> Tuple[str, bool]:
+    """Test if OpenAI model responds within timeout."""
+    try:
+        import openai
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        await asyncio.wait_for(
+            asyncio.to_thread(
+                client.chat.completions.create,
+                model=model_name,
+                messages=[{"role": "user", "content": "Health check"}],
+                max_tokens=5
+            ),
+            timeout=5
+        )
+        return model_name, True
+    except Exception:
+        return model_name, False
+
+
+async def health_openai(models: List[str], concurrency: int = 5) -> Tuple[List[str], List[str]]:
+    """Health check OpenAI models with concurrency control."""
+    if not os.getenv("OPENAI_API_KEY"):
+        return [], models  # All disabled if no API key
+        
+    sem = asyncio.Semaphore(concurrency)
+
+    async def bound(model: str):
+        async with sem:
+            return await _probe_openai(model)
+
+    results = await asyncio.gather(*(bound(m) for m in models))
+    enabled = [m for m, ok in results if ok]
+    disabled = [m for m, ok in results if not ok]
+    return enabled, disabled
+
+
+# ────────────────────────────────────────────────────────────────
+# Gemini helpers
+# ────────────────────────────────────────────────────────────────
+def list_gemini_models() -> List[str]:
+    """Return curated list of latest Gemini text generation models, sorted by release date (newest first)."""
+    # Based on research - only most relevant latest text-to-text models
+    models = [
+        "gemini-2.5-pro",           # June 2025 - most powerful thinking model
+        "gemini-2.5-flash",         # June 2025 - best price-performance  
+        "gemini-2.5-flash-lite",    # June 2025 - cost-efficient
+        "gemini-2.0-flash",         # February 2025 - next-gen features
+        "gemini-2.0-flash-lite",    # February 2025 - low latency
+        "gemini-1.5-pro",           # September 2024 - complex reasoning
+        "gemini-1.5-flash",         # September 2024 - fast & versatile
+        "gemini-1.5-flash-8b"       # October 2024 - lightweight
+    ]
+    return models
+
+
+def _extract_gemini_date(model: str) -> dt.datetime:
+    """Extract release date from Gemini model name for sorting."""
+    # Gemini models follow pattern: gemini-{version}-{variant}
+    if "2.5" in model:
+        return dt.datetime(2025, 6, 1)   # June 2025
+    elif "2.0" in model:
+        return dt.datetime(2025, 2, 1)   # February 2025  
+    elif "1.5" in model:
+        if "flash-8b" in model:
+            return dt.datetime(2024, 10, 1)  # October 2024
+        return dt.datetime(2024, 9, 1)   # September 2024
+    return dt.datetime.min
+
+
+async def _probe_gemini(model_name: str) -> Tuple[str, bool]:
+    """Test if Gemini model responds within timeout."""
+    try:
+        from google import genai
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        
+        await asyncio.wait_for(
+            asyncio.to_thread(
+                client.models.generate_content,
+                model=model_name,
+                contents="Health check"
+            ),
+            timeout=5
+        )
+        return model_name, True
+    except Exception:
+        return model_name, False
+
+
+async def health_gemini(models: List[str], concurrency: int = 5) -> Tuple[List[str], List[str]]:
+    """Health check Gemini models with concurrency control."""
+    if not os.getenv("GEMINI_API_KEY"):
+        return [], models  # All disabled if no API key
+        
+    sem = asyncio.Semaphore(concurrency)
+
+    async def bound(model: str):
+        async with sem:
+            return await _probe_gemini(model)
+
+    results = await asyncio.gather(*(bound(m) for m in models))
+    enabled = [m for m, ok in results if ok]
+    disabled = [m for m, ok in results if not ok]
+    return enabled, disabled
 
 
 # ────────────────────────────────────────────────────────────────
@@ -196,17 +324,36 @@ async def health_caii(pairs: list[_CaiiPair],
 # Single orchestrator used by the api endpoint
 # ────────────────────────────────────────────────────────────────
 async def collect_model_catalog() -> Dict[str, Dict[str, List[str]]]:
-    # Bedrock first
+    """Collect and health-check models from all providers."""
+    
+    # Bedrock
     bedrock_all = list_bedrock_models()
     bedrock_enabled, bedrock_disabled = await health_bedrock(bedrock_all)
+
+    # OpenAI  
+    openai_all = list_openai_models()
+    openai_enabled, openai_disabled = await health_openai(openai_all)
+
+    # Gemini
+    gemini_all = list_gemini_models() 
+    gemini_enabled, gemini_disabled = await health_gemini(gemini_all)
 
     catalog: Dict[str, Dict[str, List[str]]] = {
         "aws_bedrock": {
             "enabled": bedrock_enabled,
             "disabled": bedrock_disabled,
+        },
+        "openai": {
+            "enabled": openai_enabled,
+            "disabled": openai_disabled,
+        },
+        "google_gemini": {
+            "enabled": gemini_enabled,
+            "disabled": gemini_disabled,
         }
     }
 
+    # CAII (only on-cluster)
     if os.getenv("CDSW_PROJECT_ID", "local") != "local":
         caii_all = list_caii_models()
         caii_enabled, caii_disabled = await health_caii(caii_all)

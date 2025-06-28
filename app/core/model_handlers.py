@@ -22,6 +22,12 @@ import google.generativeai as genai
 class UnifiedModelHandler:
     """Unified handler for all model types using Bedrock's converse API"""
     
+    # Add timeout constants
+    OPENAI_CONNECT_TIMEOUT = 5.0
+    OPENAI_READ_TIMEOUT = 3600.0  # 1 hour, same as AWS Bedrock
+    
+    GEMINI_TIMEOUT = 3600.0  # 1 hour timeout for Gemini
+    
     def __init__(self, model_id: str, bedrock_client=None, model_params: Optional[ModelParameters] = None, inference_type = "aws_bedrock", caii_endpoint:Optional[str]=None, custom_p = False):
         """
         Initialize the model handler
@@ -43,6 +49,10 @@ class UnifiedModelHandler:
         self.MAX_RETRIES = 2
         self.BASE_DELAY = 3  # Initial delay of 3 seconds
         self.MULTIPLIER = 1.5  # AWS Step Functions multiplier
+        
+        # Add timeout configuration
+        self.CONNECT_TIMEOUT = 5  # 5 seconds connect timeout
+        self.READ_TIMEOUT = 3600  # 1 hour read timeout (same as AWS Bedrock)
 
     def _exponential_backoff(self, retry_count: int) -> None:
         """AWS Step Functions style backoff: 3s -> 4.5s -> 6.75s"""
@@ -251,7 +261,7 @@ class UnifiedModelHandler:
                             if error_code == 'ValidationException':
                                 if 'model identifier is invalid' in error_message:
                                     raise InvalidModelError(self.model_id,error_message )
-                                elif "on-demand throughput isn’t supported" in error_message:
+                                elif "on-demand throughput isn't supported" in error_message:
                                     print("Hi")
                                     raise InvalidModelError(self.model_id, error_message)
                                 
@@ -295,9 +305,20 @@ class UnifiedModelHandler:
     # ---------- OpenAI -------------------------------------------------------
     def _handle_openai_request(self, prompt: str):
         try:
+            import httpx
+            from openai import OpenAI
+            
+            # Configure timeout for OpenAI client (OpenAI v1.57.2)
+            timeout_config = httpx.Timeout(
+                connect=self.OPENAI_CONNECT_TIMEOUT,
+                read=self.OPENAI_READ_TIMEOUT,
+                write=10.0,
+                pool=5.0
+            )
+            
             client = OpenAI(
-                api_key=os.getenv("OPENAI_API_KEY"),
-                base_url=os.getenv("OPENAI_API_BASE", None) or None,
+                api_key=os.getenv('OPENAI_API_KEY'),
+                timeout=timeout_config
             )
             completion = client.chat.completions.create(
                 model=self.model_id,
@@ -329,6 +350,9 @@ class UnifiedModelHandler:
                     "temperature": self.model_params.temperature,
                     "top_p": self.model_params.top_p,
                 },
+                request_options={
+                    "timeout": self.GEMINI_TIMEOUT  # Use the dedicated Gemini timeout constant
+                }
             )
             text = resp.text
             return self._extract_json_from_text(text) if not self.custom_p else text
@@ -337,17 +361,29 @@ class UnifiedModelHandler:
 
 
     def _handle_caii_request(self, prompt: str):
-        """Original CAII implementation"""
+        """CAII implementation with proper timeout configuration (uses OpenAI SDK)"""
         try:
-            #API_KEY = json.load(open("/tmp/jwt"))["access_token"]
+            import httpx
+            from openai import OpenAI
+            
             API_KEY = _get_caii_token()
             MODEL_ID = self.model_id
             caii_endpoint = self.caii_endpoint
             
             caii_endpoint = caii_endpoint.removesuffix('/chat/completions')
+            
+            # Configure timeout for CAII client (same as OpenAI since it uses OpenAI SDK v1.57.2)
+            timeout_config = httpx.Timeout(
+                connect=self.OPENAI_CONNECT_TIMEOUT,
+                read=self.OPENAI_READ_TIMEOUT,
+                write=10.0,
+                pool=5.0
+            )
+            
             client_ca = OpenAI(
                 base_url=caii_endpoint,
                 api_key=API_KEY,
+                timeout=timeout_config  # Use the comprehensive timeout configuration
             )
 
             completion = client_ca.chat.completions.create(
