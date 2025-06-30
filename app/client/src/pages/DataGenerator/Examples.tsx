@@ -9,14 +9,14 @@ import { useMutation } from "@tanstack/react-query";
 import { useFetchExamples } from '../../api/api';
 import TooltipIcon from '../../components/TooltipIcon';
 import PCModalContent from './PCModalContent';
-import { File, QuestionSolution, WorkflowType } from './types';
+import { ExampleType, File, QuestionSolution, WorkflowType } from './types';
 import FileSelectorButton from './FileSelectorButton';
 
-import { fetchFileContent } from './hooks';
+import { fetchFileContent, getExampleType, useGetExamplesByUseCase } from './hooks';
 import { useState } from 'react';
 import FreeFormExampleTable from './FreeFormExampleTable';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const Container = styled.div`
     padding-bottom: 10px
 `
@@ -48,10 +48,7 @@ const StyledContainer = styled.div`
 
 const MAX_EXAMPLES = 5;
 
-enum ExampleType {
-  FREE_FORM = 'freeform',
-  PROMPT_COMPLETION = 'promptcompletion'
-}
+
 
 const Examples: React.FC = () => {
     const form = Form.useFormInstance();
@@ -90,13 +87,13 @@ const Examples: React.FC = () => {
             title: 'Prompts',
             dataIndex: 'question',
             ellipsis: true,
-            render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.question}</>
+            render: (_text: QuestionSolution, record: QuestionSolution) => <Text>{record.question}</Text>
         },
         {
             title: 'Completions',
             dataIndex: 'solution',
             ellipsis: true,
-            render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.solution}</>
+            render: (_text: QuestionSolution, record: QuestionSolution) => <Text>{record.solution}</Text>
         },
         {
             title: 'Actions',
@@ -178,13 +175,24 @@ const Examples: React.FC = () => {
                         />
                     </Flex>
             )
-        }},
+        }
+    },
     ];
     const dataSource = Form.useWatch('examples', form);
-    const { data: examples, loading: examplesLoading } = useFetchExamples(form.getFieldValue('use_case'));
+    const { examples, exmpleFormat, isLoading: examplesLoading } = 
+        useGetExamplesByUseCase(form.getFieldValue('use_case'));
+    
+    // update examples
     if (!dataSource && examples) {
-        form.setFieldValue('examples', examples.examples)
+        form.setFieldValue('examples', examples)
     }
+    useEffect(() => {
+        if (!isEmpty(examples) && !isEmpty(exmpleFormat)) {
+            setExampleType(exmpleFormat as ExampleType);
+            form.setFieldValue('examples', examples || []);
+        }
+    }, [examples, exmpleFormat]);
+    
     const rowLimitReached = form.getFieldValue('examples')?.length === MAX_EXAMPLES;
     const workflowType = form.getFieldValue('workflow_type');
 
@@ -299,6 +307,8 @@ const Examples: React.FC = () => {
             </Header>
             {exampleType === ExampleType.FREE_FORM && !isEmpty(mutation.data) && 
               <FreeFormExampleTable  data={mutation.data}/>}
+            {exampleType === ExampleType.FREE_FORM && form.getFieldValue('use_case') === 'lending_data' && 
+              <FreeFormExampleTable  data={form.getFieldValue('examples')}/>}  
             {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && !isEmpty(values.examples) && 
               <FreeFormExampleTable  data={values.examples}/>}  
             {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && isEmpty(values.examples) &&

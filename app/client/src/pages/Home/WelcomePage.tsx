@@ -1,4 +1,5 @@
-import { Button, Col, Flex, Layout, Row, Image } from 'antd';
+import toString from 'lodash/toString';
+import { Button, Col, Flex, Layout, Row, Image, Checkbox } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import SDGIcon from '../../assets/sdg-landing.svg';
@@ -106,6 +107,16 @@ const InfoSection = styled.div`
 `;
 
 const WelcomePage: React.FC = () => {
+    interface CheckboxChangeEvent {
+        target: {
+            checked: boolean;
+        };
+    }
+
+    const onChange = (e: CheckboxChangeEvent) => {
+        const checked = e.target.checked;
+        window.localStorage.setItem('sds_mute_welcome_page', toString(checked));
+    }
 
     return (
         <Layout>
@@ -148,6 +159,10 @@ const WelcomePage: React.FC = () => {
                         <br/>
                         <Flex style={{ marginTop: '32px' }}>
                             <Button type="primary" href="/home">Get Started</Button>
+
+                            <div style={{ marginLeft: '24px', marginTop: '8px' }}>
+                                <Checkbox onChange={onChange}>{`Don't show me this again`}</Checkbox>
+                            </div>
                         </Flex>
                     </LeftSection>
                     </Col>

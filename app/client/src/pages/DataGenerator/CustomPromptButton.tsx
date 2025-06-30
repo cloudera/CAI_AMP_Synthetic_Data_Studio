@@ -59,7 +59,6 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
   const [showModal, setShowModal] = useState(false);
   const [disabled, setDisabled] = useState(false);
   const custom_prompt_instructions = Form.useWatch('custom_prompt_instructions', { form, preserve: true });
-  console.log('custom_prompt_instructions', custom_prompt_instructions);
 
   const mutation = useMutation({
     mutationFn: fetchCustomPrompt
