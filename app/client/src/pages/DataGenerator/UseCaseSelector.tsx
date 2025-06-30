@@ -10,18 +10,15 @@ interface Props {}
 const UseCaseSelector: FunctionComponent<Props> = () => {
   const [useCases, setUseCases] = useState<UseCase[]>([]);
   const useCasesReq = useGetUseCases();  
-  console.log('useCasesReq', useCasesReq);
 
   useEffect(() => {
     if (useCasesReq.data) {
-        console.log('useCasesReq.data', useCasesReq.data);
         let _useCases = get(useCasesReq, 'data.usecases', []);
         _useCases = _useCases.map((useCase: any) => ({ 
             ...useCase,
             label: useCase.name, 
             value: useCase.id 
         }));
-        console.log('_useCases', _useCases);
         setUseCases(_useCases);
     }
   }, [useCasesReq.data]);
@@ -34,7 +31,7 @@ const UseCaseSelector: FunctionComponent<Props> = () => {
         rules={[
             { required: true }
         ]}
-        tooltip='A specialize template for generating your dataset'
+        tooltip='A specialized template for generating your dataset'
         labelCol={{
             span: 8
         }}
