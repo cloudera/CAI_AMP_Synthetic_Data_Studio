@@ -162,7 +162,7 @@ const WelcomePage: React.FC = () => {
                         <Flex style={{ marginTop: '32px' }}>
                             <Button type="primary" href="/home">Get Started</Button>
 
-                            <div>
+                            <div style={{ marginLeft: '24px' }}>
                                 <Checkbox onChange={onChange}>{`Don't show me this again`}</Checkbox>
                             </div>
                         </Flex>

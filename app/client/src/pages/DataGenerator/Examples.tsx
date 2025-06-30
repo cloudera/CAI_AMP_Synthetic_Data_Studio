@@ -181,6 +181,7 @@ const Examples: React.FC = () => {
         }},
     ];
     const dataSource = Form.useWatch('examples', form);
+    console.log('dataSource:', dataSource);
     const { data: examples, loading: examplesLoading } = useFetchExamples(form.getFieldValue('use_case'));
     if (!dataSource && examples) {
         form.setFieldValue('examples', examples.examples)

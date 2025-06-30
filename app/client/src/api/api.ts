@@ -18,6 +18,7 @@ export const usefetchTopics = (useCase: string): UseFetchApiReturn<FetchTopicsRe
 }
 
 export const useFetchExamples = (useCase: string): UseFetchApiReturn<FetchExamplesResp> => {
+    console.log('useFetchExamples', useCase);
     const url = `${baseUrl}/${isEmpty(useCase) ? 'custom' : useCase}/gen_examples`;
     return useFetch(url);
 }
