@@ -16,7 +16,7 @@ import { fetchFileContent } from './hooks';
 import { useState } from 'react';
 import FreeFormExampleTable from './FreeFormExampleTable';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const Container = styled.div`
     padding-bottom: 10px
 `
@@ -104,13 +104,13 @@ const Examples: React.FC = () => {
             title: 'Prompts',
             dataIndex: 'question',
             ellipsis: true,
-            render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.question}</>
+            render: (_text: QuestionSolution, record: QuestionSolution) => <Text>{record.question}</Text>
         },
         {
             title: 'Completions',
             dataIndex: 'solution',
             ellipsis: true,
-            render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.solution}</>
+            render: (_text: QuestionSolution, record: QuestionSolution) => <Text>{record.solution}</Text>
         },
         {
             title: 'Actions',
@@ -192,7 +192,8 @@ const Examples: React.FC = () => {
                         />
                     </Flex>
             )
-        }},
+        }
+    },
     ];
     const dataSource = Form.useWatch('examples', form);
     console.log('dataSource:', dataSource);
@@ -203,8 +204,10 @@ const Examples: React.FC = () => {
         form.setFieldValue('examples', examples.examples)
     }
     if (dataSource && form.getFieldValue('use_case') === 'text2sql') {
+        console.log('---text2sql -1');
         const _exampleType = getExampleType(dataSource);
         setExampleType(_exampleType === ExampleType.PROMPT_COMPLETION ? ExampleType.PROMPT_COMPLETION : ExampleType.FREE_FORM);
+        console.log('---text2sql -2');
     }
     if (examples && form.getFieldValue('use_case') === 'lending_data') {
         const _exampleType = getExampleType(dataSource);
@@ -237,8 +240,8 @@ const Examples: React.FC = () => {
         span: 10
     };
     console.log('use_case', form.getFieldValue('use_case'));
-    console.log('exampleType', exampleType);
-    console.log('dataSource', dataSource);
+    console.log('+exampleType', exampleType);
+    console.log('--------------------------dataSource', dataSource);
 
     return (
         <Container>
