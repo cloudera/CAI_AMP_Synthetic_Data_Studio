@@ -202,6 +202,10 @@ const Examples: React.FC = () => {
     if (!dataSource && examples) {
         form.setFieldValue('examples', examples.examples)
     }
+    if (dataSource && form.getFieldValue('use_case') === 'text2sql') {
+        const _exampleType = getExampleType(dataSource);
+        setExampleType(_exampleType === ExampleType.PROMPT_COMPLETION ? ExampleType.PROMPT_COMPLETION : ExampleType.FREE_FORM);
+    }
     if (examples && form.getFieldValue('use_case') === 'lending_data') {
         const _exampleType = getExampleType(dataSource);
         console.log('_exampleType', _exampleType);
