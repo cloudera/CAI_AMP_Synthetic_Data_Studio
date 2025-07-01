@@ -203,8 +203,10 @@ const Examples: React.FC = () => {
         form.setFieldValue('examples', examples.examples)
     }
     if (examples && form.getFieldValue('use_case') === 'lending_data') {
-        const _exampleType = getExampleType(dataSource)
+        const _exampleType = getExampleType(dataSource);
+        console.log('_exampleType', _exampleType);
         if (_exampleType === ExampleType.PROMPT_COMPLETION) {
+             console.log('setting examples.....');
             form.setFieldValue('examples', examples.examples);
             setExampleType(ExampleType.FREE_FORM)
         }   
@@ -230,6 +232,9 @@ const Examples: React.FC = () => {
     const labelCol = {
         span: 10
     };
+    console.log('use_case', form.getFieldValue('use_case'));
+    console.log('exampleType', exampleType);
+    console.log('dataSource', dataSource);
 
     return (
         <Container>
