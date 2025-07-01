@@ -53,6 +53,20 @@ enum ExampleType {
   PROMPT_COMPLETION = 'promptcompletion'
 }
 
+const getExampleType = (data: object[]) => {
+    if (!isEmpty(data)) {
+        const row = first(data);
+        console.log('row', row);
+        const keys = Object.keys(row as object);
+        console.log('keys', keys);
+        if (keys.length === 2) {
+            return ExampleType.PROMPT_COMPLETION;
+        }
+        return ExampleType.FREE_FORM;
+    }
+    return null;    
+}
+
 const Examples: React.FC = () => {
     const form = Form.useFormInstance();
     const [exampleType, setExampleType] = useState(ExampleType.PROMPT_COMPLETION);
@@ -183,8 +197,16 @@ const Examples: React.FC = () => {
     const dataSource = Form.useWatch('examples', form);
     console.log('dataSource:', dataSource);
     const { data: examples, loading: examplesLoading } = useFetchExamples(form.getFieldValue('use_case'));
+    console.log('examples:', examples);
+    // update examples
     if (!dataSource && examples) {
         form.setFieldValue('examples', examples.examples)
+    }
+    if (examples && form.getFieldValue('use_case') === 'lending_data') {
+        const _exampleType = getExampleType(dataSource)
+        if (_exampleType === ExampleType.PROMPT_COMPLETION) {
+            form.setFieldValue('examples', examples.examples);
+        }   
     }
     const rowLimitReached = form.getFieldValue('examples')?.length === MAX_EXAMPLES;
     const workflowType = form.getFieldValue('workflow_type');
