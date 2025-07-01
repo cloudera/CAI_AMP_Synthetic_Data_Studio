@@ -209,7 +209,9 @@ const Examples: React.FC = () => {
         setExampleType(_exampleType === ExampleType.PROMPT_COMPLETION ? ExampleType.PROMPT_COMPLETION : ExampleType.FREE_FORM);
         console.log('---text2sql -2');
     }
-    if (examples && form.getFieldValue('use_case') === 'lending_data') {
+    // credit_card_data
+    if (examples && (form.getFieldValue('use_case') === 'lending_data' || 
+        form.getFieldValue('use_case') === 'credit_card_data' )) {
         const _exampleType = getExampleType(dataSource);
         console.log('_exampleType', _exampleType);
         if (_exampleType === ExampleType.PROMPT_COMPLETION) {
