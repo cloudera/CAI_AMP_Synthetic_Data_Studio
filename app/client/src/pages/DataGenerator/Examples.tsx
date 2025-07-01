@@ -206,6 +206,7 @@ const Examples: React.FC = () => {
         const _exampleType = getExampleType(dataSource)
         if (_exampleType === ExampleType.PROMPT_COMPLETION) {
             form.setFieldValue('examples', examples.examples);
+            setExampleType(ExampleType.FREE_FORM)
         }   
     }
     const rowLimitReached = form.getFieldValue('examples')?.length === MAX_EXAMPLES;
@@ -322,6 +323,8 @@ const Examples: React.FC = () => {
             </Header>
             {exampleType === ExampleType.FREE_FORM && !isEmpty(mutation.data) && 
               <FreeFormExampleTable  data={mutation.data}/>}
+            {exampleType === ExampleType.FREE_FORM && form.getFieldValue('use_case') === 'lending_data' && 
+              <FreeFormExampleTable  data={form.getFieldValue('examples')}/>}  
             {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && !isEmpty(values.examples) && 
               <FreeFormExampleTable  data={values.examples}/>}  
             {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && isEmpty(values.examples) &&
