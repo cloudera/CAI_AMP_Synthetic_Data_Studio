@@ -994,7 +994,7 @@ class SynthesisService:
             mode_suffix = "test" if is_demo else "final"
             model_name = get_model_family(request.model_id).split('.')[-1]
             file_path = f"freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
-
+            
             # Save partial results if we have any data
             if final_output:
                 # Transform output
@@ -1105,10 +1105,11 @@ class SynthesisService:
                     "export_path": {'local': file_path}
                 }
             else:
-                job_status = "ENGINE_SUCCEEDED"
-                generate_file_name = os.path.basename(file_path)
+                job_status = "ENGINE_SUCCEEDED" if final_output else "ENGINE_FAILED"
+                generate_file_name = os.path.basename(file_path) if final_output else ''
+                final_output_path = file_path if final_output else ''
                 
-                self.db.update_job_generate(job_name, generate_file_name, file_path, timestamp, job_status)
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
                 self.db.backup_and_restore_db()
                 return {
                     "status": "completed" if final_output else "failed",
@@ -1118,14 +1119,20 @@ class SynthesisService:
             raise
             
         except Exception as e:
-            # Initialize variables for exception handling
-            timestamp = datetime.now(timezone.utc).isoformat()
-            time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
-            mode_suffix = "test" if is_demo else "final"
-            model_name = get_model_family(request.model_id).split('.')[-1]
-            file_path = f"freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
+            # Initialize variables for exception handling if they don't exist
+            if 'timestamp' not in locals():
+                timestamp = datetime.now(timezone.utc).isoformat()
+            if 'time_file' not in locals():
+                time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
+            if 'mode_suffix' not in locals():
+                mode_suffix = "test" if is_demo else "final"
+            if 'model_name' not in locals():
+                model_name = get_model_family(request.model_id).split('.')[-1]
+            if 'file_path' not in locals():
+                file_path = f"freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
             
-            # Save partial results if any exist before failing
+            # Try to save partial results if any exist before failing
+            saved_partial_results = False
             if 'final_output' in locals() and final_output:
                 try:
                     # Transform output
@@ -1136,7 +1143,8 @@ class SynthesisService:
                     
                     with open(file_path, "w") as f:
                         json.dump(final_output, indent=2, fp=f)
-                    self.logger.info(f"Saved {len(final_output)} results to {file_path} before failing")
+                    saved_partial_results = True
+                    self.logger.info(f"Saved {len(final_output)} partial results to {file_path} before failing")
                 except Exception as save_error:
                     self.logger.error(f"Failed to save partial results: {str(save_error)}")
             
@@ -1145,11 +1153,17 @@ class SynthesisService:
             if is_demo:
                 raise APIError(str(e))
             else:
-                time_stamp = datetime.now(timezone.utc).isoformat()
                 job_status = "ENGINE_FAILED"
-                file_name = ''
-                output_path = ''
-                self.db.update_job_generate(job_name, file_name, output_path, time_stamp, job_status)
+                if saved_partial_results:
+                    # Update with actual file information for partial results
+                    generate_file_name = os.path.basename(file_path)
+                    final_output_path = file_path
+                else:
+                    # No results saved, use empty values
+                    generate_file_name = ''
+                    final_output_path = ''
+                
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
                 raise
 
     def get_health_check(self) -> Dict:
