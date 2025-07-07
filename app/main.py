@@ -1420,13 +1420,22 @@ async def perform_upgrade():
 
         # 2. Database migrations
         try:
-            db_success, db_message = await alembic_manager.handle_database_upgrade()
-            if db_success:
-                db_upgraded = True
-                messages.append(db_message)
-            else:
-                messages.append(f"Database upgrade failed: {db_message}")
-                raise HTTPException(status_code=500, detail=db_message)
+            # In your upgrade endpoint, you can add this debug line:
+            print(f"Current working directory: {os.getcwd()}")
+            print(f"Alembic.ini exists: {os.path.exists('alembic.ini')}")
+            print("--- Starting database migration via external script ---")
+            # Use `uv run` to ensure the script runs within the project's virtual environment
+            # This is more robust than just calling 'python'
+            result = subprocess.run(
+                ["uv", "run", "python", "run_migrations.py"],
+                capture_output=True,
+                text=True,
+                check=True  # This will raise CalledProcessError on failure
+            )
+            
+            print(result.stdout) # Log the output from the script
+            db_upgraded = True
+            messages.append("Database migration check completed successfully.")
         except Exception as e:
             messages.append(f"Database migration failed: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
