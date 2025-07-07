@@ -773,6 +773,7 @@ async def get_use_cases():
             {"id": UseCase.CUSTOM, "name": "Custom"},
             {"id": UseCase.LENDING_DATA, "name": "Lending Data"},
             {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data"},
+            {"id": UseCase.TICKETING_DATASET, "name": "Ticketing Dataset"},
         ]
     }
 
