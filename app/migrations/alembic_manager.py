@@ -1,61 +1,84 @@
 # app/migrations/alembic_manager.py
-from alembic.config import Config
-from alembic import command
-from alembic.script import ScriptDirectory
-from alembic.runtime.migration import MigrationContext
-from pathlib import Path
-import os
-from sqlalchemy import create_engine
+import subprocess
 
 class AlembicMigrationManager:
     def __init__(self, db_path: str = None):
-        """Initialize Alembic with the same database path as DatabaseManager"""
-        self.app_path = Path(__file__).parent.parent.parent
-        
-        if db_path is None:
-            db_path = os.path.join(self.app_path,  "metadata.db")
-        self.db_path = db_path
-        
-        # Initialize Alembic config
-        self.alembic_cfg = Config(str(self.app_path / "alembic.ini"))
-        self.alembic_cfg.set_main_option('script_location', str(self.app_path / "alembic"))
-        self.alembic_cfg.set_main_option('sqlalchemy.url', f'sqlite:///{db_path}')
-        
-        # Create engine for version checks
-        self.engine = create_engine(f'sqlite:///{db_path}')
-
-    async def get_db_version(self) -> str:
-        """Get current database version"""
-        with self.engine.connect() as conn:
-            context = MigrationContext.configure(conn)
-            return context.get_current_revision()
+        """Initialize with database path (kept for interface compatibility)"""
+        self.db_path = db_path or "metadata.db"
 
     async def handle_database_upgrade(self) -> tuple[bool, str]:
         """
-        Handle database migrations carefully to avoid disrupting existing data
+        Simple database migration using alembic upgrade head
+        No directory changes needed - already in project root
         """
         try:
-            # First check if alembic_version table exists
-            try:
-                version = await self.get_db_version()
-                if version is None:
-                    # Database exists but no alembic version - stamp current
-                    command.stamp(self.alembic_cfg, "head")
-                    return True, "Existing database stamped with current version"
-            except Exception:
-                # No alembic_version table - stamp current
-                command.stamp(self.alembic_cfg, "head")
-                return True, "Existing database stamped with current version"
+            # Run upgrade head - we're already in the right directory
+            result = subprocess.run(
+                ["alembic", "upgrade", "head"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
             
-            # Now check for and apply any new migrations
-            script = ScriptDirectory.from_config(self.alembic_cfg)
-            head_revision = script.get_current_head()
-            
-            if version != head_revision:
-                command.upgrade(self.alembic_cfg, "head")
-                return True, "Database schema updated successfully"
-            
-            return True, "Database schema is up to date"
-
+            # Check if anything was actually upgraded
+            if "Running upgrade" in result.stdout:
+                return True, f"Database upgraded successfully: {result.stdout.strip()}"
+            else:
+                return True, "Database is already up to date"
+                
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr or e.stdout or str(e)
+            return False, f"Database upgrade failed: {error_msg}"
         except Exception as e:
             return False, f"Error during database upgrade: {str(e)}"
+
+    async def get_migration_status(self) -> dict:
+        """Get detailed migration status for debugging"""
+        try:
+            # Get current version
+            current_result = subprocess.run(
+                ["alembic", "current"], 
+                capture_output=True, 
+                text=True,
+                check=True
+            )
+            
+            # Get head version  
+            head_result = subprocess.run(
+                ["alembic", "show", "head"], 
+                capture_output=True, 
+                text=True,
+                check=True
+            )
+            
+            return {
+                "current": current_result.stdout.strip(),
+                "head": head_result.stdout.strip(),
+                "status": "ready"
+            }
+            
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr or e.stdout or str(e)
+            return {"error": f"Command failed: {error_msg}", "status": "error"}
+        except Exception as e:
+            return {"error": str(e), "status": "error"}
+
+    async def get_current_version(self) -> str:
+        """Get current database version using alembic current command"""
+        try:
+            result = subprocess.run(
+                ["alembic", "current"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            # Extract just the version ID from output like "2b4e8d9f6c3a (head)"
+            import re
+            match = re.search(r'([a-f0-9]{12})', result.stdout)
+            return match.group(1) if match else "none"
+            
+        except subprocess.CalledProcessError:
+            return "none"
+        except Exception:
+            return "unknown"
