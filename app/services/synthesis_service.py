@@ -1093,7 +1093,8 @@ class SynthesisService:
                 'input_path': input_path_str,
                 'input_key': request.input_key,
                 'output_key': request.output_key,
-                'output_value': request.output_value
+                'output_value': request.output_value,
+                'completed_rows': len(final_output) if final_output else 0
             }
             
             if is_demo:
@@ -1109,7 +1110,7 @@ class SynthesisService:
                 generate_file_name = os.path.basename(file_path) if final_output else ''
                 final_output_path = file_path if final_output else ''
                 
-                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status, len(final_output) if final_output else 0)
                 self.db.backup_and_restore_db()
                 return {
                     "status": "completed" if final_output else "failed",
@@ -1157,13 +1158,14 @@ class SynthesisService:
                 if saved_partial_results:
                     # Update with actual file information for partial results
                     generate_file_name = os.path.basename(file_path)
-                    final_output_path = file_path
+                    final_output_path = file_path   
+                    completed_rows = len(final_output) if final_output else 0
                 else:
                     # No results saved, use empty values
                     generate_file_name = ''
                     final_output_path = ''
-                
-                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
+                    completed_rows = 0
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status, completed_rows = completed_rows )
                 raise
 
     def get_health_check(self) -> Dict:

@@ -35,6 +35,7 @@ class GenerationMetadataModel(Base):
     job_name = Column(Text, unique=True)
     job_status = Column(Text)
     job_creator_name = Column(Text)
+    completed_rows = Column(Integer)
 
 class EvaluationMetadataModel(Base):
     __tablename__ = 'evaluation_metadata'
