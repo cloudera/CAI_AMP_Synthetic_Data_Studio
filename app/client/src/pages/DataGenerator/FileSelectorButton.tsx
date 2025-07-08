@@ -9,9 +9,10 @@ interface Props {
   onAddFiles: (files: File[]) => void;
   workflowType: WorkflowType;
   label?: string;
+  enableJsonFiles?: boolean;
 }
 
-const FileSelectorButton: React.FC<Props> = ({ onAddFiles, workflowType, label }) => {
+const FileSelectorButton: React.FC<Props> = ({ onAddFiles, workflowType, label, enableJsonFiles }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
@@ -43,7 +44,7 @@ const FileSelectorButton: React.FC<Props> = ({ onAddFiles, workflowType, label }
           onOk={() => onFinish()}
           width="60%"
         >
-          <FilesTable onSelectedRows={onSelectedRows} workflowType={workflowType} />
+          <FilesTable onSelectedRows={onSelectedRows} workflowType={workflowType} enableJsonFiles={enableJsonFiles} />
         </Modal>
       )}
     </>

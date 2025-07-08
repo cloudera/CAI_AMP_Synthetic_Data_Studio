@@ -19,6 +19,7 @@ interface Props {
   workflowType: WorkflowType;
   files: File[];
   onSelectedRows: (selectedRows: File[]) => void;
+  enableJsonFiles?: boolean;
 }
 
 const StyledTable = styled(Table)`
@@ -79,7 +80,7 @@ export const getSelectedRows = (fileSelectionMap: FileSelectionMap) => {
 }
 
 
-const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType }) => {
+const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType, enableJsonFiles }) => {
   const [paths, setPaths] = useState<string[] | null>(null);
   const [path, setPath] = useState<string | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -105,6 +106,9 @@ const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType }) => {
   const isSelectionDisabled = (record: File) => {
     if (isDirectory(record)) {
       return true;
+    }
+    if (enableJsonFiles) {
+      return false;
     }
 
     if (workflowType === WorkflowType.SUPERVISED_FINE_TUNING) {

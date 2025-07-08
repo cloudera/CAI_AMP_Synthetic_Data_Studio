@@ -20,6 +20,7 @@ import FileSelectorButton from './FileSelectorButton';
 import { useMutation } from '@tanstack/react-query';
 import first from 'lodash/first';
 import ResetIcon from './ResetIcon';
+import SeedInstructionTable from './SeedInstructionTable';
 
 const { Title } = Typography;
 
@@ -419,9 +420,10 @@ const Prompt = () => {
                             
                         </SeedsFormItem>
                         <div style={{ marginTop: '40px'}}>
-                            <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} />
+                            <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} enableJsonFiles={true} />
                         </div>
                         </Flex>
+                        <SeedInstructionTable form={form} topics={items || []} selelectedTopics={selectedTopics || []} />
                         <StyledFormItem
                             name='num_questions'
                             label={<FormLabel level={4}>{'Entries Per Seed'}</FormLabel>}
