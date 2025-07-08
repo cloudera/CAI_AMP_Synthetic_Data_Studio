@@ -12,6 +12,10 @@ import EvaluationDetailsPage from "./pages/EvaluationDetails/EvaluationDetailsPa
 //import TelemetryDashboard from "./components/TelemetryDashboard";
 
 
+const isWelcomePageMuted = () => {
+  return  window.localStorage.getItem('sds_mute_welcome_page') === 'true';
+}
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -19,7 +23,9 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/', // Redirect root to Pages.WELCOME
-        element: <Navigate to={Pages.WELCOME} replace />,
+        element: isWelcomePageMuted() ? <HomePage key={Pages.HOME}/> :
+        <Navigate to={Pages.WELCOME} replace />,
+        errorElement: <ErrorPage />
       },
       { 
         path: Pages.HOME, 

@@ -10,6 +10,7 @@ import { MODEL_PROVIDER_LABELS } from './constants';
 import { ModelProviders, ModelProvidersDropdownOpts } from './types';
 import { useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
+import UseCaseSelector from './UseCaseSelector';
 
 
 const StepContainer = styled(Flex)`
@@ -224,24 +225,7 @@ const Configure = () => {
                 </Form.Item>
                 {(formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
                  formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) && 
-                <Form.Item
-                    name='use_case'
-                    label='Template'
-                    rules={[
-                        { required: true }
-                    ]}
-                    tooltip='A specialize template for generating your dataset'
-                    labelCol={labelCol}
-                    shouldUpdate
-                >
-                    <Select placeholder={'Select a template'}>
-                        {USECASE_OPTIONS.map(option => 
-                            <Select.Option key={option.value} value={option.value}>
-                                {option.label}
-                            </Select.Option>
-                        )}
-                    </Select>
-                </Form.Item>}
+                 <UseCaseSelector />}
 
                 {(
                     formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 

@@ -1,10 +1,12 @@
-import { Button, Col, Flex, Layout, Row, Image } from 'antd';
+import toString from 'lodash/toString';
+import { Button, Col, Flex, Layout, Row, Image, Checkbox } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import SDGIcon from '../../assets/sdg-landing.svg';
 import LightBulbIcon from '../../assets/ic-lightbulb.svg';
 import QueryPromptIcon from '../../assets/ic-query-prompt.svg';
 import NumbersIcon from '../../assets/ic-numbers.svg';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 const { Content } = Layout;
 
@@ -107,6 +109,11 @@ const InfoSection = styled.div`
 
 const WelcomePage: React.FC = () => {
 
+    const onChange = (e: CheckboxChangeEvent) => {
+        const checked = e.target.checked;
+        window.localStorage.setItem('sds_mute_welcome_page', toString(checked));
+    }
+
     return (
         <Layout>
             <StyledContent>
@@ -148,6 +155,10 @@ const WelcomePage: React.FC = () => {
                         <br/>
                         <Flex style={{ marginTop: '32px' }}>
                             <Button type="primary" href="/home">Get Started</Button>
+
+                            <div style={{ marginLeft: '24px', marginTop: '8px' }}>
+                                <Checkbox onChange={onChange}>{`Don't show me this again`}</Checkbox>
+                            </div>
                         </Flex>
                     </LeftSection>
                     </Col>
