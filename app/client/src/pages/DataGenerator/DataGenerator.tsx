@@ -108,6 +108,7 @@ const DataGenerator: FunctionComponent<Props> = ({ mode }) => {
     
     // Data passed from listing table to prepopulate form
     const location = useLocation();
+    console.log('DataGenerator location: ', location);
     const { generate_file_name } = useParams();
     const initialData = location?.state?.data;
     const mutation = useMutation({

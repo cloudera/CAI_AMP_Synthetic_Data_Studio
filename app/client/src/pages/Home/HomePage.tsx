@@ -117,8 +117,8 @@ const HomePage: React.FC = () => {
                             </div>
                         </div>
                     </HeaderSection>
-                    <HeaderSection>
-                        <div className="left-section">
+                    <HeaderSection style={{ marginLeft: '1rem' }}>
+                        <div className="left-section" style={{ padding: '5px' }}>
                             <img src={DataAugmentationIcon} alt="Datasets" />
                         </div>
                         <div className="middle-section">

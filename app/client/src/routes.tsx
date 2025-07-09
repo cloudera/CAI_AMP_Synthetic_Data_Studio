@@ -40,7 +40,7 @@ const router = createBrowserRouter([
         loader: async () => null
       },
       { 
-        path: Pages.GENERATOR, 
+        path: Pages.DATA_AUGMENTATION, 
         element: <DataGenerator key={Pages.DATA_AUGMENTATION} mode={WizardModeType.DATA_AUGMENTATION}/>, 
         errorElement: <ErrorPage />,
         loader: async () => null
