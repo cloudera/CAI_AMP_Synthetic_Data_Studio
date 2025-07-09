@@ -17,6 +17,7 @@ class UseCase(str, Enum):
     LENDING_DATA = "lending_data"
     #HOUSING_DATA = "housing_data"
     CREDIT_CARD_DATA = "credit_card_data"
+    TICKETING_DATASET = "ticketing_dataset"
 
 class Technique(str, Enum):
     SFT = "sft"
@@ -595,9 +596,46 @@ USE_CASE_CONFIGS = {
 
     """,
 
-    schema=None
+        schema=None
     ),
-}
+
+    UseCase.TICKETING_DATASET: UseCaseMetadata(
+        name="Ticketing Dataset",
+        description= "Synthetic dataset for ticketing system ",
+        topics=["Technical Issues", "Billing Queries", "Payment queries"],
+        default_examples=[
+    {
+        "Prompt": "I have received this message that I owe $300 and I was instructed to pay the bill online. I already paid this amount and I am wondering why I received this message.",
+        "Completion": "report_payment_issue"
+    },
+    {
+        "Prompt": "I will not be able to attend the presentation and would like to cancel my rsvp.",
+        "Completion": "cancel_ticket"
+    },
+    {
+        "Prompt": "I am having questions regarding the exact time, location, and requirements of the event and would like to talk to customer service.",
+        "Completion": "Customer_service"
+    }
+    ]
+    ,
+        prompt= """
+            Generate authentic customer support ticket interactions that have a user query and system response. 
+    For each user query, the system generates a keyword that is used to forward the user to the specific subsystem.
+    Requirements for user queries:
+    - Use professional, respectful language
+    - Follow standard customer service best practices
+    Each response should be a single id from the following list:
+    cancel_ticket,customer_service,report_payment_issue
+    Here are the explanations of the responses:
+    cancel_ticket means that the customer wants to cancel the ticket.
+    customer_service means that customer wants to talk to customer service.
+    report_payment_issue means that the customer is facing payment issues and wants to be forwarded to the billing department to resolve the issue. 
+
+            """,
+        schema=None
+        )
+    }
+
 
 
 USE_CASE_CONFIGS_EVALS = {
@@ -916,6 +954,43 @@ Points are accumulated based on the satisfaction of each criterion:
 
 
         Give a score rating 1-10 for the given data.  If there are more than 9 points to subtract use 1 as the absolute minimum scoring. List all justification as list.
+        """
+        ),
+        UseCase.TICKETING_DATASET: UseCaseMetadataEval(
+        name="Ticketing Dataset",
+        default_examples=[
+                {
+                    "score": 5,
+                    "justification": """
+                    The query is professionally written, respectful, and follows customer service best practices.
+                    The response 'report_payment_issue' is one of the allowed keywords.
+                    The matching between the query and response is perfect according to the provided definitions.
+
+        """},
+        {
+            "score": 3,
+        "justification": """
+        The query is professionally written and respectful.
+        The response 'cancel_ticket' is one of the allowed keywords.
+        While the response uses a valid keyword, it doesn't match the most appropriate category for the specific query content.
+        """
+        },
+
+            ],
+        prompt= """
+        You are given a user query for a ticketing support system and the system responses which is a keyword that is used to forward the user to the specific subsystem.
+        Evaluate whether the queries:
+        - Use professional, respectful language
+        - Follow standard customer service best practices
+        Evaluate whether the responses use only one of the the following keywords: cancel_ticket,customer_service,report_payment_issue
+        Evaluate whether the solutions and responses are correctly matched based on the following definitions:
+        cancel_ticket means that the customer wants to cancel the ticket.
+        customer_service means that customer wants to talk to customer service.
+        report_payment_issue means that the customer is facing payment issues and wants to be forwarded to the billing department to resolve the issue. 
+        Give a score of 1-5 based on the following instructions:
+        If the responses don’t match the four keywords give always value 1.
+        Rate the quality of the queries and responses based on the instructions give a rating between 1 to 5. 
+
         """
         )
 }

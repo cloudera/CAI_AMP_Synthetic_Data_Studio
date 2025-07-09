@@ -2,7 +2,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import Layout from "./Container";
 import DataGenerator from "./pages/DataGenerator";
 import HomePage from "./pages/Home";
-import { Pages } from "./types";
+import { Pages, WizardModeType } from "./types";
 import EvaluatorPage from "./pages/Evaluator";
 import ReevaluatorPage from "./pages/Evaluator/ReevaluatorPage";
 import DatasetDetailsPage from "./pages/DatasetDetails/DatasetDetailsPage";
@@ -12,6 +12,10 @@ import EvaluationDetailsPage from "./pages/EvaluationDetails/EvaluationDetailsPa
 //import TelemetryDashboard from "./components/TelemetryDashboard";
 
 
+const isWelcomePageMuted = () => {
+  return  window.localStorage.getItem('sds_mute_welcome_page') === 'true';
+}
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -19,7 +23,9 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/', // Redirect root to Pages.WELCOME
-        element: <Navigate to={Pages.WELCOME} replace />,
+        element: isWelcomePageMuted() ? <HomePage key={Pages.HOME}/> :
+        <Navigate to={Pages.WELCOME} replace />,
+        errorElement: <ErrorPage />
       },
       { 
         path: Pages.HOME, 
@@ -29,7 +35,13 @@ const router = createBrowserRouter([
       },
       { 
         path: Pages.GENERATOR, 
-        element: <DataGenerator key={Pages.GENERATOR}/>, 
+        element: <DataGenerator key={Pages.GENERATOR} mode={WizardModeType.DATA_GENERATION}/>, 
+        errorElement: <ErrorPage />,
+        loader: async () => null
+      },
+      { 
+        path: Pages.DATA_AUGMENTATION, 
+        element: <DataGenerator key={Pages.DATA_AUGMENTATION} mode={WizardModeType.DATA_AUGMENTATION}/>, 
         errorElement: <ErrorPage />,
         loader: async () => null
       },
