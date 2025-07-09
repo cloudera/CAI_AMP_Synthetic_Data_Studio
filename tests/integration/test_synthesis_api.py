@@ -48,8 +48,8 @@ def test_generate_endpoint_with_doc_paths():
         assert "export_path" in res_json
 
 def test_generation_history():
-    # Patch db_manager.get_paginated_generate_metadata to return dummy metadata with pagination info
-    db_manager.get_paginated_generate_metadata = lambda page, page_size: (
+    # Patch db_manager.get_paginated_generate_metadata_light to return dummy metadata with pagination info
+    db_manager.get_paginated_generate_metadata_light = lambda page, page_size: (
         1,  # total_count
         [{"generate_file_name": "qa_pairs_claude_20250210T170521148_test.json", 
           "timestamp": "2024-02-10T12:00:00", 
