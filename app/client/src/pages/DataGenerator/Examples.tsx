@@ -211,7 +211,7 @@ const Examples: React.FC = () => {
                 form.setFieldValue('examples', apiExamples || []);
             }
         }
-    }, [apiExamples, exmpleFormat, examples, isRegenerating, examples]);
+    }, [apiExamples, exmpleFormat, examples, isRegenerating]);
     
     const rowLimitReached = form.getFieldValue('examples')?.length === MAX_EXAMPLES;
     const workflowType = form.getFieldValue('workflow_type');
