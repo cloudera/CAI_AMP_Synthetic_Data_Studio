@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Col, Divider, Form, InputNumber, Row, Slider, Typography } from 'antd';
 import { merge } from 'lodash';
 import styled from 'styled-components';
+import { useLocation } from 'react-router-dom';
 
 import { useFetchDefaultModelParams } from '../../api/api';
 import { LABELS } from '../../constants';
@@ -27,6 +28,10 @@ const ParamLabel = styled(Typography)`
 
 const Parameters = () => {
     const form = Form.useFormInstance()
+    const location = useLocation();
+
+    // Check if this is a regeneration scenario
+    const isRegenerating = location.state?.data || location.state?.internalRedirect;
 
     const MODEL_PARAM_DEFAULTS = useRef({
         temperature: {
@@ -58,7 +63,8 @@ const Parameters = () => {
     const formData = form.getFieldsValue(true);
     const [values, setValues] = useState(formData?.model_parameters);
 
-    const { data: defaultParams } = useFetchDefaultModelParams();
+    // Only fetch default params if we're NOT regenerating
+    const { data: defaultParams } = useFetchDefaultModelParams(!isRegenerating);
 
     useEffect(() => {
         if (!isEmpty(formData?.model_parameters)) {
@@ -67,7 +73,8 @@ const Parameters = () => {
     }, [formData?.model_parameters]);
 
     useEffect(() => {
-        if (defaultParams && !formData.model_parameters) {
+        // Only set defaults for new datasets, not during regeneration
+        if (!isRegenerating && defaultParams && !formData.model_parameters) {
             // Set ref to be use to define min/max for each formItem
             MODEL_PARAM_DEFAULTS.current = merge(MODEL_PARAM_DEFAULTS.current, defaultParams.parameters);
             // Create the data structure to set the default value for each form item.
@@ -77,8 +84,7 @@ const Parameters = () => {
             setValues(defaultValues)
             form.setFieldValue('model_parameters', defaultValues)
         }
-
-    }, [defaultParams]);
+    }, [defaultParams, isRegenerating]);
 
     // Update both InputNumber and Slider together
     const handleValueChange = (field: string, value: string | number | null) => {

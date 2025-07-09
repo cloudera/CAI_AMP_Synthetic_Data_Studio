@@ -3,7 +3,7 @@ import { SyntheticEvent, useEffect } from "react";
 import { Badge, Col, Flex, Input, notification, Row, Table, TableProps } from "antd";
 import styled from "styled-components";
 import Paragraph from 'antd/es/typography/Paragraph';
-import { JOB_EXECUTION_TOTAL_COUNT_THRESHOLD, TRANSLATIONS } from '../../constants';
+import { JOB_EXECUTION_TOTAL_COUNT_THRESHOLD } from '../../constants';
 import { useEvaluations } from "./hooks";
 import { Evaluation } from "./types";
 import { sortItemsByKey } from "../../utils/sortutils";
@@ -15,6 +15,7 @@ import EvaluateActions from "./EvaluateActions";
 import { getColorCode } from "../Evaluator/util";
 import { JobStatus } from "../../types";
 import JobStatusIcon from "../../components/JobStatus/jobStatusIcon";
+import { useUseCaseMapping } from "../../api/hooks";
 
 const { Search } = Input;
 
@@ -55,6 +56,7 @@ const StyledParagraph = styled(Paragraph)`
 
 const EvaluationsTab: React.FC = () => {
     const { data, isLoading, isError, refetch, setSearchQuery, pagination } = useEvaluations();
+    const { getUseCaseName } = useUseCaseMapping();
 
     useEffect(() => {
         if (isError) {
@@ -99,20 +101,20 @@ const EvaluationsTab: React.FC = () => {
               key: 'average_score',
               title: 'Average Score',
               dataIndex: 'average_score',
-              render: (average_score) => <Badge count={average_score} color={getColorCode(average_score)} showZero />,
+              render: (average_score: number) => <Badge count={average_score} color={getColorCode(average_score)} showZero />,
               sorter: sortItemsByKey('average_score'),
         },{
               key: 'use_case',
               title: 'Use Case',
               dataIndex: 'use_case',
               sorter: sortItemsByKey('use_case'),
-              render: (useCase) => <StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{TRANSLATIONS[useCase]}</StyledParagraph>
+              render: (useCase: string) => <StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{getUseCaseName(useCase)}</StyledParagraph>
         }, {
               key: 'timestamp',
               title: 'Create Time',
               dataIndex: 'timestamp',
               sorter: sortItemsByKey('timestamp'),
-              render: (timestamp) => <DateTime dateTime={timestamp}></DateTime>
+              render: (timestamp: string) => <DateTime dateTime={timestamp}></DateTime>
         
         }, {
             key: 'action',

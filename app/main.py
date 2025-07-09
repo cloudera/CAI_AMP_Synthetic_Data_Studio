@@ -986,7 +986,8 @@ async def get_generation_history(
         db_manager.update_job_statuses_generate(job_status_map)
     
     # Get paginated data
-    total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    #otal_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    total_count, results = db_manager.get_paginated_generate_metadata_light(page, page_size)
     
     # Return in the structure expected by the frontend
     return {

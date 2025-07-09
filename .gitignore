@@ -69,6 +69,13 @@ coverage.xml
 .tox/
 .nox/
 .pytest_cache
+
+# Test files and generated data
+SeedsInstructions.json
+seeds_housing.json
+app/test_models.py
+freeform_data_*.json
+
 #old code
 app/frontend/
 app/launch_streamlit.py

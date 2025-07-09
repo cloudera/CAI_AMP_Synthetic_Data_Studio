@@ -99,63 +99,99 @@ const DataGenerator = () => {
     const [current, setCurrent] = useState(0);
     const [maxStep, setMaxStep] = useState(0);
     const [isStepValid, setIsStepValid] = useState<boolean>(false);
+    const [formInitialValues, setFormInitialValues] = useState<any>(null);
     
     // Data passed from listing table to prepopulate form
     const location = useLocation();
     const { generate_file_name } = useParams();
-    const initialData = location?.state?.data;
+    let initialData = location?.state?.data;
     const mutation = useMutation({
         mutationFn: fetchDatasetDetails
     });
 
+    // Process initial data for regeneration
+    if (initialData?.technique) {
+        initialData = {
+            ...initialData,
+            workflow_type: initialData.technique // Use technique value directly as it matches WORKFLOW_OPTIONS
+        };
+    }
+    
+    if (Array.isArray(initialData?.doc_paths) && !isEmpty(initialData?.doc_paths)) {
+        initialData = {
+            ...initialData,
+            doc_paths: initialData.doc_paths.map((path: string) => ({
+                value: path,
+                label: path
+            }))
+        };
+    }
+
+    if (Array.isArray(initialData?.input_paths) && !isEmpty(initialData?.input_paths)) {
+        initialData = {
+            ...initialData,
+            doc_paths: initialData.input_paths.map((path: string) => ({
+                value: path,
+                label: path
+            }))
+        };
+    }
+    
+    if (isString(initialData?.doc_paths)) {
+        initialData = {
+            ...initialData,
+            doc_paths: []
+        };
+    }
+
+    const [form] = Form.useForm<FormInstance>();
+
+    // Set initial form values based on available data
+    useEffect(() => {
+        if (initialData) {
+            // We have data from location.state (actions menu regeneration)
+            setFormInitialValues(initialData);
+        } else if (!generate_file_name) {
+            // New dataset creation
+            setFormInitialValues({ num_questions: 20, topics: [] });
+        }
+    }, [initialData, generate_file_name]);
 
     useEffect(() => {
         if (generate_file_name && !mutation.data) {
             mutation.mutate(generate_file_name);
         }
         if (mutation.data && mutation?.data?.dataset) {
-            form.setFieldsValue({
-                ...initialData,
-                ...(mutation?.data?.dataset as any)
-            });
+            const apiData = mutation.data.dataset as any;
+            
+            // Map technique from API to workflow_type for UI
+            let processedApiData = { ...apiData };
+            if (apiData.technique) {
+                processedApiData.workflow_type = apiData.technique; // Use technique value directly as it matches WORKFLOW_OPTIONS
+            }
+            
+            // Process doc_paths for API data
+            if (Array.isArray(apiData.doc_paths) && !isEmpty(apiData.doc_paths)) {
+                processedApiData.doc_paths = apiData.doc_paths.map((path: string) => ({
+                    value: path,
+                    label: path
+                }));
+            }
+            
+            if (Array.isArray(apiData.input_paths) && !isEmpty(apiData.input_paths)) {
+                processedApiData.doc_paths = apiData.input_paths.map((path: string) => ({
+                    value: path,
+                    label: path
+                }));
+            }
+            
+            const finalFormValues = { ...initialData, ...processedApiData };
+            
+            // Update both the form values and the initial values state
+            setFormInitialValues(finalFormValues);
+            form.setFieldsValue(finalFormValues);
         }
-
-    }, [generate_file_name]);
-    
-
-    if (initialData?.technique) {
-        initialData.workflow_type = initialData?.technique === 'sft' ? 
-        WorkflowType.SUPERVISED_FINE_TUNING :
-        initialData?.technique === 'freeform' ? WorkflowType.FREE_FORM_DATA_GENERATION :
-        WorkflowType.CUSTOM_DATA_GENERATION;
-    }
-    if (Array.isArray(initialData?.doc_paths) && !isEmpty(initialData?.doc_paths) ) {
-        initialData.doc_paths = initialData?.doc_paths.map((path: string) => ({
-            value: path,
-            label: path
-        }));
-        
-    }
-
-    // if (datasetDetailsReq && datasetDetailsReq.data && 
-    //     !isEmpty(datasetDetailsReq?.data?.generate_file_name)) {
-    //     initialData.example_path = initialData?.example_path;
-    // }
-
-    if (Array.isArray(initialData?.input_paths) && !isEmpty(initialData?.input_paths) ) {
-        initialData.doc_paths = initialData?.input_paths.map((path: string) => ({
-            value: path,
-            label: path
-        }));
-    }
-    if (isString(initialData?.doc_paths)) {
-        initialData.doc_paths = [];
-    }
-
-
-    const formData = useRef(initialData || { num_questions: 20, topics: [] });
-
-    const [form] = Form.useForm<FormInstance>();
+    }, [generate_file_name, mutation.data]);
 
     const onStepChange = (value: number) => {
         setCurrent(value);
@@ -180,15 +216,17 @@ const DataGenerator = () => {
                     items={steps.map((step, i) => ({ title: step.title, key: step.key,  disabled: maxStep < i }))}
                 />
                 <WizardContent>
-                    <Form
-                        colon={false}
-                        name='data-generator'
-                        initialValues={formData.current}
-                        form={form}
-                        onFieldsChange={() => {}}
-                    >
-                        {steps[current].content}
-                    </Form>
+                    {formInitialValues && (
+                        <Form
+                            colon={false}
+                            name='data-generator'
+                            initialValues={formInitialValues}
+                            form={form}
+                            onFieldsChange={() => {}}
+                        >
+                            {steps[current].content}
+                        </Form>
+                    )}
                 </WizardContent>
                 <WizardFooter justify='space-between'>
                     <div>

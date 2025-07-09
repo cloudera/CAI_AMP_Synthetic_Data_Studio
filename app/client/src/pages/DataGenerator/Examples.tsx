@@ -6,6 +6,7 @@ import { Button, Form, Modal, Space, Table, Tooltip, Typography, Flex, Input, Em
 import { CloudUploadOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useMutation } from "@tanstack/react-query";
+import { useLocation } from 'react-router-dom';
 import { useFetchExamples } from '../../api/api';
 import TooltipIcon from '../../components/TooltipIcon';
 import PCModalContent from './PCModalContent';
@@ -52,17 +53,25 @@ const MAX_EXAMPLES = 5;
 
 const Examples: React.FC = () => {
     const form = Form.useFormInstance();
+    const location = useLocation();
     const [exampleType, setExampleType] = useState(ExampleType.PROMPT_COMPLETION);
     
     const mutation = useMutation({
         mutationFn: fetchFileContent
     });
-    const values = form.getFieldsValue(true)
+    
+    // Get ALL form values - this works consistently during regeneration
+    const allFormValues = form.getFieldsValue(true);
+    const { examples = [] } = allFormValues;
+
+    // Check if this is a regeneration scenario
+    const isRegenerating = location.state?.data || location.state?.internalRedirect;
 
     useEffect(() => {
         const example_path = form.getFieldValue('example_path');
 
-        if (!isEmpty(example_path)) {
+        // Only try to load from example_path if we're not regenerating and have a path
+        if (!isRegenerating && !isEmpty(example_path)) {
             mutation.mutate({
                 path: example_path      
             });
@@ -71,16 +80,14 @@ const Examples: React.FC = () => {
         if (form.getFieldValue('workflow_type') === 'freeform') {
             setExampleType(ExampleType.FREE_FORM);
         }
-       
-        
-
-     }, [form.getFieldValue('example_path'), form.getFieldValue('workflow_type')]);
+    }, [form.getFieldValue('example_path'), form.getFieldValue('workflow_type'), isRegenerating]);
 
     useEffect(() => {   
-        if (!isEmpty(mutation.data)) {
+        // Only set examples from mutation data if we're not regenerating
+        if (!isRegenerating && !isEmpty(mutation.data)) {
             form.setFieldValue('examples', mutation.data);
         }
-    }, [mutation.data]);
+    }, [mutation.data, isRegenerating]);
 
     const columns = [
         {
@@ -178,20 +185,33 @@ const Examples: React.FC = () => {
         }
     },
     ];
-    const dataSource = Form.useWatch('examples', form);
-    const { examples, exmpleFormat, isLoading: examplesLoading } = 
-        useGetExamplesByUseCase(form.getFieldValue('use_case'));
     
-    // update examples
-    if (!dataSource && examples) {
-        form.setFieldValue('examples', examples)
-    }
+    // Only fetch examples from API if we're NOT regenerating
+    const { examples: apiExamples, exmpleFormat, isLoading: examplesLoading } = 
+        useGetExamplesByUseCase(!isRegenerating ? form.getFieldValue('use_case') : '');
+    
+    // Only update examples from API if we're not regenerating and don't have existing examples
     useEffect(() => {
-        if (!isEmpty(examples) && !isEmpty(exmpleFormat)) {
-            setExampleType(exmpleFormat as ExampleType);
-            form.setFieldValue('examples', examples || []);
+        if (!isRegenerating && !examples && apiExamples) {
+            form.setFieldValue('examples', apiExamples)
         }
-    }, [examples, exmpleFormat]);
+    }, [apiExamples, examples, isRegenerating]);
+
+    useEffect(() => {
+        // For regeneration: if we have existing examples, determine the type
+        if (isRegenerating && !isEmpty(examples)) {
+            const exampleFormat = getExampleType(examples);
+            setExampleType(exampleFormat as ExampleType);
+        }
+        // For new datasets: use API format
+        else if (!isRegenerating && !isEmpty(apiExamples) && !isEmpty(exmpleFormat)) {
+            setExampleType(exmpleFormat as ExampleType);
+            // Only set examples if we don't already have them
+            if (!examples || isEmpty(examples)) {
+                form.setFieldValue('examples', apiExamples || []);
+            }
+        }
+    }, [apiExamples, exmpleFormat, examples, isRegenerating, examples]);
     
     const rowLimitReached = form.getFieldValue('examples')?.length === MAX_EXAMPLES;
     const workflowType = form.getFieldValue('workflow_type');
@@ -225,11 +245,11 @@ const Examples: React.FC = () => {
                     </Space>
                 </StyledTitle>
                 <Flex align='center' gap={15}>       
-                    {workflowType === WorkflowType.FREE_FORM_DATA_GENERATION && 
+                    {workflowType === 'freeform' && 
                       <>
                         <Form.Item
                             name="example_path"
-                            tooltip='Upload a JSAON file containing examples'
+                            tooltip='Upload a JSON file containing examples'
                             labelCol={labelCol}
                             style={{ display: 'none' }}
                             shouldUpdate
@@ -255,8 +275,8 @@ const Examples: React.FC = () => {
                                         <Button onClick={() => Modal.destroyAll()}>{'Cancel'}</Button>
                                         <Button
                                             onClick={() => {
-                                                if (examples?.examples) {
-                                                    form.setFieldValue('examples', [...examples.examples]);
+                                                if (apiExamples) {
+                                                    form.setFieldValue('examples', [...apiExamples]);
                                                 }
                                                 Modal.destroyAll();
                                             }}
@@ -305,45 +325,42 @@ const Examples: React.FC = () => {
                     </Tooltip>}
                 </Flex>
             </Header>
-            {exampleType === ExampleType.FREE_FORM && !isEmpty(mutation.data) && 
-              <FreeFormExampleTable  data={mutation.data}/>}
-            {exampleType === ExampleType.FREE_FORM && form.getFieldValue('use_case') === 'lending_data' && 
-              <FreeFormExampleTable  data={form.getFieldValue('examples')}/>}  
-            {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && !isEmpty(values.examples) && 
-              <FreeFormExampleTable  data={values.examples}/>}  
-            {exampleType === ExampleType.FREE_FORM && isEmpty(mutation.data) && isEmpty(values.examples) &&
+            {exampleType === ExampleType.FREE_FORM ? (
+              !isEmpty(examples) || !isEmpty(mutation.data) ? (
+                <FreeFormExampleTable data={mutation.data || examples} />
+              ) : (
                 <Empty
-                image={
-                   <StyledContainer>
-                     <CloudUploadOutlined />
-                   </StyledContainer>
-                }
-                imageStyle={{
-                    height: 60,
-                    marginBottom: 24
-                }}
-                description={
-                  <>
-                    <h4>
-                    Upload a JSON file containing examples
-                    </h4>
-                    <p>
-                    {'Examples should be in the format of a JSON array containing array of key & value pairs. The key should be the column name and the value should be the cell value.'}
-                    </p>
-                  </>
-                }
+                  image={
+                    <StyledContainer>
+                      <CloudUploadOutlined />
+                    </StyledContainer>
+                  }
+                  imageStyle={{
+                      height: 60,
+                      marginBottom: 24
+                  }}
+                  description={
+                    <>
+                      <h4>
+                      Upload a JSON file containing examples
+                      </h4>
+                      <p>
+                      {'Examples should be in the format of a JSON array containing array of key & value pairs. The key should be the column name and the value should be the cell value.'}
+                      </p>
+                    </>
+                  }
+                >
+                </Empty>
+              )
+            ) : (
+              <Form.Item
+                  name='examples'
               >
-              </Empty>
-            }  
-            {exampleType !== ExampleType.FREE_FORM && 
-            <Form.Item
-                name='examples'
-            >
-                <StyledTable
+                  <StyledTable<QuestionSolution>
                     columns={columns}
-                    dataSource={dataSource}
+                    dataSource={examples}
                     pagination={false}
-                    loading={examplesLoading}
+                    loading={!isRegenerating && examplesLoading}
                     onRow={(record) => ({
                         onClick: () => Modal.info({ 
                             title: 'View Details',
@@ -355,8 +372,9 @@ const Examples: React.FC = () => {
                     })}
                     rowClassName={() => 'hover-pointer'}
                     rowKey={(_record, index) => `examples-table-${index}`}
-                />
-            </Form.Item>}
+                  />
+              </Form.Item>
+            )}
             
         </Container>
     )

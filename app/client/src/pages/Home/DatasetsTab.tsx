@@ -6,7 +6,7 @@ import { useDatasets } from './hooks';
 import Loading from '../Evaluator/Loading';
 import { Dataset } from '../Evaluator/types';
 import Paragraph from 'antd/es/typography/Paragraph';
-import { JOB_EXECUTION_TOTAL_COUNT_THRESHOLD, TRANSLATIONS } from '../../constants';
+import { JOB_EXECUTION_TOTAL_COUNT_THRESHOLD } from '../../constants';
 import DateTime from '../../components/DateTime/DateTime';
 import DatasetActions from './DatasetActions';
 import { sortItemsByKey } from '../../utils/sortutils';
@@ -15,6 +15,7 @@ import DatasetExportModal, { ExportResult } from '../../components/Export/Export
 import React from 'react';
 import { JobStatus } from '../../types';
 import JobStatusIcon from '../../components/JobStatus/jobStatusIcon';
+import { useUseCaseMapping } from '../../api/hooks';
 
 const { Search } = Input;
 
@@ -56,6 +57,7 @@ const StyledParagraph = styled(Paragraph)`
 
 const DatasetsTab: React.FC = () => {
     const { data, isLoading, isError, refetch, setSearchQuery, pagination } = useDatasets();
+    const { getUseCaseName } = useUseCaseMapping();
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [exportResult, setExportResult] = React.useState<ExportResult>();
     const [toggleDatasetExportModal, setToggleDatasetExportModal] = React.useState(false);
@@ -116,14 +118,14 @@ const DatasetsTab: React.FC = () => {
             dataIndex: 'generate_file_name',
             sorter: sortItemsByKey('generate_file_name'),
             width: 250,
-            render: (generate_file_name) => <Tooltip title={generate_file_name}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{generate_file_name}</StyledParagraph></Tooltip>
+            render: (generate_file_name: string) => <Tooltip title={generate_file_name}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{generate_file_name}</StyledParagraph></Tooltip>
         }, {
             key: 'model_id',
             title: 'Model',
             dataIndex: 'model_id',
             sorter: sortItemsByKey('model_id'),
             width: 250,
-            render: (modelId) => <Tooltip title={modelId}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{modelId}</StyledParagraph></Tooltip>
+            render: (modelId: string) => <Tooltip title={modelId}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{modelId}</StyledParagraph></Tooltip>
         }, {
             key: 'num_questions',
             title: 'Questions Per Topic',
@@ -140,18 +142,26 @@ const DatasetsTab: React.FC = () => {
             sorter: sortItemsByKey('total_count'),
             width: 80
         }, {
+            key: 'completed_rows',
+            title: 'Completed Rows',
+            dataIndex: 'completed_rows',
+            align: 'center',
+            sorter: sortItemsByKey('completed_rows'),
+            width: 100,
+            render: (completed_rows: number | null) => <>{completed_rows != null ? completed_rows : 'N/A'}</>
+        }, {
             key: 'use_case',
             title: 'Use Case',
             dataIndex: 'use_case',
             sorter: sortItemsByKey('use_case'),
-            render: (useCase) => TRANSLATIONS[useCase]
+            render: (useCase: string) => getUseCaseName(useCase)
         }, {
             key: 'timestamp',
             title: 'Creation Time',
             dataIndex: 'timestamp',
             defaultSortOrder: 'descend',
             sorter: sortItemsByKey('timestamp'),
-            render: (timestamp) => <>{timestamp == null ? 'N/A' : <DateTime dateTime={timestamp}/>}</>
+            render: (timestamp: string | null) => <>{timestamp == null ? 'N/A' : <DateTime dateTime={timestamp}/>}</>
         }, {
             key: '7',
             title: 'Actions',

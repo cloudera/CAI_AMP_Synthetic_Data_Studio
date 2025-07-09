@@ -8,7 +8,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { DownOutlined, FolderViewOutlined, ThunderboltOutlined } from '@ant-design/icons';
 
 import { blue } from '@ant-design/colors';
-import { TRANSLATIONS } from "../../constants";
+import { useUseCaseMapping } from "../../api/hooks";
 import DateTime from "../DateTime/DateTime";
 import styled from "styled-components";
 import { Pages } from "../../types";
@@ -23,6 +23,7 @@ const ModalButtonGroup = styled(Flex)`
 export default function Evaluations() {
   const evaluationsHistoryAPI = useGetEvaluationsHistory();
   const deleteEvaluationHistoryAPI = useDeleteEvaluation();
+  const { getUseCaseName } = useUseCaseMapping();
   const [toggleEvaluationDetailModal, setToggleEvaluationDetailModal] = React.useState(false);
   const [evaluationDetail, setEvaluationDetail] = React.useState<EvaluationResponse>({} as EvaluationResponse);
 
@@ -46,7 +47,7 @@ export default function Evaluations() {
       key: '4',
       title: 'Use Case',
       dataIndex: 'use_case',
-      render: (useCase) => <Paragraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{TRANSLATIONS[useCase]}</Paragraph>
+      render: (useCase: string) => <Paragraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{getUseCaseName(useCase)}</Paragraph>
     },
     {
       key: '5',

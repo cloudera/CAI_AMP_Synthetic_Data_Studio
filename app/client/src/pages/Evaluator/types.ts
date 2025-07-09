@@ -22,6 +22,7 @@ export interface Dataset {
   examples: Example[];
   schema: string | null;
   total_count: number;
+  completed_rows: number | null;
   num_questions: number;
   job_id: string;
   job_name: string;
