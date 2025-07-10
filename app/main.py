@@ -1155,10 +1155,23 @@ async def get_topics(use_case: UseCase):
 
 @app.get("/{use_case}/gen_examples")
 async def get_gen_examples(use_case: UseCase):
-        if use_case ==UseCase.CUSTOM:
-            return {"examples":[]}
-        else:
-            return {"examples": USE_CASE_CONFIGS[use_case].default_examples}
+    if use_case == UseCase.CUSTOM:
+        return {"examples": []}
+    else:
+        examples = USE_CASE_CONFIGS[use_case].default_examples
+        
+        # Transform field names for ticketing dataset to match frontend expectations
+        if use_case == UseCase.TICKETING_DATASET:
+            transformed_examples = []
+            for example in examples:
+                transformed_example = {
+                    "question": example.get("Prompt", ""),
+                    "solution": example.get("Completion", "")
+                }
+                transformed_examples.append(transformed_example)
+            return {"examples": transformed_examples}
+        
+        return {"examples": examples}
 
 @app.get("/{use_case}/eval_examples")
 async def get_eval_examples(use_case: UseCase):

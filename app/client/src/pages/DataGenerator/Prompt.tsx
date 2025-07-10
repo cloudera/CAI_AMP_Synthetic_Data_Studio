@@ -21,6 +21,7 @@ import FileSelectorButton from './FileSelectorButton';
 import { useMutation } from '@tanstack/react-query';
 import first from 'lodash/first';
 import ResetIcon from './ResetIcon';
+import { File } from './types';
 
 const { Title } = Typography;
 

@@ -307,7 +307,7 @@ export const useGetExamplesByUseCase = (use_case: string) => {
 
     return {
       data,
-      isLoading: isEmpty(use_case) ? false : (isLoading || isFetching), // Return false when disabled
+      isLoading: isLoading || isFetching, // Always return actual loading state
       isError,
       error,
       examples,

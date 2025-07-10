@@ -1,83 +1,141 @@
-import { Collapse, Flex, Modal, Table } from "antd";
-import styled from "styled-components";
-import { DatasetResponse } from "../../../api/Datasets/response";
-import { QuestionSolution } from "../../../pages/DataGenerator/types";
-import { Dataset } from "../../../pages/Evaluator/types";
+import { Collapse, Flex, Modal } from 'antd';
+import styled from 'styled-components';
+import isEmpty from 'lodash/isEmpty';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import { themeMaterial, ModuleRegistry, ClientSideRowModelModule, ValidationModule, TextFilterModule, NumberFilterModule, DateFilterModule, type ColDef, type GetRowIdFunc, type GetRowIdParams } from 'ag-grid-community';
+import toString from 'lodash/toString';
 
-import ExampleModal from "./ExampleModal";
-import FreeFormExampleTable from "../DataGenerator/FreeFormExampleTable";
+import { QuestionSolution } from '../DataGenerator/types';
+import FreeFormExampleTable from '../DataGenerator/FreeFormExampleTable';
+import ExampleModal from './ExampleModal';
+import { DatasetResponse } from "../../api/Datasets/response";
+import { Dataset } from "../Evaluator/types";
 
-const Panel = Collapse.Panel;
+// Register AG Grid modules
+ModuleRegistry.registerModules([
+    TextFilterModule,
+    NumberFilterModule,
+    DateFilterModule,
+    ClientSideRowModelModule,
+    ValidationModule
+]);
 
+const { Panel } = Collapse;
 
-const StyledTable = styled(Table)`
-  font-family: Roboto, -apple-system, 'Segoe UI', sans-serif;
-  color:  #5a656d;
-  .ant-table-thead > tr > th {
-    color: #5a656d;
-    border-bottom: 1px solid #eaebec;
-    font-weight: 500;
-    text-align: left;
-    // background: #ffffff;
-    border-bottom: 1px solid #eaebec;
-    transition: background 0.3s ease; 
-  }
-    .ant-table-row {
-        cursor: pointer;
-    }
-  .ant-table-row > td.ant-table-cell {
-    padding: 8px;
-    padding-left: 16px;
-    font-size: 13px;
+const Label = styled.div`
+    margin-bottom: 4px;
     font-family: Roboto, -apple-system, 'Segoe UI', sans-serif;
-    color:  #5a656d;
-    .ant-typography {
-      font-size: 13px;
-      font-family: Roboto, -apple-system, 'Segoe UI', sans-serif;
-    }
-  }
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: block;
+    font-size: 14px;
+    color: #5a656d;
 `;
-
-
 
 const StyledCollapse = styled(Collapse)`
-  .ant-collapse-content > .ant-collapse-content-box {
-    padding: 0;
-  }
-  .ant-collapse-item > .ant-collapse-header .ant-collapse-expand-icon {
-    height: 28px;
-    display: flex;
-    align-items: center;
-    padding-inline-end: 12px;
-  }  
+    .ant-collapse-content > .ant-collapse-content-box {
+        padding: 0 !important;
+    }
 `;
 
-const Label = styled.div` 
-    font-size: 18px;
-    padding-top: 8px;
-`;
+// Unified AG Grid Table Component for Dataset Details
+const DatasetExampleTable: React.FC<{ data: QuestionSolution[] }> = ({ data }) => {
+    const [colDefs, setColDefs] = useState<ColDef[]>([]);
+    const [rowData, setRowData] = useState<QuestionSolution[]>([]);
+    
+    useEffect(() => {
+        if (!isEmpty(data)) {
+            const columnDefs: ColDef[] = [
+                {
+                    field: 'question',
+                    headerName: 'Prompts',
+                    flex: 1,
+                    filter: true,
+                    sortable: true,
+                    resizable: true,
+                    minWidth: 200,
+                    wrapText: true,
+                    autoHeight: true,
+                },
+                {
+                    field: 'solution',
+                    headerName: 'Completions',
+                    flex: 1,
+                    filter: true,
+                    sortable: true,
+                    resizable: true,
+                    minWidth: 200,
+                    wrapText: true,
+                    autoHeight: true,
+                }
+            ];
+            setColDefs(columnDefs);
+            setRowData(data);
+        }
+    }, [data]);
+    
+    const defaultColDef: ColDef = useMemo(
+        () => ({
+            flex: 1,
+            filter: true,
+            sortable: true,
+            resizable: true,
+            minWidth: 170,
+            wrapText: true,
+            autoHeight: true,
+        }),
+        []
+    );
+    
+    let index = 0;
+    const getRowId = useCallback<GetRowIdFunc>(
+        ({ data: rowData }: GetRowIdParams) => {
+            index++;
+            return toString(index);
+        },
+        []
+    );
+
+    const onRowClicked = useCallback((event: { data: QuestionSolution }) => {
+        const record = event.data;
+        Modal.info({
+            title: 'View Details',
+            content: <ExampleModal {...record} />,
+            icon: undefined,
+            maskClosable: false,
+            width: 1000
+        });
+    }, []);
+
+    return (
+        <div style={{ 
+            height: '300px',
+            width: '100%'
+        }}>
+            <AgGridReact
+                theme={themeMaterial}
+                columnDefs={colDefs}
+                rowData={rowData}
+                getRowId={getRowId}
+                defaultColDef={defaultColDef}
+                onRowClicked={onRowClicked}
+                rowSelection="single"
+                suppressRowHoverHighlight={false}
+                suppressCellFocus={true}
+            />
+        </div>
+    );
+};
 
 export type DatasetDetailProps = {
     datasetDetails: DatasetResponse | Dataset;
 }
 
 const ExamplesSection= ({ datasetDetails }: DatasetDetailProps)  => {
-    const { technique } = datasetDetails;
-
-    const exampleCols = [
-        {
-          title: 'Prompts',
-          dataIndex: 'prompts',
-          ellipsis: true,
-          render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.question}</>
-        },
-        {
-          title: 'Completions',
-          dataIndex: 'completions',
-          ellipsis: true,
-          render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.solution}</>
-        },
-      ]
+    // Handle both DatasetResponse and Dataset types
+    const technique = 'technique' in datasetDetails ? datasetDetails.technique : 'sft';
+    const examples = datasetDetails.examples || [];
 
     return (
      
@@ -90,25 +148,10 @@ const ExamplesSection= ({ datasetDetails }: DatasetDetailProps)  => {
                 <Flex vertical gap="middle">
                     {technique === 'freeform' ? (
                         <FreeFormExampleTable
-                            data={datasetDetails.examples || []}
+                            data={examples as any}
                         />    
                     ) : 
-                    <StyledTable
-                        bordered
-                        columns={exampleCols}
-                        dataSource={datasetDetails.examples || []}
-                        pagination={false}
-                        onRow={(record: { question: string, solution: string}) => ({
-                        onClick: () => Modal.info({
-                            title: 'View Details',
-                            content: <ExampleModal {...record} />,
-                            icon: undefined,
-                            maskClosable: false,
-                            width: 1000
-                        })
-                    })}
-                    rowKey={(_record, index) => `summary-examples-table-${index}`}
-                />}
+                    <DatasetExampleTable data={examples as QuestionSolution[]} />}
             </Flex>
             </Panel>
         </StyledCollapse>
