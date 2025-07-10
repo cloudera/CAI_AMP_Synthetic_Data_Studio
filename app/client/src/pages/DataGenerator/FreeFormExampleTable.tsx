@@ -4,6 +4,8 @@ import first from 'lodash/first';
 import toString from 'lodash/toString';
 import React, { FunctionComponent, useState, useMemo, useCallback, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
+import { Spin, Empty, Typography } from 'antd';
+import styled from 'styled-components';
 
 // // Register all Community features
 // // ModuleRegistry.registerModules([AllCommunityModule]);
@@ -41,27 +43,42 @@ ModuleRegistry.registerModules([
     ValidationModule
 ]);
 
+const { Text } = Typography;
+
+const LoadingContainer = styled.div`
+    height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+`;
+
 interface Props {
     data: Record<string, unknown>[];
+    loading?: boolean;
 }
 
-const FreeFormExampleTable: FunctionComponent<Props> = ({ data }) => {
-    const [colDefs, setColDefs] = useState([]);
-    const [rowData, setRowData] = useState([]);
+const FreeFormExampleTable: FunctionComponent<Props> = ({ data, loading = false }) => {
+    const [colDefs, setColDefs] = useState<ColDef[]>([]);
+    const [rowData, setRowData] = useState<Record<string, unknown>[]>([]);
     
     useEffect(() => {
         if (!isEmpty(data)) {
-            const columnNames = Object.keys(first(data));
-            const columnDefs = columnNames.map((colName) => ({
-                field: colName,
-                headerName: colName,
-                width: 250,
-                filter: true,
-                sortable: true,
-                resizable: true
-            }));
-            setColDefs(columnDefs);
-            setRowData(data);
+            const firstRow = first(data);
+            if (firstRow) {
+                const columnNames = Object.keys(firstRow);
+                const columnDefs = columnNames.map((colName) => ({
+                    field: colName,
+                    headerName: colName,
+                    width: 250,
+                    filter: true,
+                    sortable: true,
+                    resizable: true
+                }));
+                setColDefs(columnDefs);
+                setRowData(data);
+            }
         }
     }
     , [data]);
@@ -72,8 +89,7 @@ const FreeFormExampleTable: FunctionComponent<Props> = ({ data }) => {
           filter: true,
           enableRowGroup: true,
           enableValue: true,
-
-          editable: true,
+          editable: false, // Make it non-editable for consistency
           minWidth: 170
         }),
         []
@@ -101,13 +117,31 @@ const FreeFormExampleTable: FunctionComponent<Props> = ({ data }) => {
         []
       );
 
+    // Show loading state
+    if (loading) {
+        return (
+            <LoadingContainer>
+                <Spin size="large" />
+                <Text type="secondary">Loading examples...</Text>
+            </LoadingContainer>
+        );
+    }
+
+    // Show empty state if no data
+    if (isEmpty(data)) {
+        return (
+            <div style={{ height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Empty description="No examples available" />
+            </div>
+        );
+    }
 
   return (
     <>
       <div style={{ 
         // minHeight: '600px', 
-        xScroll: 'auto', 
-        yScroll: 'auto',
+        overflowX: 'auto', 
+        overflowY: 'auto',
         height: '600px',
         display: 'flex',
         flexDirection: 'column'
@@ -119,6 +153,8 @@ const FreeFormExampleTable: FunctionComponent<Props> = ({ data }) => {
           getRowId={getRowId}
           defaultColDef={defaultColDef}
           statusBar={statusBar}
+          suppressRowHoverHighlight={true} // Remove hover effects for consistency
+          suppressCellFocus={true}
         />
       </div>
     </>

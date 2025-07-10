@@ -1,18 +1,24 @@
 import { Form, Select } from "antd";
 import { FunctionComponent, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useGetUseCases } from "./hooks";
 import { UseCase } from "../../types";
 import get from "lodash/get";
 
 interface Props {}
 
-
 const UseCaseSelector: FunctionComponent<Props> = () => {
   const [useCases, setUseCases] = useState<UseCase[]>([]);
-  const useCasesReq = useGetUseCases();  
+  const location = useLocation();
+  
+  // Check if this is a regeneration scenario
+  const isRegenerating = location.state?.data || location.state?.internalRedirect;
+  
+  // Only fetch use cases if we're NOT regenerating
+  const useCasesReq = useGetUseCases(isRegenerating);  
 
   useEffect(() => {
-    if (useCasesReq.data) {
+    if (!isRegenerating && useCasesReq.data) {
         let _useCases = get(useCasesReq, 'data.usecases', []);
         _useCases = _useCases.map((useCase: any) => ({ 
             ...useCase,
@@ -21,8 +27,7 @@ const UseCaseSelector: FunctionComponent<Props> = () => {
         }));
         setUseCases(_useCases);
     }
-  }, [useCasesReq.data]);
-
+  }, [useCasesReq.data, isRegenerating]);
 
   return (
     <Form.Item

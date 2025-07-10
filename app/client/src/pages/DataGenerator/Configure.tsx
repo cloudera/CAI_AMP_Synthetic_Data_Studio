@@ -4,6 +4,7 @@ import isFunction from 'lodash/isFunction';
 import { useEffect, useState } from 'react';
 import { Flex, Form, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
+import { useLocation } from 'react-router-dom';
 import { File, WorkflowType } from './types';
 import { useFetchModels } from '../../api/api';
 import { MODEL_PROVIDER_LABELS } from './constants';
@@ -52,6 +53,7 @@ const Configure = () => {
     const formData = Form.useWatch((values) => values, form);
     const { setIsStepValid } = useWizardCtx();
     const { data } = useFetchModels();
+    const location = useLocation();
     const [selectedFiles, setSelectedFiles] = useState(
         !isEmpty(form.getFieldValue('doc_paths')) ? form.getFieldValue('doc_paths') : []);
 
@@ -73,12 +75,19 @@ const Configure = () => {
         validateForm()
     }, [form, formData])
 
-    // keivan
+    // Only set default inference_type for completely new datasets
     useEffect(() => {
-        if (formData && formData?.inference_type === undefined) {
+        const isRegenerating = location.state?.data || location.state?.internalRedirect;
+        const existingInferenceType = form.getFieldValue('inference_type');
+        
+        // Only set default if:
+        // 1. NOT regenerating an existing dataset
+        // 2. No existing inference_type value in form
+        // 3. formData watch shows undefined (initial state)
+        if (!isRegenerating && !existingInferenceType && formData && formData?.inference_type === undefined) {
             form.setFieldValue('inference_type', ModelProviders.CAII);
         }
-    }, [formData]);
+    }, [formData, location.state, form]);
 
     const labelCol = {
       span: 8

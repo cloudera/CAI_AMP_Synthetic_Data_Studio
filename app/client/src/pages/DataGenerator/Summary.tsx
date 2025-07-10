@@ -1,12 +1,27 @@
-import { Descriptions, Flex, Form, Input, List, Modal, Table, Typography } from 'antd';
+import { Descriptions, Flex, Form, Input, List, Modal, Typography, Empty } from 'antd';
 import styled from 'styled-components';
 import isEmpty from 'lodash/isEmpty';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import { themeMaterial, ModuleRegistry, ClientSideRowModelModule, ValidationModule, TextFilterModule, NumberFilterModule, DateFilterModule, type ColDef, type GetRowIdFunc, type GetRowIdParams, type ICellRendererParams } from 'ag-grid-community';
+import toString from 'lodash/toString';
+
 import Markdown from '../../components/Markdown';
 import PCModalContent from './PCModalContent'
 import { MODEL_PROVIDER_LABELS } from './constants'
 import { ModelParameters } from '../../types';
 import { ModelProviders, QuestionSolution, Usecases } from './types';
 import FreeFormExampleTable from './FreeFormExampleTable';
+
+// Register AG Grid modules
+ModuleRegistry.registerModules([
+    TextFilterModule,
+    NumberFilterModule,
+    DateFilterModule,
+    ClientSideRowModelModule,
+    ValidationModule
+]);
+
 const { Title } = Typography;
 
 const MODEL_PARAMETER_LABELS: Record<ModelParameters, string> = {
@@ -23,12 +38,6 @@ const MarkdownWrapper = styled.div`
     padding: 4px 11px;
 `;
 
-const StyledTable = styled(Table)`
-    .ant-table-row {
-        cursor: pointer;
-    }
-`
-
 const StyledTextArea = styled(Input.TextArea)`
     color: #575757 !important;
     background: #fafafa !important;
@@ -36,6 +45,113 @@ const StyledTextArea = styled(Input.TextArea)`
     min-width: 800px;
 }
 `;
+
+// Improved cell renderer with better text handling
+const TextCellRenderer = (params: ICellRendererParams) => {
+    const { value } = params;
+    if (!value) return '';
+    
+    return (
+        <div 
+            style={{ 
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word',
+                lineHeight: '1.5',
+                padding: '8px 4px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+            }}
+        >
+            {value}
+        </div>
+    );
+};
+
+const SummaryExampleTable: React.FC<{ data: QuestionSolution[] }> = ({ data }) => {
+    const [colDefs, setColDefs] = useState<ColDef[]>([]);
+    const [rowData, setRowData] = useState<QuestionSolution[]>([]);
+    
+    useEffect(() => {
+        if (!isEmpty(data)) {
+            const columnDefs: ColDef[] = [
+                {
+                    field: 'question',
+                    headerName: 'Prompts',
+                    flex: 1,
+                    filter: true,
+                    sortable: true,
+                    resizable: true,
+                    minWidth: 300,
+                    cellRenderer: TextCellRenderer,
+                    wrapText: true,
+                    autoHeight: false,
+                },
+                {
+                    field: 'solution',
+                    headerName: 'Completions',
+                    flex: 1,
+                    filter: true,
+                    sortable: true,
+                    resizable: true,
+                    minWidth: 300,
+                    cellRenderer: TextCellRenderer,
+                    wrapText: true,
+                    autoHeight: false,
+                }
+            ];
+            setColDefs(columnDefs);
+            setRowData(data);
+        }
+    }, [data]);
+    
+    const defaultColDef: ColDef = useMemo(
+        () => ({
+            flex: 1,
+            filter: true,
+            sortable: true,
+            resizable: true,
+            minWidth: 250,
+        }),
+        []
+    );
+    
+    let index = 0;
+    const getRowId = useCallback<GetRowIdFunc>(
+        ({ data: rowData }: GetRowIdParams) => {
+            index++;
+            return toString(index);
+        },
+        []
+    );
+
+    if (isEmpty(data)) {
+        return (
+            <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Empty description="No examples available" />
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ 
+            height: '300px',
+            width: '100%'
+        }}>
+            <AgGridReact
+                theme={themeMaterial}
+                columnDefs={colDefs}
+                rowData={rowData}
+                getRowId={getRowId}
+                defaultColDef={defaultColDef}
+                suppressRowHoverHighlight={true} // REMOVE hover effects for consistency
+                suppressCellFocus={true}
+                rowHeight={60}
+                domLayout="normal"
+                // REMOVE onRowClicked to make it non-interactive like lending/credit data
+            />
+        </div>
+    );
+};
 
 const Summary= () => {
     const form = Form.useFormInstance()
@@ -63,72 +179,21 @@ const Summary= () => {
         { label: 'Data Count', children: num_questions },
         { label: 'Total Dataset Size', children: topics === null ? num_questions : num_questions * topics.length },
     ];
-    const exampleCols = [
-        {
-            title: 'Prompts',
-            dataIndex: 'prompts',
-            ellipsis: true,
-            render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.question}</>
-        },
-        {
-            title: 'Completions',
-            dataIndex: 'completions',
-            ellipsis: true,
-            render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.solution}</>
-        },
-    ];
 
     return (
-        <Flex gap={20} vertical>
+        <Flex vertical gap={20}>
             <div>
-                <Title level={4}>{'Settings'}</Title>
-                <Descriptions
+                <Title level={4}>{'Configuration'}</Title>
+                <Descriptions 
                     bordered
-                    colon
                     column={1}
                     items={cfgStepDataSource}
-                    style={{ maxWidth: 800}}
                 />
             </div>
             <div>
                 <Title level={4}>{'Prompt'}</Title>
-                <StyledTextArea autoSize disabled value={custom_prompt}/>
-                {/* <MarkdownWrapper>
-                    <Markdown text={custom_prompt}/>
-                </MarkdownWrapper> */}
+                <StyledTextArea value={custom_prompt} disabled />
             </div>
-            <div>
-                <Title level={4}>{'Parameters'}</Title>
-                <Descriptions
-                    bordered
-                    colon
-                    column={1}
-                    items={Object.keys(model_parameters).map((param, i: number) => {
-                        return {
-                            key: `${param}-${i}`,
-                            label: MODEL_PARAMETER_LABELS[param as ModelParameters],
-                            children: model_parameters[param]
-                        }
-                    })}
-                    size='small'
-                    style={{ maxWidth: 400}}
-                />
-            </div>
-            {isEmpty(topics) && 
-            <div>
-                <Title level={4}>{'Seed Instructions'}</Title>
-                <List
-                    dataSource={topics || []}
-                    renderItem={(item: string) => (<List.Item>{item}</List.Item>)}
-                    locale={{
-                        emptyText: (
-                            <Flex justify='start'>
-                                {'No seed instructions were selected'}
-                            </Flex>
-                        )
-                    }}
-                />
-            </div>}
             {(schema && use_case === Usecases.TEXT2SQL) && (
                 <div>
                     <Title level={4}>{'DB Schema'}</Title>
@@ -142,25 +207,10 @@ const Summary= () => {
                 <Title level={4}>{'Examples'}</Title>
                 {workflow_type === 'freeform' ?
                 <FreeFormExampleTable  data={examples} /> :
-                <StyledTable
-                    bordered
-                    columns={exampleCols}
-                    dataSource={examples}
-                    pagination={false}
-                    onRow={(record,) => ({
-                        onClick: () => Modal.info({ 
-                            title: 'View Details',
-                            content: <PCModalContent {...record}/>,
-                            icon: undefined,
-                            maskClosable: true,
-                            width: 1000
-                        })
-                    })}
-                    rowKey={(_record, index) => `summary-examples-table-${index}`}
-                />}
+                <SummaryExampleTable data={examples} />}
             </div>}
         </Flex>
     )
-}
+};
 
 export default Summary;

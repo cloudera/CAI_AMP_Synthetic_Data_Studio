@@ -5,6 +5,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Alert, Button, Col, Divider, Flex, Form, Input, InputNumber, Modal, notification, Row, Select, Space, Tooltip, Typography } from 'antd';
 import type { InputRef } from 'antd';
 import styled from 'styled-components';
+import { useLocation } from 'react-router-dom';
 
 import Parameters from './Parameters';
 import TooltipIcon from '../../components/TooltipIcon';
@@ -20,6 +21,7 @@ import FileSelectorButton from './FileSelectorButton';
 import { useMutation } from '@tanstack/react-query';
 import first from 'lodash/first';
 import ResetIcon from './ResetIcon';
+import { File } from './types';
 
 const { Title } = Typography;
 
@@ -76,11 +78,16 @@ const SeedsFormItem = styled(StyledFormItem)`
 
 const Prompt = () => {
     const form = Form.useFormInstance();
+    const location = useLocation();
     const selectedTopics = Form.useWatch('topics');
     const numQuestions = Form.useWatch('num_questions');
     const datasetSize = Form.useWatch('num_questions');
     const [items, setItems] = useState<string[]>([]);
     const [customTopic, setCustomTopic] = useState('');
+
+    // Check if this is a regeneration scenario
+    const isRegenerating = location.state?.data || location.state?.internalRedirect;
+    const existingTopics = form.getFieldValue('topics');
 
     const customTopicRef = useRef<InputRef>(null);
     const defaultPromptRef = useRef<null|string>(null);
@@ -96,11 +103,11 @@ const Prompt = () => {
     const output_key = form.getFieldValue('output_key');
     const caii_endpoint = form.getFieldValue('caii_endpoint');
     
-    const { data: defaultPrompt, loading: promptsLoading } = useFetchDefaultPrompt(useCase, workflow_type);
-
-    // Page Bootstrap requests and useEffect
-    const { data: defaultTopics, loading: topicsLoading } = usefetchTopics(useCase);
-    const { data: defaultSchema, loading: schemaLoading } = useFetchDefaultSchema();
+    // Only fetch defaults if we're NOT regenerating
+    const { data: defaultPrompt, loading: promptsLoading } = useFetchDefaultPrompt(!isRegenerating ? useCase : '', workflow_type);
+    const { data: defaultTopics, loading: topicsLoading } = usefetchTopics(!isRegenerating ? useCase : '');
+    const { data: defaultSchema, loading: schemaLoading } = useFetchDefaultSchema(!isRegenerating);
+    
     const { data: dataset_size, isLoading: datasetSizeLoading, isError, error } = useDatasetSize(
         workflow_type,
         doc_paths,
@@ -120,7 +127,6 @@ const Prompt = () => {
         }
     }, [mutation.data]);
 
-
     useEffect(() => {  
         if (isError) {
             notification.error({
@@ -128,11 +134,15 @@ const Prompt = () => {
                 description: get(error, 'error'),
             });
         } 
-
     }, [error, isError]);
 
     useEffect(() => {
-        if (defaultTopics) {
+        // For regeneration: use existing topics if available
+        if (isRegenerating && !isEmpty(existingTopics)) {
+            setItems(existingTopics);
+        }
+        // For new datasets: use API topics
+        else if (!isRegenerating && defaultTopics) {
             // customTopics is a client-side only fieldValue that persists custom topics added
             // when the user switches between wizard steps
             const customTopics = form.getFieldValue('customTopics')
@@ -145,7 +155,9 @@ const Prompt = () => {
                 form.setFieldValue('topics', [])
             }
         }
-        if (defaultPrompt) {
+        
+        // Handle prompts - for regeneration, preserve existing; for new, use defaults
+        if (!isRegenerating && defaultPrompt) {
             defaultPromptRef.current = defaultPrompt;
             if (form.getFieldValue('custom_prompt') === undefined) {
                 form.setFieldValue('custom_prompt', defaultPrompt)
@@ -155,18 +167,21 @@ const Prompt = () => {
                 form.setFieldValue('custom_prompt', defaultPrompt)
             }
         }
-        if (defaultSchema) {
+        
+        // Handle schema - only for new datasets
+        if (!isRegenerating && defaultSchema) {
             defaultSchemaRef.current = defaultSchema;
             if (form.getFieldValue('schema') === undefined) {
                 form.setFieldValue('schema', defaultSchema)
             }
         }
+        
         if (dataset_size) {
             if (form.getFieldValue('num_questions') !== dataset_size) {
                 form.setFieldValue('num_questions', dataset_size)
             }
         }
-    }, [defaultPromptRef, defaultSchema, defaultSchemaRef, defaultTopics, dataset_size, form, setItems]);
+    }, [defaultPromptRef, defaultSchema, defaultSchemaRef, defaultTopics, dataset_size, form, setItems, isRegenerating, existingTopics]);
 
     const { setIsStepValid } = useWizardCtx();
     useEffect(() => {
@@ -176,7 +191,7 @@ const Prompt = () => {
                 isStepValid = true;
             }
             setIsStepValid(isStepValid)
-        } else if(!isEmpty(doc_paths) && workflow_type === WorkflowType.SUPERVISED_FINE_TUNING) {
+        } else if(!isEmpty(doc_paths) && workflow_type === 'sft') {
             setIsStepValid(isNumber(datasetSize) && datasetSize > 0);
         } else {
             setIsStepValid(true);
@@ -244,8 +259,7 @@ const Prompt = () => {
                                     </Space>
                                 </FormLabel>
                                 <Flex style={{ flexDirection: 'row-reverse', width: '100%' }}>
-                                    {(form.getFieldValue('use_case') === Usecases.CUSTOM.toLowerCase() ||
-                                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) &&  
+                                    {form.getFieldValue('use_case') === 'custom' &&  
                                         <CustomPromptButton 
                                             model_id={model_id}
                                             inference_type={inference_type}
@@ -294,8 +308,8 @@ const Prompt = () => {
                         
                         
                     </div>
-                    {((workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && !isEmpty(doc_paths)) ||
-                    (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING && !isEmpty(doc_paths))) && 
+                    {((workflow_type === 'custom_workflow' && !isEmpty(doc_paths)) ||
+                    (workflow_type === 'sft' && !isEmpty(doc_paths))) && 
                         <StyledFormItem
                             name={'num_questions'}
                             label={
@@ -307,7 +321,7 @@ const Prompt = () => {
                                 </FormLabel>
                             }
                             rules={[
-                                { required: workflow_type === WorkflowType.SUPERVISED_FINE_TUNING, message: `Please select a workflow.` }
+                                { required: workflow_type === 'sft', message: `Please select a workflow.` }
                             ]}
                             labelCol={{ span: 24 }}
                             wrapperCol={{ span: 24 }}
@@ -315,12 +329,12 @@ const Prompt = () => {
                            
                         >
                         
-                            <InputNumber disabled={workflow_type === WorkflowType.CUSTOM_DATA_GENERATION} value={dataset_size} />
+                            <InputNumber disabled={workflow_type === 'custom_workflow'} value={dataset_size} />
                         </StyledFormItem>    
                     }
-                    {isEmpty(doc_paths) && (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING ||
-                        workflow_type === WorkflowType.CUSTOM_DATA_GENERATION ||
-                        workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) &&
+                    {isEmpty(doc_paths) && (workflow_type === 'sft' ||
+                        workflow_type === 'custom_workflow' ||
+                        workflow_type === 'freeform') &&
                     <Flex gap={20} vertical>
                         {mutation.isError &&
                             <Alert

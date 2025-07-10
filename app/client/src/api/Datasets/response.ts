@@ -17,6 +17,7 @@ export type DatasetResponse = {
     schema: string | null;
     custom_prompt: string;
     total_count: number;
+    completed_rows: number | null;
     num_questions: number;
     job_id: string;
     job_name: string;

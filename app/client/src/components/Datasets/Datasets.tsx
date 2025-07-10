@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { HuggingFaceIconUrl, Pages } from "../../types";
 import { blue } from '@ant-design/colors';
 import DateTime from "../DateTime/DateTime";
-import { TRANSLATIONS } from "../../constants";
+import { useUseCaseMapping } from "../../api/hooks";
 import DeleteConfirmWarningModal from './DeleteConfirmModal';
 import DatasetExportModal, { ExportResult } from '../Export/ExportModal';
 
@@ -22,6 +22,7 @@ const { Paragraph, Text } = Typography;
 export default function DatasetsComponent() {
   const datasetHistoryAPI = useGetDatasetHistory();
   const deleteDatasetHistoryAPI = useDeleteDataset();
+  const { getUseCaseName } = useUseCaseMapping();
   const [toggleDatasetDetailModal, setToggleDatasetDetailModal] = React.useState(false);
   const [toggleDatasetExportModal, setToggleDatasetExportModal] = React.useState(false);
   const [exportResult, setExportResult] = React.useState<ExportResult>();
@@ -65,7 +66,7 @@ export default function DatasetsComponent() {
       key: '3',
       title: 'Model',
       dataIndex: 'model_id',
-      render: (modelId) => <Tooltip title={modelId}><Paragraph style={{ width: 150, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{modelId}</Paragraph></Tooltip>
+      render: (modelId: string) => <Tooltip title={modelId}><Paragraph style={{ width: 150, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{modelId}</Paragraph></Tooltip>
     },
     {
       key: '4',
@@ -74,10 +75,18 @@ export default function DatasetsComponent() {
       width: 150
     },
     {
+      key: '4a',
+      title: 'Completed Rows',
+      dataIndex: 'completed_rows',
+      width: 120,
+      align: 'center',
+      render: (completed_rows: number | null) => <>{completed_rows != null ? completed_rows : 'N/A'}</>
+    },
+    {
       key: '5',
       title: 'Use Case',
       dataIndex: 'use_case',
-      render: (useCase) => <Paragraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{TRANSLATIONS[useCase]}</Paragraph>
+      render: (useCase: string) => <Paragraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{getUseCaseName(useCase)}</Paragraph>
     },
     {
       key: '6',

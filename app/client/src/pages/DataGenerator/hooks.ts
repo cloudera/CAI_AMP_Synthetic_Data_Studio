@@ -255,17 +255,18 @@ export const useDatasetSize = (
     return body;
 }
 
-export const useGetUseCases = () => {
+export const useGetUseCases = (shouldSkip: boolean = false) => {
     const { data, isLoading, isError, error, isFetching } = useQuery(
         {
             queryKey: ['useCases'],
             queryFn: () => fetchUseCases(),
             refetchOnWindowFocus: false,
+            enabled: !shouldSkip, // Only run query if not skipped
         }
     );
     return {
       data,
-      isLoading: isLoading || isFetching,
+      isLoading: shouldSkip ? false : (isLoading || isFetching), // Return false when disabled
       isError,
       error    
     };
@@ -282,9 +283,10 @@ export const fetchExamplesByUseCase = async (use_case: string) => {
 export const useGetExamplesByUseCase = (use_case: string) => {
     const { data, isLoading, isError, error, isFetching } = useQuery(
         {
-            queryKey: ['fetchUseCaseTopics', fetchExamplesByUseCase],
+            queryKey: ['fetchUseCaseTopics', fetchExamplesByUseCase, use_case],
             queryFn: () => fetchExamplesByUseCase(use_case),
             refetchOnWindowFocus: false,
+            enabled: !isEmpty(use_case), // Only run query if use_case is not empty
         }
     );
 
@@ -305,7 +307,7 @@ export const useGetExamplesByUseCase = (use_case: string) => {
 
     return {
       data,
-      isLoading: isLoading || isFetching,
+      isLoading: isLoading || isFetching, // Always return actual loading state
       isError,
       error,
       examples,

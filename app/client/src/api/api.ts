@@ -13,12 +13,12 @@ import {
 const baseUrl = import.meta.env.VITE_AMP_URL;
 
 export const usefetchTopics = (useCase: string): UseFetchApiReturn<FetchTopicsResp> => {
-    const url = `${baseUrl}/use-cases/${isEmpty(useCase) ? 'custom' : useCase}/topics`;
+    const url = isEmpty(useCase) ? '' : `${baseUrl}/use-cases/${useCase}/topics`;
     return useFetch(url);
 }
 
 export const useFetchExamples = (useCase: string): UseFetchApiReturn<FetchExamplesResp> => {
-    const url = `${baseUrl}/${isEmpty(useCase) ? 'custom' : useCase}/gen_examples`;
+    const url = isEmpty(useCase) ? '' : `${baseUrl}/${useCase}/gen_examples`;
     return useFetch(url);
 }
 
@@ -27,21 +27,25 @@ export const useFetchModels = (): UseFetchApiReturn<FetchModelsResp> => {
     return useFetch(url);
 }
 
-export const useFetchDefaultPrompt = (useCase: string, workflowType?: WorkerType): UseFetchApiReturn<FetchDefaultPromptResp> => {
-    let url = `${baseUrl}/${isEmpty(useCase) ? 'custom' : useCase}/gen_prompt`;
+export const useFetchDefaultPrompt = (useCase: string, workflowType?: string): UseFetchApiReturn<FetchDefaultPromptResp> => {
+    if (isEmpty(useCase)) {
+        return { data: null, loading: false, error: null };
+    }
+    
+    let url = `${baseUrl}/${useCase}/gen_prompt`;
     if (workflowType && workflowType === 'freeform') {
-        url = `${baseUrl}/${isEmpty(useCase) ? 'custom' : useCase}/gen_freeform_prompt`;
+        url = `${baseUrl}/${useCase}/gen_freeform_prompt`;
     }
     return useFetch(url);
 }
 
-export const useFetchDefaultSchema = (): UseFetchApiReturn<FetchDefaultSchemaResp> => {
-    const url = `${baseUrl}/sql_schema`;
+export const useFetchDefaultSchema = (shouldFetch: boolean = true): UseFetchApiReturn<FetchDefaultSchemaResp> => {
+    const url = shouldFetch ? `${baseUrl}/sql_schema` : '';
     return useFetch(url);
 }
 
-export const useFetchDefaultModelParams = (): UseFetchApiReturn<FetchDefaultParamsResp> => {
-    const url = `${baseUrl}/model/parameters`;
+export const useFetchDefaultModelParams = (shouldFetch: boolean = true): UseFetchApiReturn<FetchDefaultParamsResp> => {
+    const url = shouldFetch ? `${baseUrl}/model/parameters` : '';
     return useFetch(url);
 }
 

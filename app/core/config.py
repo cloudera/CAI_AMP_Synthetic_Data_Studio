@@ -826,7 +826,7 @@ Points are accumulated based on the satisfaction of each criterion:
 
         Cross-column guidelines:
         1) Check for logical and realistic consistency and correlations between variables. Examples include but not limited to:
-        a) Grade/Sub-grade consistency: Sub-grade must match the grade (e.g., "B" grade → "B1" to "B5" possible subgrades).  
+        a) Grade/Sub-grade consistency: Sub-grade must match the grade (e.g., "B" grade → "B1" to "B5").  
         b) Interest Rate vs Grade/Subgrade relationship: Higher subgrades (e.g., A5) could have higher `int_rate` than lower subgrades (e.g., A3).  
         c) Mortgage Consistency: `mort_acc` should be 1 or more if `home_ownership` is `MORTGAGE`. 
         d) Open Accounts: `open_acc` ≤ `total_acc`.  
