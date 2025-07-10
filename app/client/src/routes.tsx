@@ -2,7 +2,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import Layout from "./Container";
 import DataGenerator from "./pages/DataGenerator";
 import HomePage from "./pages/Home";
-import { Pages, WizardModeType } from "./types";
+import { Pages } from "./types";
 import EvaluatorPage from "./pages/Evaluator";
 import ReevaluatorPage from "./pages/Evaluator/ReevaluatorPage";
 import DatasetDetailsPage from "./pages/DatasetDetails/DatasetDetailsPage";
@@ -35,13 +35,7 @@ const router = createBrowserRouter([
       },
       { 
         path: Pages.GENERATOR, 
-        element: <DataGenerator key={Pages.GENERATOR} mode={WizardModeType.DATA_GENERATION}/>, 
-        errorElement: <ErrorPage />,
-        loader: async () => null
-      },
-      { 
-        path: Pages.DATA_AUGMENTATION, 
-        element: <DataGenerator key={Pages.DATA_AUGMENTATION} mode={WizardModeType.DATA_AUGMENTATION}/>, 
+        element: <DataGenerator key={Pages.GENERATOR}/>, 
         errorElement: <ErrorPage />,
         loader: async () => null
       },

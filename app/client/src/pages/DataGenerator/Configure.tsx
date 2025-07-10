@@ -8,12 +8,9 @@ import { File, WorkflowType } from './types';
 import { useFetchModels } from '../../api/api';
 import { MODEL_PROVIDER_LABELS } from './constants';
 import { ModelProviders, ModelProvidersDropdownOpts } from './types';
-import { getWizardModel, getWizardModeType, useWizardCtx } from './utils';
+import { useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
 import UseCaseSelector from './UseCaseSelector';
-import { useLocation } from 'react-router-dom';
-import { WizardModeType } from '../../types';
-import { get } from 'lodash';
 
 
 const StepContainer = styled(Flex)`
@@ -42,7 +39,7 @@ export const USECASE_OPTIONS = [
 export const WORKFLOW_OPTIONS = [
     { label: 'Supervised Fine-Tuning', value: 'supervised-fine-tuning' },
     { label: 'Custom Data Generation', value: 'custom' },
-    // { label: 'Freeform Data Generation', value: 'freeform' }
+    { label: 'Freeform Data Generation', value: 'freeform' }
 ];
 
 export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
@@ -51,18 +48,6 @@ export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
 ];
 
 const Configure = () => {
-    const location = useLocation();
-    const [wizardModeType, setWizardModeType] = useState(getWizardModeType(location));
-
-    useEffect(() => {
-        if (wizardModeType === WizardModeType.DATA_AUGMENTATION) {
-            setWizardModeType(WizardModeType.DATA_AUGMENTATION);
-            form.setFieldValue('workflow_type', 'freeform');
-        } else {
-            setWizardModeType(WizardModeType.DATA_GENERATION);
-        }
-    }, [location, wizardModeType]);
-
     const form = Form.useFormInstance();
     const formData = Form.useWatch((values) => values, form);
     const { setIsStepValid } = useWizardCtx();
@@ -156,10 +141,8 @@ const Configure = () => {
                     label='Model Provider'
                     rules={[{ required: true }]}
                     labelCol={labelCol}
-                    shouldUpdate
                 >
                     <Select
-                       
                         onChange={() => form.setFieldValue('model_id', undefined)}
                         placeholder={'Select a model provider'}
                     >
@@ -227,7 +210,6 @@ const Configure = () => {
                     label='Workflow'
                     tooltip='A specialized workflow for your dataset'
                     labelCol={labelCol}
-                    hidden={wizardModeType === WizardModeType.DATA_AUGMENTATION}
                     shouldUpdate
                     rules={[
                             { required: true }

@@ -1,6 +1,6 @@
 import isEmpty from 'lodash/isEmpty';
 import isString from 'lodash/isString';
-import { FunctionComponent, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
 import { Button, Flex, Form, Layout, Steps } from 'antd';
@@ -20,14 +20,9 @@ import { DataGenWizardSteps, WizardStepConfig, WorkflowType } from './types';
 import { WizardCtx } from './utils';
 import { fetchDatasetDetails, useGetDatasetDetails } from '../DatasetDetails/hooks';
 import { useMutation } from '@tanstack/react-query';
-import { WizardModeType } from '../../types';
 
 const { Content } = Layout;
 // const { Title } = Typography;
-
-interface Props {
-    mode?: WizardModeType;
-}
 
 const StyledTitle = styled.div`
     margin-top: 10px;
@@ -100,7 +95,7 @@ const steps: WizardStepConfig[] = [
 /**
  * Wizard component for Synthetic Data Generation workflow
  */
-const DataGenerator: FunctionComponent<Props> = () => {
+const DataGenerator = () => {
     const [current, setCurrent] = useState(0);
     const [maxStep, setMaxStep] = useState(0);
     const [isStepValid, setIsStepValid] = useState<boolean>(false);
