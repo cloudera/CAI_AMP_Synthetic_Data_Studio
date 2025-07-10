@@ -40,9 +40,9 @@ export const USECASE_OPTIONS = [
 ];
 
 export const WORKFLOW_OPTIONS = [
-    { label: 'Supervised Fine-Tuning', value: 'supervised-fine-tuning' },
+    // { label: 'Supervised Fine-Tuning', value: 'supervised-fine-tuning' },
     { label: 'Custom Data Generation', value: 'custom' },
-    // { label: 'Freeform Data Generation', value: 'freeform' }
+    { label: 'Freeform Data Generation', value: 'freeform' }
 ];
 
 export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
@@ -57,9 +57,10 @@ const Configure = () => {
     useEffect(() => {
         if (wizardModeType === WizardModeType.DATA_AUGMENTATION) {
             setWizardModeType(WizardModeType.DATA_AUGMENTATION);
-            form.setFieldValue('workflow_type', 'freeform');
+            form.setFieldValue('workflow_type', 'custom');
         } else {
             setWizardModeType(WizardModeType.DATA_GENERATION);
+            form.setFieldValue('workflow_type', 'freeform');
         }
     }, [location, wizardModeType]);
 
@@ -227,7 +228,7 @@ const Configure = () => {
                     label='Workflow'
                     tooltip='A specialized workflow for your dataset'
                     labelCol={labelCol}
-                    hidden={wizardModeType === WizardModeType.DATA_AUGMENTATION}
+                    hidden={true}
                     shouldUpdate
                     rules={[
                             { required: true }
