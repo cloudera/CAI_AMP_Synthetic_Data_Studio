@@ -3,6 +3,7 @@ import { WizardCtxObj } from './types';
 import moment from 'moment';
 import toString from 'lodash/toString';
 import { File } from './types';
+import { WizardModeType } from '../../types';
 
 export const WizardCtx = createContext<WizardCtxObj | null>(null);
 export const useWizardCtx = (): WizardCtxObj => {
@@ -105,3 +106,15 @@ export const getHttpStatusCodeVerb = (statusCode: number) => {
       return null;
   }
 };
+
+export const getWizardModeType = (location: any) => {
+  const pathname = location?.pathname || '';
+  switch (pathname) {
+    case '/data-augmentation':
+      return WizardModeType.DATA_AUGMENTATION;
+    case '/data-generator':
+      return WizardModeType.DATA_GENERATION;
+    default:
+      return null;
+  }
+}
