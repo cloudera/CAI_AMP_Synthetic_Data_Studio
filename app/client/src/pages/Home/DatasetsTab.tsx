@@ -21,7 +21,6 @@ const { Search } = Input;
 const Container = styled.div`
   background-color: #ffffff;
   padding: 1rem;
-  overflow-x: auto;
 `;
 
 const StyledTable = styled(Table)`
@@ -110,42 +109,40 @@ const DatasetsTab: React.FC = () => {
             key: 'display_name',
             title: 'Display Name',
             dataIndex: 'display_name',
-            width: 140,
-            sorter: sortItemsByKey('display_name')
+            sorter: sortItemsByKey('display_name'),
         }, {
             key: 'generate_file_name',
             title: 'Dataset Name',
             dataIndex: 'generate_file_name',
-            width: 250,
             sorter: sortItemsByKey('generate_file_name'),
+            width: 250,
             render: (generate_file_name) => <Tooltip title={generate_file_name}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{generate_file_name}</StyledParagraph></Tooltip>
         }, {
             key: 'model_id',
             title: 'Model',
             dataIndex: 'model_id',
-            width: 250,
             sorter: sortItemsByKey('model_id'),
+            width: 250,
             render: (modelId) => <Tooltip title={modelId}><StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{modelId}</StyledParagraph></Tooltip>
         }, {
             key: 'num_questions',
             title: 'Questions Per Topic',
             dataIndex: 'num_questions',
-            width: 120,
             align: 'center',
-            sorter: sortItemsByKey('num_questions')
+            sorter: sortItemsByKey('num_questions'),
+            width: 120
         }, 
         {
             key: 'total_count',
             title: 'Total Count',
             dataIndex: 'total_count',
-            width: 80,
             align: 'center',
-            sorter: sortItemsByKey('total_count')
+            sorter: sortItemsByKey('total_count'),
+            width: 80
         }, {
             key: 'use_case',
             title: 'Use Case',
             dataIndex: 'use_case',
-            width: 120,
             sorter: sortItemsByKey('use_case'),
             render: (useCase) => TRANSLATIONS[useCase]
         }, {
@@ -153,13 +150,12 @@ const DatasetsTab: React.FC = () => {
             title: 'Creation Time',
             dataIndex: 'timestamp',
             defaultSortOrder: 'descend',
-            width: 120,
             sorter: sortItemsByKey('timestamp'),
             render: (timestamp) => <>{timestamp == null ? 'N/A' : <DateTime dateTime={timestamp}/>}</>
         }, {
             key: '7',
             title: 'Actions',
-            width: 100,
+            width: 150,
             render: (row: Dataset) => (
                 <DatasetActions dataset={row} refetch={refetch} setToggleDatasetExportModal={setToggleDatasetExportModal}/>
             )

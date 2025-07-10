@@ -21,7 +21,6 @@ const { Search } = Input;
 const Container = styled.div`
   background-color: #ffffff;
   padding: 1rem;
-  overflow-x: auto;
 `;
 
 const StyledTable = styled(Table)`
@@ -90,40 +89,34 @@ const EvaluationsTab: React.FC = () => {
               key: 'display_name',
               title: 'Display Name',
               dataIndex: 'display_name',
-              width: 150,
               sorter: sortItemsByKey('display_name'),
         }, {
               key: 'model_id',
               title: 'Model ID',
               dataIndex: 'model_id',
-              width: 150,
               sorter: sortItemsByKey('model_id'),
         }, {
               key: 'average_score',
               title: 'Average Score',
               dataIndex: 'average_score',
-              width: 80,
               render: (average_score) => <Badge count={average_score} color={getColorCode(average_score)} showZero />,
               sorter: sortItemsByKey('average_score'),
         },{
               key: 'use_case',
               title: 'Use Case',
               dataIndex: 'use_case',
-              width: 180,
               sorter: sortItemsByKey('use_case'),
               render: (useCase) => <StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{TRANSLATIONS[useCase]}</StyledParagraph>
         }, {
               key: 'timestamp',
               title: 'Create Time',
               dataIndex: 'timestamp',
-              width: 140,
               sorter: sortItemsByKey('timestamp'),
               render: (timestamp) => <DateTime dateTime={timestamp}></DateTime>
         
         }, {
             key: 'action',
             title: 'Actions',
-            width: 100,
             render: (row: Evaluation) => 
               <EvaluateActions evaluation={row} refetch={refetch} />
             
