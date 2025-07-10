@@ -1,6 +1,5 @@
 export enum Pages {
     GENERATOR = 'data-generator',
-    DATA_AUGMENTATION = 'data-augmentation',
     REGENERATE = 're-generate',
     EVALUATOR = 'evaluator',
     HISTORY = 'history',
@@ -53,9 +52,4 @@ export interface UseCase {
     id: string;
     label: string;
     value: string;
-}
-
-export enum WizardModeType {
-    DATA_GENERATION = 'data-generation',
-    DATA_AUGMENTATION = 'data-augmention'
 }
