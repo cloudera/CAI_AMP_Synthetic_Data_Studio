@@ -708,9 +708,10 @@ async def create_custom_prompt(request: CustomPromptRequest, request_id = None):
         prompt = PromptBuilder.build_custom_prompt(
                 model_id=request.model_id,
                 custom_prompt=request.custom_prompt,
-                example_path= request.example_path
+                example_path= request.example_path,
+                example = request.example
             )
-        print(prompt)
+        #print(prompt)
         prompt_gen = model_handler.generate_response(prompt, request_id=request_id)
 
         return {"generated_prompt":prompt_gen}
@@ -768,12 +769,12 @@ async def get_use_cases():
     """Get available use cases"""
     return {
         "usecases": [
-            {"id": UseCase.CODE_GENERATION, "name": "Code Generation"},
-            {"id": UseCase.TEXT2SQL, "name": "Text to SQL"},
-            {"id": UseCase.CUSTOM, "name": "Custom"},
-            {"id": UseCase.LENDING_DATA, "name": "Lending Data"},
-            {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data"},
-            {"id": UseCase.TICKETING_DATASET, "name": "Ticketing Dataset"},
+            {"id": UseCase.CODE_GENERATION, "name": "Code Generation", "description": "Generates paired programming questions and fully-worked answers that include runnable, well-formatted code plus concise explanations. Ideal for building Q-and-A datasets across programming languages like Python.", "tag": ["Supervised Finetuning", "LLM"]},
+            {"id": UseCase.TEXT2SQL, "name": "Text to SQL", "description": "Creates natural-language questions matched to clean, executable SQL queries (with optional brief clarifications) spanning basics, joins, aggregates, subqueries, and window functions. Ensures each pair is consistently formatted for training or evaluation.", "tag": ["Supervised Finetuning", "LLM"]},
+            {"id": UseCase.CUSTOM, "name": "Custom", "description": "A blank template meant for any user-defined synthetic data task.", "tag":[]},
+            {"id": UseCase.LENDING_DATA, "name": "Lending Data", "description": "Produces realistic LendingClub-style loan records—complete borrower, loan, and credit-profile fields—while respecting privacy and intricate cross-field logic (grades, DTI, employment, etc.). Useful for credit-risk modeling or analytics demos.", "tag": ["Tabular Data", "Machine Learning"]},
+            {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data", "description": "Synthesizes comprehensive user profiles plus chronological credit-status histories, maintaining ID consistency and plausibly evolving payment behavior. Designed for training credit-scoring models without exposing real customer information.", "tag": ["Tabular Data", "Machine Learning"]},
+            {"id": UseCase.TICKETING_DATASET, "name": "Ticketing Dataset", "description": "Generates polite, professional customer-support prompts and assigns a single classification intent (cancel_ticket, customer_service, or report_payment_issue). Perfect for intent-classification or help-desk automation training.", "tag": ["Tabular Data", "Machine Learning"]},
         ]
     }
 
@@ -986,7 +987,8 @@ async def get_generation_history(
         db_manager.update_job_statuses_generate(job_status_map)
     
     # Get paginated data
-    total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    #total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    total_count, results = db_manager.get_paginated_generate_metadata_light(page, page_size)
     
     # Return in the structure expected by the frontend
     return {

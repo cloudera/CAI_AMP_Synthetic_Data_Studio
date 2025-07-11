@@ -242,6 +242,10 @@ class CustomPromptRequest(BaseModel):
     inference_type :Optional[str] = "aws_bedrock"
     caii_endpoint: Optional[str] = None
     example_path: Optional[str] = None
+    example: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="JSON array where each object has the same structure (consistent columns), but the structure itself can be defined flexibly per use case"
+    )
     custom_p:bool =True
 
     model_config = ConfigDict(protected_namespaces=(),

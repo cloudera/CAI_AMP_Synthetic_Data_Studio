@@ -668,231 +668,180 @@ class ModelPrompts:
     #     else:
     #         final_prompt =  "\n" + final_instruction 
     #     return final_prompt
-
+    
+    @staticmethod
     def create_custom_prompt(
-    model_id: str,
-    custom_prompt: str,
-    example_path: str | None = None,
-) -> str:
-        """
-        Create a custom prompt for a language model, optionally including dataset analysis.
-        
-        Args:
-            model_id: The ID of the model to create the prompt for
-            custom_prompt: The base custom prompt text
-            example_path: Optional path to an example dataset
-            
-        Returns:
-            A formatted prompt suitable for the specified model
-        """
+        model_id: str,
+        custom_prompt: str,
+        example_path: str | None = None,
+        example: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
         summary_block = ""
         example_block = ""
 
-        if example_path:
-            print(f"Loading example data from: {example_path}")
+        if example_path or example:
             try:
-                df = DataLoader.load(example_path)
-                #print(f"Loaded DataFrame with shape: {df.shape}")
-                
-                # Apply type inference to improve analysis
-                df = DataLoader.infer_dtypes(df)
-                
-                if "error_message" in df.columns and len(df.columns) == 1:
-                    # Data loading failed
-                    print(f"Error loading data: {df['error_message'][0]}")
-                    # Keep summary and example blocks as empty strings
-                elif not df.empty:
-                    # ---------- build summary block ----------
-                    try:
-                        print("Analyzing data...")
-                        summary_dict = DataAnalyser.analyse(df)
+                if example_path:
+                    print(f"Loading example data from: {example_path}")
+                    df = DataLoader.load(example_path)
+                elif example:
+                    df = pd.DataFrame(example)
+                else:
+                    df = None
 
-                        # Create a more structured summary with explanations
-                        summary_block = (
-                            "<data_summary>\n"
-                            "INSTRUCTIONS: The following analysis provides key insights about the dataset that should guide your synthetic data generation. Use these signals to match distributions and relationships when generating synthetic data.\n\n"
-                        )
+                if df is not None:
+                    df = DataLoader.infer_dtypes(df)
 
-                        # Add section for columns classification
-                        if "columns" in summary_dict:
-                            summary_block += ("""
-                            ## Column Types\n
-                            "These are all  columns identified in the dataset in given specific order:\n\n
-                            Make sure to provide definitions of each column in the same order as they are in the dataset.
-                            Don't change or skip any column name or order.                                          
-                            """)
-                            
-                            
-                           
-
-                            summary_block += "\n".join(f"- {col}" for col in summary_dict["columns"]) + "\n\n"
-
-                        # Add section for statistical analysis
-                        if "statistical_analysis" in summary_dict:
-                            summary_block += (
-                                "## Statistical Analysis\n"
-                                "These statistics describe the distributions of values in the dataset:\n\n"
+                    if "error_message" in df.columns and len(df.columns) == 1:
+                        print(f"Error loading data: {df['error_message'][0]}")
+                    elif not df.empty:
+                        try:
+                            print("Analyzing data...")
+                            summary_dict = DataAnalyser.analyse(df)
+                            summary_block = (
+                                "<data_summary>\n"
+                                "INSTRUCTIONS: The following analysis provides key insights about the dataset that should guide your synthetic data generation. Use these signals to match distributions and relationships when generating synthetic data.\n\n"
                             )
-                            
-                            if "numeric" in summary_dict["statistical_analysis"]:
+                            if "columns" in summary_dict:
+                                summary_block += ("""
+                                ## Column Types\n
+                                "These are all  columns identified in the dataset in given specific order:\n\n
+                                Make sure to provide definitions of each column in the same order as they are in the dataset.
+                                Don't change or skip any column name or order.                                          
+                                """)
+                                summary_block += "\n".join(f"- {col}" for col in summary_dict["columns"]) + "\n\n"
+
+                            if "statistical_analysis" in summary_dict:
+                                summary_block += "## Statistical Analysis\n"
+                                if "numeric" in summary_dict["statistical_analysis"]:
+                                    summary_block += (
+                                        "### Numeric Statistics\n"
+                                        f"{json.dumps(summary_dict['statistical_analysis']['numeric'], indent=2)}\n\n"
+                                    )
+                                if "categorical" in summary_dict["statistical_analysis"]:
+                                    summary_block += (
+                                        "### Categorical Statistics\n"
+                                        f"{json.dumps(summary_dict['statistical_analysis']['categorical'], indent=2)}\n\n"
+                                    )
+                                if "datetime" in summary_dict["statistical_analysis"]:
+                                    summary_block += (
+                                        "### DateTime Statistics\n"
+                                        f"{json.dumps(summary_dict['statistical_analysis']['datetime'], indent=2)}\n\n"
+                                    )
+
+                            if "cross_row_relationship" in summary_dict:
                                 summary_block += (
-                                    "### Numeric Statistics\n"
-                                    "Key statistics for numeric columns (mean, median, min, max, etc.):\n"
-                                    f"{json.dumps(summary_dict['statistical_analysis']['numeric'], indent=2)}\n\n"
+                                    "## Cross-Row Relationships\n"
+                                    f"{json.dumps(summary_dict['cross_row_relationship'], indent=2)}\n\n"
                                 )
-                            
-                            if "categorical" in summary_dict["statistical_analysis"]:
+                            if "cross_column_relationship" in summary_dict:
                                 summary_block += (
-                                    "### Categorical Statistics\n"
-                                    "Distribution of values in categorical columns:\n"
-                                    f"{json.dumps(summary_dict['statistical_analysis']['categorical'], indent=2)}\n\n"
-                                )
-                            
-                            if "datetime" in summary_dict["statistical_analysis"]:
-                                summary_block += (
-                                    "### DateTime Statistics\n"
-                                    "Temporal patterns and ranges in datetime columns:\n"
-                                    f"{json.dumps(summary_dict['statistical_analysis']['datetime'], indent=2)}\n\n"
+                                    "## Cross-Column Relationships\n"
+                                    f"{json.dumps(summary_dict['cross_column_relationship'], indent=2)}\n\n"
                                 )
 
-                        # Add section for cross-row relationships
-                        if "cross_row_relationship" in summary_dict:
-                            summary_block += (
-                                "## Cross-Row Relationships\n"
-                                "These insights describe patterns across rows in the dataset:\n\n"
-                                f"{json.dumps(summary_dict['cross_row_relationship'], indent=2)}\n\n"
+                            summary_block += "</data_summary>\n"
+                            print("Data analysis completed successfully.")
+                        except Exception as e:
+                            print(f"Error in data analysis: {str(e)}")
+
+                        try:
+                            print("Creating CSV snippet...")
+                            csv_snippet = SummaryFormatter.first_rows_block(df)
+                            example_block = (
+                                "<example>\n"
+                                "INSTRUCTIONS: The CSV snippet shows the first 10 rows of the "
+                                "original dataset. Preserve this column order, header names, "
+                                "and data types while creating new rows. "
+                                "Use this to create a comprehensive list of all columns and their definitions. "
+                                "Make sure the list covers all details and columns which will be required "
+                                "to create data.\n"
+                                f"{csv_snippet}</example>\n"
                             )
-
-                        # Add section for cross-column relationships
-                        if "cross_column_relationship" in summary_dict:
-                            summary_block += (
-                                "## Cross-Column Relationships\n"
-                                "These insights describe correlations and dependencies between columns:\n\n"
-                                f"{json.dumps(summary_dict['cross_column_relationship'], indent=2)}\n\n"
-                            )
-
-                        # Close the data summary block
-                        summary_block += "</data_summary>\n"
-
-                        print("Data analysis completed successfully.")
-                      
-                    except Exception as e: 
-                        # Analysis failed → keep summary_block as empty string
-                        print(f"Error in data analysis: {str(e)}")
-                        # Do NOT add any error messages to blocks
-
-                    # ---------- build example block ----------
-                    try:
-                        print("Creating CSV snippet...")
-                        csv_snippet = SummaryFormatter.first_rows_block(df)
-                        example_block = (
-                            "<example>\n"
-                            "INSTRUCTIONS: The CSV snippet shows the first 10 rows of the "
-                            "original dataset. Preserve this column order, header names, "
-                            "and data types while creating new rows. "
-                            "Use this to create a comprehensive list of all columns and their definitions. "
-                            "Make sure the list covers all details and columns which will be required "
-                            "to create data.\n"
-                            f"{csv_snippet}"
-                            "</example>\n"
-                        )
-                        print("CSV snippet created successfully.")
-                    except Exception as e:
-                        # Snippet failed → keep example_block as empty string
-                        print(f"Error creating CSV snippet: {str(e)}")
-                        # Do NOT add any error messages to blocks
+                            print("CSV snippet created successfully.")
+                        except Exception as e:
+                            print(f"Error creating CSV snippet: {str(e)}")
             except Exception as e:
-                print(f"Error processing example file: {str(e)}")
-                # Keep blocks as empty strings
-                # Do NOT add any error messages to blocks
+                print(f"Error processing example data: {str(e)}")
 
-        # Construct the final instruction with proper error handling for missing constants
         try:
-            
-            
             if example_path:
-            #Construct the final instruction
+                final_instruction = f"""You are a brilliant prompt engineer.
+                                        Your task: **{custom_prompt}**
+
+                                        {summary_block}{example_block}Return **only** the finished prompt that can be sent directly to a language model.
+                                        Now that you have complete information about the task, follow the below instructions to create prompt.
+
+                                        - Look at column list and include all columns in your prompt with their definitions. the list should be exhaustive and cover all columns.
+                                        - Make sure to have all statistical analysis , cross-row and cross-column relationships in your prompt.
+                                        - The prmpt should be absolutely clear in its final goal and there should not be any ambiguity or vagueness in the prompt.
+                                        - The prompt should be clear and exhaustive in its column details.                             
+
+                                    A few examples are given below for your reference 
+                                    Code Generation:
+
+                                    {DEFAULT_CODE_GENERATION_PROMPT}
+
+                                    Lending Data Generation:
+                                    {LENDING_DATA_PROMPT}
+
+                                Make sure you just give the prompt in your response which can be directly used by large language model.
+                                No need to give any explanation but just the prompt in same format as the example given above.
+                                Never mention how many rows or dataset size needs to be generated in the final output.
+
+                                    """
+            else:
                 final_instruction = f"""You are a brilliant prompt engineer.
                                     Your task: **{custom_prompt}**
+                                    
+                                    {summary_block}{example_block}
+                                    
+                                    Return a well-crafted prompt that focuses on:
+                                    - The core task objective
+                                    - Clear and exhaustive column details
+                                    - Key aspects to consider or maintain
+                                    - Special requirements for the task
 
-                                    {summary_block}{example_block}Return **only** the finished prompt that can be sent directly to a language model.
-                                    Now that you have complete information about the task, follow the below instructions to create prompt.
+                                    A few examples are given below for your reference 
+                                    Code Generation:
 
-                                    - Look at column list and include all columns in your prompt with their definitions. the list should be exhaustive and cover all columns.
-                                    - Make sure to have all statistical analysis , cross-row and cross-column relationships in your prompt.
-                                    - The prmpt should be absolutely clear in its final goal and there should not be any ambiguity or vagueness in the prompt.
-                                    - The prompt should be clear and exhaustive in its column details.                             
+                                    {DEFAULT_CODE_GENERATION_PROMPT}
 
-                                
-                                A few examples are given below for your reference 
-                                Code Generation:
-
-                                {DEFAULT_CODE_GENERATION_PROMPT}
-
-                                Lending Data Generation:
-                                {LENDING_DATA_PROMPT}
-
-                            Make sure you just give the prompt in your response which can be directly used by large language model.
-                            No need to give any explanation but just the prompt in same format as the example given above.
-                            Never mention how many rows or dataset size needs to be generated in the final output.
-
-                                """
-            else:
+                                    Text to SQL:
+                                    {DEFAULT_TEXT2SQL_PROMPT}
                 
-                final_instruction = f"""You are a brilliant prompt engineer.
-                                Your task: **{custom_prompt}**
-                                
-                                {summary_block}{example_block}
-                                
-                                Return a well-crafted prompt that focuses on:
-                                - The core task objective
-                                - Clear and exhaustive column details
-                                - Key aspects to consider or maintain
-                                - Special requirements for the task
-
-                                A few examples are given below for your reference 
-                                Code Generation:
-
-                                {DEFAULT_CODE_GENERATION_PROMPT}
-
-                                Text to SQL:
-                                {DEFAULT_TEXT2SQL_PROMPT}
-               
-                                Make sure you just give the prompt in your response which can be directly used by large language model.
-                                No need to give any explanation but just the prompt in same format as the example given above.
-                                Never mention how many rows or dataset size needs to be generated in the final output.
-                                """
+                                    Make sure you just give the prompt in your response which can be directly used by large language model.
+                                    No need to give any explanation but just the prompt in same format as the example given above.
+                                    Never mention how many rows or dataset size needs to be generated in the final output.
+                                    """
         except Exception as e:
             print(f"Error constructing instruction template: {str(e)}")
-            # Fallback to a simpler template that still includes any successful blocks
             final_instruction = f"""You are a brilliant prompt engineer.
-                                Your task: **{custom_prompt}**
-                                
-                                {summary_block}{example_block}
-                                
-                                Return a well-crafted prompt that focuses on:
-                                - The core task objective
-                                - Clear and exhaustive column details
-                                - Key aspects to consider or maintain
-                                - Special requirements for the task
+                                    Your task: **{custom_prompt}**
+                                    
+                                    {summary_block}{example_block}
+                                    
+                                    Return a well-crafted prompt that focuses on:
+                                    - The core task objective
+                                    - Clear and exhaustive column details
+                                    - Key aspects to consider or maintain
+                                    - Special requirements for the task
 
-                                A few examples are given below for your reference 
-                                Code Generation:
+                                    A few examples are given below for your reference 
+                                    Code Generation:
 
-                                {DEFAULT_CODE_GENERATION_PROMPT}
+                                    {DEFAULT_CODE_GENERATION_PROMPT}
 
-                                Text to SQL:
-                                {DEFAULT_TEXT2SQL_PROMPT}
-               
-                                Make sure you just give the prompt in your response which can be directly used by large language model.
-                                No need to give any explanation but just the prompt in same format as the example given above.
-                                Never mention how many rows or dataset size needs to be generated in the final output.
-                                """
+                                    Text to SQL:
+                                    {DEFAULT_TEXT2SQL_PROMPT}
+                
+                                    Make sure you just give the prompt in your response which can be directly used by large language model.
+                                    No need to give any explanation but just the prompt in same format as the example given above.
+                                    Never mention how many rows or dataset size needs to be generated in the final output.
+                                    """
 
-        # Format according to model family
         try:
             family = get_model_family(model_id)
-            
             if family == ModelFamily.LLAMA:
                 return "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n" \
                     f"{final_instruction}\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
@@ -903,21 +852,19 @@ class ModelPrompts:
             elif family == ModelFamily.QWEN:
                 system = "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
                 return f"""<|im_start|>system
-                                {system}<|im_end|>
-                                <|im_start|>user
+                                    {system}<|im_end|>
+                                    <|im_start|>user
 
-                                {final_instruction}<|im_end|>
-                                <|im_start|>assistant
-                                """
+                                    {final_instruction}<|im_end|>
+                                    <|im_start|>assistant
+                                    """
             else:
-                # Default format if model family is unknown
                 return "\n" + final_instruction
         except Exception as e:
             print(f"Error formatting for model family: {str(e)}")
-            # Return the raw instruction if formatting fails
             return final_instruction
+
         
-       
     
     @staticmethod
     def generate_result_prompt(model_id: str,
@@ -999,11 +946,11 @@ class ModelPrompts:
         use_case: UseCase,
         topic: str,
        num_questions: int,
-        omit_questions: List,
-        example_custom: List[Dict[str, Any]],
-        example_path: Optional[str],
-       custom_prompt = Optional[str],
-       schema = Optional[str]
+     omit_questions: List,
+        example_custom: Optional[List[Dict[str, Any]]] = None,  # <- now optional
+        example_path: Optional[str] = None,
+        custom_prompt: Optional[str] = None,
+        schema: Optional[str] = None,
     ) -> str:
         
         if example_path:
@@ -1184,10 +1131,11 @@ class PromptBuilder:
     @staticmethod
     def build_custom_prompt(model_id: str,
         custom_prompt = Optional[str],
-        example_path= Optional[str]
+        example_path= Optional[str],
+        example = Optional[List[Dict[str, Any]]]
     ) -> str:
         
-        return ModelPrompts.create_custom_prompt(model_id, custom_prompt, example_path)
+        return ModelPrompts.create_custom_prompt(model_id, custom_prompt, example_path, example)
     
     @staticmethod
     def build_freeform_prompt(model_id: str,

@@ -821,6 +821,39 @@ class DatabaseManager:
             print(f"Error retrieving all metadata: {str(e)}")
             return []
     
+    def get_paginated_generate_metadata_light(self, page: int, page_size: int) -> Tuple[int, List[Dict]]:
+        """Retrieve paginated metadata with only fields needed for list view"""
+        try:
+            with self.get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+
+                # Get total count
+                count_query = "SELECT COUNT(*) FROM generation_metadata"
+                cursor.execute(count_query)
+                total_count = cursor.fetchone()[0]
+
+                # Get only fields needed for list view
+                offset = (page - 1) * page_size
+                query = """
+                    SELECT 
+                        id, timestamp, display_name, generate_file_name, model_id, 
+                        num_questions, total_count, use_case, job_status, 
+                        local_export_path, hf_export_path, completed_rows
+                    FROM generation_metadata 
+                    ORDER BY timestamp DESC 
+                    LIMIT ? OFFSET ?
+                """
+                cursor.execute(query, (page_size, offset))
+
+                results = [dict(row) for row in cursor.fetchall()]
+                return total_count, results
+
+        except Exception as e:
+            print(f"Error retrieving paginated metadata: {str(e)}")
+            return 0, []
+
+
     def get_paginated_generate_metadata(self, page: int, page_size: int) -> Tuple[int, List[Dict]]:
         """Retrieve paginated metadata entries for generations"""
         try:
