@@ -57,5 +57,5 @@ export interface UseCase {
 
 export enum WizardModeType {
     DATA_GENERATION = 'data-generation',
-    DATA_AUGMENTATION = 'data-augmention'
+    DATA_AUGMENTATION = 'data-augmentation'
 }
