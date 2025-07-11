@@ -7,6 +7,7 @@ import EvaluationsTab from './EvaluationsTab';
 import DatasetIcon from '../../assets/ic-datasets.svg';
 import ArrowRightIcon from '../../assets/ic-arrow-right.svg';
 import EvaluateIcon from '../../assets/ic-evaluations.svg';
+import DataAugmentationIcon from '../../assets/ic-data-augmentation.svg';
 import EvaluateButton from './EvaluateButton';
 import ExportsTab from './ExportsTab';
 
@@ -110,6 +111,25 @@ const HomePage: React.FC = () => {
                         <div className="right-section">
                             <div>
                                 <Button href="/data-generator">
+                                    Get Started
+                                    <img src={ArrowRightIcon} alt="Get Started" />
+                                </Button>
+                            </div>
+                        </div>
+                    </HeaderSection>
+                    <HeaderSection style={{ marginLeft: '1rem' }}>
+                        <div className="left-section" style={{ padding: '5px' }}>
+                            <img src={DataAugmentationIcon} alt="Datasets" />
+                        </div>
+                        <div className="middle-section">
+                            <div className="section-title">Data Augmentation</div>
+                            <div className="section-description">
+                                <p>Generate multi-dimension datasets using LLM custom prompts</p>
+                            </div>
+                        </div>
+                        <div className="right-section">
+                            <div>
+                                <Button href="/data-augmentation">
                                     Get Started
                                     <img src={ArrowRightIcon} alt="Get Started" />
                                 </Button>
