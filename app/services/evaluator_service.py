@@ -323,7 +323,7 @@ class EvaluatorService:
             timestamp = datetime.now(timezone.utc).isoformat()
             time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
             model_name = get_model_family(request.model_id).split('.')[-1]
-            output_path = f"qa_pairs_{model_name}_{time_file}_evaluated.json"
+            output_path = f"Data_Evaluation_Results/qa_pairs_{model_name}_{time_file}_evaluated.json"
             
             self.logger.info(f"Saving evaluation results to: {output_path}")
             with open(output_path, 'w') as f:
@@ -614,7 +614,7 @@ class EvaluatorService:
             timestamp = datetime.now(timezone.utc).isoformat()
             time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
             model_name = get_model_family(request.model_id).split('.')[-1]
-            output_path = f"row_data_{model_name}_{time_file}_evaluated.json"
+            output_path = f"Data_Evaluation_Results/row_data_{model_name}_{time_file}_evaluated.json"
             
             self.logger.info(f"Saving row evaluation results to: {output_path}")
             with open(output_path, 'w') as f:

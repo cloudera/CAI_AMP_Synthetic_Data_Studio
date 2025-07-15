@@ -357,7 +357,7 @@ class SynthesisService:
             time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
             mode_suffix = "test" if is_demo else "final"
             model_name = get_model_family(request.model_id).split('.')[-1]
-            file_path = f"qa_pairs_{model_name}_{time_file}_{mode_suffix}.json"
+            file_path = f"Data_Generation_Results/qa_pairs_{model_name}_{time_file}_{mode_suffix}.json"
             if request.doc_paths:
                 final_output = [{
                                     'Generated_From': item['Topic'],
@@ -557,7 +557,7 @@ class SynthesisService:
             time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
             mode_suffix = "test" if is_demo else "final"
             model_name = get_model_family(request.model_id).split('.')[-1]
-            file_path = f"qa_pairs_{model_name}_{time_file}_{mode_suffix}.json"
+            file_path = f"Data_Augmentation_Results/qa_pairs_{model_name}_{time_file}_{mode_suffix}.json"
             input_key = request.output_key or request.input_key
             result = [{
                                 
@@ -993,7 +993,7 @@ class SynthesisService:
             time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
             mode_suffix = "test" if is_demo else "final"
             model_name = get_model_family(request.model_id).split('.')[-1]
-            file_path = f"freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
+            file_path = f"Data_Generation_Results/freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
             
             # Save partial results if we have any data
             if final_output:
@@ -1130,7 +1130,7 @@ class SynthesisService:
             if 'model_name' not in locals():
                 model_name = get_model_family(request.model_id).split('.')[-1]
             if 'file_path' not in locals():
-                file_path = f"freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
+                file_path = f"Data_Generation_Results/freeform_data_{model_name}_{time_file}_{mode_suffix}.json"
             
             # Try to save partial results if any exist before failing
             saved_partial_results = False

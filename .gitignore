@@ -84,3 +84,8 @@ sample_200x100.csv
 Raw_Web_Visit_sample.csv
 Raw_Web_Visit_Sample.csv
 Raw_Web_Visit_Sample.csv
+
+# Generated data results directories
+Data_Generation_Results/
+Data_Augmentation_Results/
+Data_Evaluation_Results/

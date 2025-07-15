@@ -243,6 +243,20 @@ async def lifespan(app: FastAPI):
     #path_manager.make_dirs(path_manager.upload_dir)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     print(f"Document upload directory created at: {UPLOAD_DIR}")
+    
+    # Create additional directories for data processing results
+    data_generation_dir = ROOT_DIR / "Data_Generation_Results"
+    data_augmentation_dir = ROOT_DIR / "Data_Augmentation_Results"
+    data_evaluation_dir = ROOT_DIR / "Data_Evaluation_Results"
+    
+    os.makedirs(data_generation_dir, exist_ok=True)
+    os.makedirs(data_augmentation_dir, exist_ok=True)
+    os.makedirs(data_evaluation_dir, exist_ok=True)
+    
+    print(f"Data Generation Results directory created at: {data_generation_dir}")
+    print(f"Data Augmentation Results directory created at: {data_augmentation_dir}")
+    print(f"Data Evaluation Results directory created at: {data_evaluation_dir}")
+    
     yield
 
 
