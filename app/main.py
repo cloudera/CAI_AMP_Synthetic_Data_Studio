@@ -768,15 +768,15 @@ async def get_model_id_filtered():
 async def get_use_cases():
     """Get available use cases"""
     return {
-        "usecases": [
-            {"id": UseCase.CODE_GENERATION, "name": "Code Generation", "description": "Generates paired programming questions and fully-worked answers that include runnable, well-formatted code plus concise explanations. Ideal for building Q-and-A datasets across programming languages like Python.", "tag": ["Supervised Finetuning", "LLM"]},
-            {"id": UseCase.TEXT2SQL, "name": "Text to SQL", "description": "Creates natural-language questions matched to clean, executable SQL queries (with optional brief clarifications) spanning basics, joins, aggregates, subqueries, and window functions. Ensures each pair is consistently formatted for training or evaluation.", "tag": ["Supervised Finetuning", "LLM"]},
-            {"id": UseCase.CUSTOM, "name": "Custom", "description": "A blank template meant for any user-defined synthetic data task.", "tag":[]},
-            {"id": UseCase.LENDING_DATA, "name": "Lending Data", "description": "Produces realistic LendingClub-style loan records—complete borrower, loan, and credit-profile fields—while respecting privacy and intricate cross-field logic (grades, DTI, employment, etc.). Useful for credit-risk modeling or analytics demos.", "tag": ["Tabular Data", "Machine Learning"]},
-            {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data", "description": "Synthesizes comprehensive user profiles plus chronological credit-status histories, maintaining ID consistency and plausibly evolving payment behavior. Designed for training credit-scoring models without exposing real customer information.", "tag": ["Tabular Data", "Machine Learning"]},
-            {"id": UseCase.TICKETING_DATASET, "name": "Ticketing Dataset", "description": "Generates polite, professional customer-support prompts and assigns a single classification intent (cancel_ticket, customer_service, or report_payment_issue). Perfect for intent-classification or help-desk automation training.", "tag": ["Tabular Data", "Machine Learning"]},
-        ]
-    }
+   "usecases": [
+       {"id": UseCase.CODE_GENERATION, "name": "Code Generation", "description": "Generates paired programming questions and answers with runnable, well-formatted code plus explanations. Ideal for building Q-and-A datasets across programming languages like Python.", "tag": ["Supervised Finetuning", "Data Generation"]},
+       {"id": UseCase.TEXT2SQL, "name": "Text to SQL", "description": "Creates natural-language questions matched to clean, executable SQL queries spanning basics, joins, aggregates, subqueries, and window functions. Great for training and evaluation.", "tag": ["Supervised Finetuning", "Data Generation"]},
+       {"id": UseCase.CUSTOM, "name": "Custom", "description": "A blank template meant for any user-defined synthetic data task.", "tag": []},
+       {"id": UseCase.LENDING_DATA, "name": "Lending Data", "description": "Produces realistic LendingClub-style loan records—complete borrower, loan, and credit-profile fields—while respecting privacy and intricate cross-field logic (grades, DTI, employment, etc.).", "tag": ["Data Generation", "Tabular Data"]},
+       {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data", "description": "Builds user profiles with chronological credit-status histories, maintaining ID consistency and evolving payment behavior. Supports training for credit scoring models without real user data.", "tag": ["Data Generation", "Tabular Data"]},
+       {"id": UseCase.TICKETING_DATASET, "name": "Ticketing Dataset", "description": "Generates support queries with labelled ticket classification intent (cancel_ticket, customer_service, or report_payment_issue). Perfect for intent-classification or help-desk automation training.", "tag": ["Data Generation", "Intent Classification"]},
+   ]
+}
 
 @app.get("/model/parameters", include_in_schema=True)
 async def get_model_parameters() -> Dict:
