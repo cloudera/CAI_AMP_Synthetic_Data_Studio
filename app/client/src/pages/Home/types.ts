@@ -32,3 +32,10 @@ export interface DatasetDetails {
 export interface DatasetGeneration {
     [key: string]: string;
 }
+
+export interface Template {
+    id: string;
+    name: string;
+    tag: string[];
+    description: string;
+}

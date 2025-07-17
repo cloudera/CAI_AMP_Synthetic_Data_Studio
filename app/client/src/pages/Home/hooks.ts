@@ -35,7 +35,7 @@ const fetchExports = async (page = 1, pageSize = 10) => {
 
 export const useDatasets = () => {
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 5 });
   
   const { data, isLoading, isError, refetch } = useQuery<PaginatedResponse<DatasetResponse>>(
     {
@@ -64,6 +64,9 @@ export const useDatasets = () => {
       ...data,
       data: filtered,
     };
+  }
+  if (filteredData && filteredData.data.length !== 0 && filteredData.data.length > 5) {
+    filteredData.data = filteredData.data.slice(0, 5);
   }
   
   return {
@@ -115,6 +118,10 @@ export const useEvaluations = () => {
       ...data,
       data: filtered,
     };
+  }
+
+  if (filteredData && filteredData.data.length !== 0 && filteredData.data.length > 5) {
+    filteredData.data = filteredData.data.slice(0, 5);
   }
   
   return {
@@ -169,6 +176,10 @@ export const useExports = () => {
       data: filtered,
     };
 
+  }
+
+  if (filteredData && filteredData.data.length !== 0 && filteredData.data.length > 5) {
+    filteredData.data = filteredData.data.slice(0, 5);
   }
   
   return {
