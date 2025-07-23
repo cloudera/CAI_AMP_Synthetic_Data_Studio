@@ -178,7 +178,7 @@ const DataGenerator: FunctionComponent<Props> = () => {
     return (
         <WizardCtx.Provider value={{ setIsStepValid }}>
             <Layout style={{ paddingBottom: 45 }}>
-                <StyledTitle>{'Synthetic Dataset Studio'}</StyledTitle>
+                <StyledTitle>{'Configure Synthetic Dataset'}</StyledTitle>
                 <Wizard
                     current={current}
                     onChange={onStepChange}

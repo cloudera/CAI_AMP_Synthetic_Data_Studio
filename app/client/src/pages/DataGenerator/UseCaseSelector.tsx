@@ -1,13 +1,15 @@
-import { Form, Select } from "antd";
+import { Form, FormInstance, Select } from "antd";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useGetUseCases } from "./hooks";
 import { UseCase } from "../../types";
 import get from "lodash/get";
 
-interface Props {}
+interface Props {
+    form: FormInstance<any>;
+}
 
 
-const UseCaseSelector: FunctionComponent<Props> = () => {
+const UseCaseSelector: FunctionComponent<Props> = ({ form }) => {
   const [useCases, setUseCases] = useState<UseCase[]>([]);
   const useCasesReq = useGetUseCases();  
 
@@ -23,6 +25,15 @@ const UseCaseSelector: FunctionComponent<Props> = () => {
     }
   }, [useCasesReq.data]);
 
+  const onChange = (value: string) => {
+    console.log('value', value);
+    form.setFieldValue('use_case', value);
+    if (value !== 'custom') {
+        form.setFieldValue('example_path', null);
+        form.setFieldValue('examples', []);
+    }
+  }
+
 
   return (
     <Form.Item
@@ -37,7 +48,7 @@ const UseCaseSelector: FunctionComponent<Props> = () => {
         }}
         shouldUpdate
         >
-            <Select placeholder={'Select a template'}>
+            <Select placeholder={'Select a template'} onChange={onChange}>
                 {useCases.map(option => 
                     <Select.Option key={option.value} value={option.value}>
                         {option.label}

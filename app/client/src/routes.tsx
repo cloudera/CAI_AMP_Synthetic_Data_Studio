@@ -9,6 +9,9 @@ import DatasetDetailsPage from "./pages/DatasetDetails/DatasetDetailsPage";
 import WelcomePage from "./pages/Home/WelcomePage";
 import ErrorPage from "./pages/ErrorPage";
 import EvaluationDetailsPage from "./pages/EvaluationDetails/EvaluationDetailsPage";
+import DatasetsPage from "./pages/Datasets/DatasetsPage";
+import EvaluationsPage from "./pages/Evaluations/EvaluationsPage";
+import ExportsPage from "./pages/Exports/ExportsPage";
 //import TelemetryDashboard from "./components/TelemetryDashboard";
 
 
@@ -40,8 +43,32 @@ const router = createBrowserRouter([
         loader: async () => null
       },
       { 
+        path: `${Pages.GENERATOR}/:template_name`, 
+        element: <DataGenerator key={Pages.GENERATOR}/>, 
+        errorElement: <ErrorPage />,
+        loader: async () => null
+      },
+      { 
         path: Pages.DATA_AUGMENTATION, 
         element: <DataGenerator key={Pages.DATA_AUGMENTATION} mode={WizardModeType.DATA_AUGMENTATION}/>, 
+        errorElement: <ErrorPage />,
+        loader: async () => null
+      },
+      { 
+        path: Pages.DATASETS, 
+        element: <DatasetsPage key={Pages.GENERATOR} />, 
+        errorElement: <ErrorPage />,
+        loader: async () => null
+      },
+      { 
+        path: Pages.EVALUATIONS, 
+        element: <EvaluationsPage key={Pages.EVALUATIONS} />, 
+        errorElement: <ErrorPage />,
+        loader: async () => null
+      },
+      { 
+        path: Pages.EXPORTS, 
+        element: <ExportsPage key={Pages.EXPORTS} />, 
         errorElement: <ErrorPage />,
         loader: async () => null
       },

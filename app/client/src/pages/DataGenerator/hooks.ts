@@ -280,7 +280,7 @@ export const fetchExamplesByUseCase = async (use_case: string) => {
 }
 
 export const useGetExamplesByUseCase = (use_case: string) => {
-    const { data, isLoading, isError, error, isFetching } = useQuery(
+    const { data, isLoading, isError, error, isFetching, refetch } = useQuery(
         {
             queryKey: ['fetchUseCaseTopics', fetchExamplesByUseCase],
             queryFn: () => fetchExamplesByUseCase(use_case),
@@ -309,7 +309,8 @@ export const useGetExamplesByUseCase = (use_case: string) => {
       isError,
       error,
       examples,
-      exmpleFormat
+      exmpleFormat,
+      refetch
     };
 } 
 

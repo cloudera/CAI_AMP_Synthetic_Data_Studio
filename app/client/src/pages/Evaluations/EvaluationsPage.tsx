@@ -1,11 +1,11 @@
 import throttle from "lodash/throttle";
 import { SyntheticEvent, useEffect } from "react";
-import { Badge, Col, Flex, Input, notification, Row, Table, TableProps } from "antd";
+import { Badge, Col, Flex, Input, Layout, notification, Row, Table, TableProps } from "antd";
 import styled from "styled-components";
 import Paragraph from 'antd/es/typography/Paragraph';
 import { JOB_EXECUTION_TOTAL_COUNT_THRESHOLD, TRANSLATIONS } from '../../constants';
-import { useEvaluations } from "./hooks";
-import { Evaluation } from "./types";
+import { useEvaluations } from "../Home/hooks";
+import { Evaluation } from "../Home/types";
 import { sortItemsByKey } from "../../utils/sortutils";
 import Loading from "../Evaluator/Loading";
 
@@ -15,14 +15,20 @@ import EvaluateActions from "./EvaluateActions";
 import { getColorCode } from "../Evaluator/util";
 import { JobStatus } from "../../types";
 import JobStatusIcon from "../../components/JobStatus/jobStatusIcon";
+import StyledTitle from "../Evaluator/StyledTitle";
 
+
+const { Content } = Layout;
 const { Search } = Input;
+
+const StyledContent = styled(Content)`
+    padding: 24px;
+    background-color: #f5f7f8;
+`;
 
 const Container = styled.div`
   background-color: #ffffff;
   padding: 1rem;
-  padding-left: 0;
-  padding-right: 0;
   overflow-x: auto;
 `;
 
@@ -55,12 +61,8 @@ const StyledParagraph = styled(Paragraph)`
     color:  #5a656d;
 `;
 
-interface Props {
-    hideSearch?: boolean;
-}
 
-
-const EvaluationsTab: React.FC<Props> = ({ hideSearch }) => {
+const EvaluationsPage: React.FC = () => {
     const { data, isLoading, isError, refetch, setSearchQuery, pagination } = useEvaluations();
 
     useEffect(() => {
@@ -136,9 +138,13 @@ const EvaluationsTab: React.FC<Props> = ({ hideSearch }) => {
           },
     ]; 
     
+
     return (
-        <Container>
-            {!hideSearch && <Row style={{ marginBottom: 16 }}>
+        <Layout>
+            <StyledContent>
+            <StyledTitle style={{ fontWeight: 600}}>{'Evaluations'}</StyledTitle>
+            <Container>
+            <Row style={{ marginBottom: 16 }}>
                 <Col span={24}>
                     <Search 
                         placeholder="Search Evaluations"
@@ -146,17 +152,19 @@ const EvaluationsTab: React.FC<Props> = ({ hideSearch }) => {
                         onChange={onChange} 
                         style={{ width: 350 }} />
                 </Col>
-            </Row>}
+            </Row>
             {isLoading && <Loading />}
             <StyledTable
                 rowKey={(row: Evaluation) => `${row?.display_name}_${row?.evaluate_file_name}`}
                 tableLayout="fixed"
-                // pagination={pagination}
+                pagination={pagination}
                 columns={columns}
                 dataSource={data?.data || [] as Evaluation[]} 
             />
         </Container>
-    )
+        </StyledContent>
+        </Layout>    
+    );
 }
 
-export default EvaluationsTab;
+export default EvaluationsPage;

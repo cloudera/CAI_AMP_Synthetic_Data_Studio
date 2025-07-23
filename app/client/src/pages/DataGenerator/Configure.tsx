@@ -11,7 +11,7 @@ import { ModelProviders, ModelProvidersDropdownOpts } from './types';
 import { getWizardModel, getWizardModeType, useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
 import UseCaseSelector from './UseCaseSelector';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { WizardModeType } from '../../types';
 import { get } from 'lodash';
 
@@ -52,6 +52,7 @@ export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
 
 const Configure = () => {
     const location = useLocation();
+    const { template_name, generate_file_name } = useParams();
     const [wizardModeType, setWizardModeType] = useState(getWizardModeType(location));
 
     useEffect(() => {
@@ -63,6 +64,12 @@ const Configure = () => {
             form.setFieldValue('workflow_type', 'freeform');
         }
     }, [location, wizardModeType]);
+
+    useEffect(() => {
+        if (template_name) {
+            form.setFieldValue('use_case', template_name);
+        }
+    }, [template_name]);
 
     const form = Form.useFormInstance();
     const formData = Form.useWatch((values) => values, form);
@@ -91,7 +98,7 @@ const Configure = () => {
 
     // keivan
     useEffect(() => {
-        if (formData && formData?.inference_type === undefined) {
+        if (formData && formData?.inference_type === undefined && isEmpty(generate_file_name)) {
             form.setFieldValue('inference_type', ModelProviders.CAII);
         }
     }, [formData]);
@@ -290,7 +297,7 @@ const Configure = () => {
                 >
                     <Flex>
                         <Select placeholder={'Select project files'} mode="multiple" value={selectedFiles || []} onChange={onFilesChange} allowClear/>    
-                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} />
+                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} allowFileTypes={['pdf', 'docx']}/>
                     </Flex>
                 </Form.Item>}
                 {formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && 

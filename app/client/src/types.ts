@@ -6,6 +6,8 @@ export enum Pages {
     HISTORY = 'history',
     HOME = 'home',
     DATASETS = 'datasets',
+    EVALUATIONS = 'evaluations',
+    EXPORTS = 'exports',
     WELCOME = 'welcome',
     FEEDBACK = 'feedback',
     UPGRADE = 'upgrade'

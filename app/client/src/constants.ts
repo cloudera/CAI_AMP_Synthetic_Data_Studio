@@ -8,6 +8,8 @@ export const LABELS = {
     [Pages.GENERATOR]: 'Generation',
     [Pages.EVALUATOR]: 'Evaluator',
     [Pages.DATASETS]: 'Datasets',
+    [Pages.EVALUATIONS]: 'Evaluations',
+    [Pages.EXPORTS]: 'Exports',
     [Pages.HISTORY]: 'History',
     [Pages.FEEDBACK]: 'Feedback',
     //[Pages.TELEMETRY]: 'Telemetry',
@@ -19,7 +21,11 @@ export const LABELS = {
 
 export const TRANSLATIONS: Record<string, string> = {
     "code_generation": "Code Generation",
-    "text2sql": "Text to SQL"
+    "text2sql": "Text to SQL",
+    "custom": "Custom",
+    "lending_data": "Lending Data",
+    "credit_card_data": "Credit Card Data",
+    "ticketing_dataset": "Ticketing Dataset"
   };
 
 export const CDSW_PROJECT_URL = import.meta.env.VITE_CDSW_PROJECT_URL;
