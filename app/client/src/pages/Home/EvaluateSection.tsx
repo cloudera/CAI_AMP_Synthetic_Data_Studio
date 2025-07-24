@@ -58,12 +58,12 @@ const EvaluateSection: React.FC = () => {
         <>
             <HeaderSection style={{ marginLeft: '1rem' }} onClick={onClick}>
                 <div className="left-section evaluate-icon">
-                    <img src={EvaluateIcon} alt="Datasets" />
+                    <img src={EvaluateIcon} alt="evaluation" />
                 </div>
                 <div className="middle-section">
-                    <div className="section-title">Evaluate</div>
+                    <div className="section-title">Evaluation</div>
                     <div className="section-description">
-                        Evaluate generated datasets for fine tuning LLMs
+                    Use LLMs to score and filter your synthetic data. Keep only high-quality results.
                     </div>
                 </div>
             </HeaderSection>

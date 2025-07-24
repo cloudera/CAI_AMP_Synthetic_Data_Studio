@@ -118,21 +118,21 @@ const HomePage: React.FC = () => {
                             <img src={DatasetIcon} alt="Datasets" />
                         </div>
                         <div className="middle-section">
-                            <div className="section-title">Create Datasets</div>
+                            <div className="section-title">Generation</div>
                             <div className="section-description">
-                                Generate synthetic datasets for training models
+                              Create synthetic data from scratch using examples, documents, seed instructions and AI assisted prompts.
                             </div>
                         </div>
                     </HeaderSection>
 
                     <HeaderSection style={{ marginLeft: '1rem' }} onClick={() => navigate('/data-augmentation')}>
                         <div className="left-section" style={{ padding: '5px' }}>
-                            <img src={DataAugmentationIcon} alt="Datasets" />
+                            <img src={DataAugmentationIcon} alt="augmentation" />
                         </div>
                         <div className="middle-section">
-                            <div className="section-title">Data Augmentation</div>
+                            <div className="section-title">Augmentation</div>
                             <div className="section-description">
-                                Generate multi-dimension datasets using LLM custom prompts
+                            Add synthetic rows or field to existing data to fill gaps or balance datasets such as language translations.
                             </div>
                         </div>
                     </HeaderSection>
