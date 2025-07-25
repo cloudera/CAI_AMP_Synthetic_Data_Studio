@@ -1007,19 +1007,24 @@ class SynthesisService:
                     json.dump(final_output, indent=2, fp=f)
                 self.logger.info(f"Saved {len(final_output)} results to {file_path}")
 
-            # Check if we have any critical model errors across all topics
-            has_critical_model_error = any(
-                topic_errors and any("ModelHandlerError" in error for error in topic_errors)
-                for _, _, topic_errors, _ in completed_topics
-            )
+            # Find the first critical model error message
+            first_critical_error = None
+            for _, _, topic_errors, _ in completed_topics:
+                if topic_errors:
+                    for error in topic_errors:
+                        if "ModelHandlerError" in error:
+                            first_critical_error = error
+                            break
+                    if first_critical_error:
+                        break
 
             # After saving (or if no data), check for critical errors
-            if has_critical_model_error:
+            if first_critical_error:
                 if final_output:
                     self.logger.info(f"Saved {len(final_output)} results before failing due to model errors")
                 else:
                     self.logger.info("No results to save before failing due to model errors")
-                raise APIError("Critical model errors encountered during generation")
+                raise APIError(first_critical_error)
 
             # Handle custom prompt, examples and schema
             custom_prompt_str = PromptHandler.get_default_custom_prompt(request.use_case, request.custom_prompt)
