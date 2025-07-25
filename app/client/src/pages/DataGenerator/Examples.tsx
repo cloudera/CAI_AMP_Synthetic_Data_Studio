@@ -12,7 +12,7 @@ import PCModalContent from './PCModalContent';
 import { ExampleType, File, QuestionSolution, WorkflowType } from './types';
 import FileSelectorButton from './FileSelectorButton';
 
-import { fetchFileContent, getExampleType, useGetExamplesByUseCase } from './hooks';
+import { fetchExamplesByUseCase, fetchFileContent, getExampleType, useGetExamplesByUseCase } from './hooks';
 import { useState } from 'react';
 import FreeFormExampleTable from './FreeFormExampleTable';
 import { L } from 'vitest/dist/chunks/reporters.DTtkbAtP.js';
@@ -54,12 +54,20 @@ const Examples: FunctionComponent = () => {
     const form = Form.useFormInstance();
     const [records, setRecords] = useState<Record<string, string>[]>([]);
     const workflowType = form.getFieldValue('workflow_type');
-    const { examples, isLoading: examplesLoading, refetch } = 
-        useGetExamplesByUseCase(form.getFieldValue('use_case'));
 
     const mutation = useMutation({
         mutationFn: fetchFileContent
     });
+
+    const restore_mutation = useMutation({
+        mutationFn: fetchExamplesByUseCase
+    });
+
+    useEffect(() => {
+        const useCase = form.getFieldValue('use_case');
+        restore_mutation.mutate(useCase);
+    }, [form.getFieldValue('use_case')]);
+
 
     useEffect(() => {
         const example_path = form.getFieldValue('example_path');
@@ -70,21 +78,28 @@ const Examples: FunctionComponent = () => {
         }
      }, [form.getFieldValue('example_path'), form.getFieldValue('workflow_type')]);
 
-    useEffect(() => {  
-        console.log('------------------> useEffect')
+    useEffect(() => {
         if (!isEmpty(mutation.data)) {
             form.setFieldValue('examples', mutation.data);
             if (!isEqual(mutation.data, records)) {
                setRecords(mutation.data);
             }
             
-        } else if (Array.isArray(examples) && !isEqual(examples, records)) {
+        }
+    }, [mutation.data]);
+
+    useEffect(() => {
+        if (!isEmpty(restore_mutation.data)) {
+            const examples = get(restore_mutation.data, 'examples', []);
             form.setFieldValue('examples', examples);
             setRecords(examples);
         }
-    }, [mutation.data, examples]);
+    }, [restore_mutation.data]);
     
-    
+    const onRestoreDefaults = async() => {
+        const useCase = form.getFieldValue('use_case');
+        restore_mutation.mutate(useCase);
+    }
 
     const onAddFiles = (files: File[]) => {
       if (!isEmpty (files)) {
@@ -104,16 +119,16 @@ const Examples: FunctionComponent = () => {
         span: 10
     };
 
-    const showEmptyState = workflowType === WorkflowType.FREE_FORM_DATA_GENERATION && 
+    const showEmptyState = (workflowType === WorkflowType.FREE_FORM_DATA_GENERATION && 
         isEmpty(mutation.data) &&
-        records.length === 0;
+        records.length === 0) || 
+        (form.getFieldValue('use_case') === 'custom' && 
+        isEmpty(form.getFieldValue('examples')));
 
-    console.log('examples', form.getFieldValue('examples'));
-    console.log('records', records);
 
     return (
         <Container>
-            {examplesLoading && <Loading />}
+            {mutation?.isPending || restore_mutation.isPending && <Loading />}
             <Header align='center' justify='space-between'>
                 <StyledTitle level={3}>
                     <Space>
@@ -149,8 +164,8 @@ const Examples: FunctionComponent = () => {
                                     <ModalButtonGroup gap={8} justify='end'>
                                         <Button onClick={() => Modal.destroyAll()}>{'Cancel'}</Button>
                                         <Button
-                                            onClick={() => {
-                                                refetch();
+                                            onClick={async () => {
+                                                await onRestoreDefaults();
                                                 Modal.destroyAll();
                                             }}
                                             type='primary'
