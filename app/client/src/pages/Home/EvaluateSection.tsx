@@ -1,4 +1,4 @@
-import { Form, Modal, Select } from "antd";
+import { Button, Form, Modal, Select } from "antd";
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from "react";
 import { useDatasets } from "./hooks";
@@ -8,6 +8,7 @@ import { HeaderSection } from "./HomePage";
 import { Dataset } from "../Evaluator/types";
 import { Pages } from "../../types";
 import EvaluateIcon from '../../assets/ic-brand-inventory-ordering.svg';
+import ArrowRightIcon from '../../assets/ic-arrow-right.svg';
 
 
 const EvaluateSection: React.FC = () => {
@@ -57,13 +58,23 @@ const EvaluateSection: React.FC = () => {
     return (
         <>
             <HeaderSection style={{ marginLeft: '1rem' }} onClick={onClick}>
-                <div className="left-section evaluate-icon">
-                    <img src={EvaluateIcon} alt="evaluation" />
+                <div className="top-section">
+                    <div className="left-section evaluate-icon">
+                        <img src={EvaluateIcon} alt="evaluation" />
+                    </div>
+                    <div className="middle-section">
+                        <div className="section-title">Evaluation</div>
+                        <div className="section-description">
+                            Use LLMs to score and filter your synthetic data. Keep only high-quality results.
+                        </div>
+                    </div>
                 </div>
-                <div className="middle-section">
-                    <div className="section-title">Evaluation</div>
-                    <div className="section-description">
-                    Use LLMs to score and filter your synthetic data. Keep only high-quality results.
+                <div className="bottom-section">
+                    <div>
+                        <Button onClick={onClick}>
+                            Get Started
+                            <img src={ArrowRightIcon} alt="Get Started" />
+                        </Button>
                     </div>
                 </div>
             </HeaderSection>

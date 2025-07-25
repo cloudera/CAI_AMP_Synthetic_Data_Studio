@@ -280,6 +280,7 @@ export const fetchExamplesByUseCase = async (use_case: string) => {
 }
 
 export const useGetExamplesByUseCase = (use_case: string) => {
+    console.log('------------------> useGetExamplesByUseCase', use_case);
     const { data, isLoading, isError, error, isFetching, refetch } = useQuery(
         {
             queryKey: ['fetchUseCaseTopics', fetchExamplesByUseCase],

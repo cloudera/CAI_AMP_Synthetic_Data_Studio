@@ -13,7 +13,6 @@ import FileSelectorButton from './FileSelectorButton';
 import UseCaseSelector from './UseCaseSelector';
 import { useLocation, useParams } from 'react-router-dom';
 import { WizardModeType } from '../../types';
-import { get } from 'lodash';
 
 
 const StepContainer = styled(Flex)`
@@ -96,10 +95,13 @@ const Configure = () => {
         validateForm()
     }, [form, formData])
 
-    // keivan
+    
     useEffect(() => {
         if (formData && formData?.inference_type === undefined && isEmpty(generate_file_name)) {
             form.setFieldValue('inference_type', ModelProviders.CAII);
+            setTimeout(() => {
+                form.setFieldValue('use_case','custom');
+            }, 1000);
         }
     }, [formData]);
 
@@ -251,18 +253,19 @@ const Configure = () => {
                 </Form.Item>
                 {(formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
                  formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) && 
-                 <UseCaseSelector />}
+                 <UseCaseSelector form={form} />}
 
                 {(
                     formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
                     formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) && 
                 <Form.Item
                     name='doc_paths'
-                    label='Context'
+                    label='Input File'
                     labelCol={labelCol}
                     dependencies={['workflow_type']}
                     shouldUpdate
                     validateTrigger="['onBlur','onChange']"
+                    tooltip='Select a file from your project that contains the initial data to be augmented.'
                     validateFirst
                     rules={[
                         () => ({
@@ -307,6 +310,7 @@ const Configure = () => {
                         label='Input Key'
                         labelCol={labelCol}
                         validateTrigger={['workflow_type', 'onChange']}
+                        tooltip='Choose the key or column from your uploaded file that will be used as the input for data generation.'
                         shouldUpdate
                         rules={[
                             () => ({
@@ -330,6 +334,7 @@ const Configure = () => {
                         name='output_key'
                         label='Output Key'
                         labelCol={labelCol}
+                        tooltip='Name the value or column where the prompts will be saved. If left blank, this will default to “Prompt".'
                         shouldUpdate
                     >
                         <Input />
@@ -338,6 +343,7 @@ const Configure = () => {
                         name='output_value'
                         label='Output Value'
                         labelCol={labelCol}
+                        tooltip='Enter the name for the generated values corresponding to each input. If left blank, this will default to “Completion”.'
                         shouldUpdate
                     >
                         <Input />

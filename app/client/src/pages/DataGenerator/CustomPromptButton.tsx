@@ -157,7 +157,7 @@ const CustomPromptButton: React.FC<Props> = ({ model_id, inference_type, caii_en
                             disabled={mutation.isPending} 
                             rows={15}
                             autoSize 
-                            placeholder={'Enter instructions for a custom prompt'}
+                            placeholder={'Generate prompt from the example data'}
                         />
                     </Form.Item>
                 </Form>
