@@ -147,7 +147,16 @@ const DatasetsTab: React.FC<Props> = ({ hideSearch = false }) => {
             width: 80,
             align: 'center',
             sorter: sortItemsByKey('total_count')
-        }, {
+        }, 
+        {
+            key: 'completed_rows',
+            title: 'Completed Rows',
+            dataIndex: 'completed_rows',
+            width: 80,
+            align: 'center',
+            sorter: sortItemsByKey('completed_rows')
+        },
+        {
             key: 'use_case',
             title: 'Use Case',
             dataIndex: 'use_case',
