@@ -572,8 +572,7 @@ class ModelPrompts:
             examples_str = PromptHandler.format_examples_eval(examples)
         
         elif examples == [] or examples == None:
-            examples_str = PromptHandler.format_examples_eval(USE_CASE_CONFIGS_EVALS[use_case].default_examples)
-        
+            examples_str = str(USE_CASE_CONFIGS_EVALS[use_case].default_examples)        
         base_prompt = """ You are a brilliant judge on evaluating a set of data with fields and corresponding values
           Follow the given instructions to understand the structure of given data and evaluate it based on parameters defined for you."""
         final_instruction = f"""data row: {row}
