@@ -226,7 +226,6 @@ const Prompt = () => {
             }
         };
     }
-    console.log('mutation data:', mutation);
 
     return (
         <Row gutter={[50,0]}>
