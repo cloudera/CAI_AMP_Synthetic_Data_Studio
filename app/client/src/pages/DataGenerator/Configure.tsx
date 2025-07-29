@@ -1,15 +1,18 @@
 import endsWith from 'lodash/endsWith';
 import isEmpty from 'lodash/isEmpty';
 import isFunction from 'lodash/isFunction';
-import { useEffect, useState } from 'react';
-import { Flex, Form, Input, Select, Typography } from 'antd';
+import { FunctionComponent, useEffect, useState } from 'react';
+import { Flex, Form, FormInstance, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
 import { File, WorkflowType } from './types';
 import { useFetchModels } from '../../api/api';
 import { MODEL_PROVIDER_LABELS } from './constants';
 import { ModelProviders, ModelProvidersDropdownOpts } from './types';
-import { useWizardCtx } from './utils';
+import { getWizardModel, getWizardModeType, useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
+import UseCaseSelector from './UseCaseSelector';
+import { useLocation, useParams } from 'react-router-dom';
+import { WizardModeType } from '../../types';
 
 
 const StepContainer = styled(Flex)`
@@ -36,7 +39,7 @@ export const USECASE_OPTIONS = [
 ];
 
 export const WORKFLOW_OPTIONS = [
-    { label: 'Supervised Fine-Tuning', value: 'supervised-fine-tuning' },
+    // { label: 'Supervised Fine-Tuning', value: 'supervised-fine-tuning' },
     { label: 'Custom Data Generation', value: 'custom' },
     { label: 'Freeform Data Generation', value: 'freeform' }
 ];
@@ -46,9 +49,31 @@ export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
     { label: MODEL_PROVIDER_LABELS[ModelProviders.CAII], value: ModelProviders.CAII },
 ];
 
-const Configure = () => {
+const Configure: FunctionComponent = () => {
     const form = Form.useFormInstance();
     const formData = Form.useWatch((values) => values, form);
+    const location = useLocation();
+    const { template_name, generate_file_name } = useParams();
+    const [wizardModeType, setWizardModeType] = useState(getWizardModeType(location));
+
+    useEffect(() => {
+        if (wizardModeType === WizardModeType.DATA_AUGMENTATION) {
+            setWizardModeType(WizardModeType.DATA_AUGMENTATION);
+            form.setFieldValue('workflow_type', 'freeform');
+        } else {
+            setWizardModeType(WizardModeType.DATA_GENERATION);
+            form.setFieldValue('workflow_type', 'custom');
+        }
+    }, [location, wizardModeType]);
+
+    useEffect(() => {
+        if (template_name) {
+            form.setFieldValue('use_case', template_name);
+        }
+    }, [template_name]);
+
+    
+    // let formData = Form.useWatch((values) => values, form);
     const { setIsStepValid } = useWizardCtx();
     const { data } = useFetchModels();
     const [selectedFiles, setSelectedFiles] = useState(
@@ -72,10 +97,13 @@ const Configure = () => {
         validateForm()
     }, [form, formData])
 
-    // keivan
+    
     useEffect(() => {
-        if (formData && formData?.inference_type === undefined) {
+        if (formData && formData?.inference_type === undefined && isEmpty(generate_file_name)) {
             form.setFieldValue('inference_type', ModelProviders.CAII);
+            setTimeout(() => {
+                form.setFieldValue('use_case','custom');
+            }, 1000);
         }
     }, [formData]);
 
@@ -140,8 +168,10 @@ const Configure = () => {
                     label='Model Provider'
                     rules={[{ required: true }]}
                     labelCol={labelCol}
+                    shouldUpdate
                 >
                     <Select
+                       
                         onChange={() => form.setFieldValue('model_id', undefined)}
                         placeholder={'Select a model provider'}
                     >
@@ -209,6 +239,7 @@ const Configure = () => {
                     label='Workflow'
                     tooltip='A specialized workflow for your dataset'
                     labelCol={labelCol}
+                    hidden={true}
                     shouldUpdate
                     rules={[
                             { required: true }
@@ -224,35 +255,33 @@ const Configure = () => {
                 </Form.Item>
                 {(formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
                  formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) && 
-                <Form.Item
-                    name='use_case'
-                    label='Template'
-                    rules={[
-                        { required: true }
-                    ]}
-                    tooltip='A specialize template for generating your dataset'
-                    labelCol={labelCol}
-                    shouldUpdate
-                >
-                    <Select placeholder={'Select a template'}>
-                        {USECASE_OPTIONS.map(option => 
-                            <Select.Option key={option.value} value={option.value}>
-                                {option.label}
-                            </Select.Option>
-                        )}
-                    </Select>
-                </Form.Item>}
+                 <UseCaseSelector form={form} />}
 
                 {(
-                    formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
-                    formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) && 
+                    formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION || 
+                    formData?.use_case === 'custom')  && 
+                    <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) =>
+                      prevValues.doc_paths !== currentValues.doc_paths ||
+                      prevValues.use_case !== currentValues.use_case
+                    }
+                  >
+                    {({}) => {
+                           const useCase = form.getFieldValue('use_case');
+                           if (useCase === 'custom') {
+   
+                           }
+                      return (
+                     
                 <Form.Item
                     name='doc_paths'
-                    label='Context'
+                    label={useCase === 'custom' ? 'Context' : 'Input File'}
                     labelCol={labelCol}
-                    dependencies={['workflow_type']}
+                    dependencies={['workflow_type', 'use_case]']}
                     shouldUpdate
                     validateTrigger="['onBlur','onChange']"
+                    tooltip='Select a file from your project that contains the initial data to be augmented.'
                     validateFirst
                     rules={[
                         () => ({
@@ -287,9 +316,9 @@ const Configure = () => {
                 >
                     <Flex>
                         <Select placeholder={'Select project files'} mode="multiple" value={selectedFiles || []} onChange={onFilesChange} allowClear/>    
-                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} />
+                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} allowFileTypes={['pdf', 'docx', 'json']}/>
                     </Flex>
-                </Form.Item>}
+                </Form.Item>)}}</Form.Item>}
                 {formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && 
                 <>
                     <Form.Item
@@ -297,6 +326,7 @@ const Configure = () => {
                         label='Input Key'
                         labelCol={labelCol}
                         validateTrigger={['workflow_type', 'onChange']}
+                        tooltip='Choose the key or column from your uploaded file that will be used as the input for data generation.'
                         shouldUpdate
                         rules={[
                             () => ({
@@ -320,6 +350,7 @@ const Configure = () => {
                         name='output_key'
                         label='Output Key'
                         labelCol={labelCol}
+                        tooltip='Name the value or column where the prompts will be saved. If left blank, this will default to “Prompt".'
                         shouldUpdate
                     >
                         <Input />
@@ -328,6 +359,7 @@ const Configure = () => {
                         name='output_value'
                         label='Output Value'
                         labelCol={labelCol}
+                        tooltip='Enter the name for the generated values corresponding to each input. If left blank, this will default to “Completion”.'
                         shouldUpdate
                     >
                         <Input />

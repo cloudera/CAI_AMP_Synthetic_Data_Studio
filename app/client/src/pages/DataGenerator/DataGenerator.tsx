@@ -1,6 +1,6 @@
 import isEmpty from 'lodash/isEmpty';
 import isString from 'lodash/isString';
-import { useEffect, useRef, useState } from 'react';
+import { FunctionComponent, useEffect, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
 import { Button, Flex, Form, Layout, Steps } from 'antd';
@@ -20,9 +20,14 @@ import { DataGenWizardSteps, WizardStepConfig, WorkflowType } from './types';
 import { WizardCtx } from './utils';
 import { fetchDatasetDetails, useGetDatasetDetails } from '../DatasetDetails/hooks';
 import { useMutation } from '@tanstack/react-query';
+import { WizardModeType } from '../../types';
 
 const { Content } = Layout;
 // const { Title } = Typography;
+
+interface Props {
+    mode?: WizardModeType;
+}
 
 const StyledTitle = styled.div`
     margin-top: 10px;
@@ -62,48 +67,22 @@ const WizardFooter = styled(Flex)`
 
 `;
 
-const steps: WizardStepConfig[] = [
-    {
-        title: 'Configure',
-        key: DataGenWizardSteps.CONFIGURE,
-        content: <Configure/>,
-        required: true,
-    },
-    {
-        title: 'Examples',
-        key: DataGenWizardSteps.EXAMPLES,
-        content: <Examples/>
-    },
-    {
-        title: 'Prompt',
-        key: DataGenWizardSteps.PROMPT,
-        content: <Prompt/>,
-    },
-    {
-        title: 'Summary',
-        key: DataGenWizardSteps.SUMMARY,
-        content: <Summary/>
-    },
-    {
-        title: 'Finish',
-        key: DataGenWizardSteps.FINISH,
-        content: <Finish/>
-    },
 
-];
 
 /**
  * Wizard component for Synthetic Data Generation workflow
  */
-const DataGenerator = () => {
+const DataGenerator: FunctionComponent<Props> = () => {
     const [current, setCurrent] = useState(0);
     const [maxStep, setMaxStep] = useState(0);
     const [isStepValid, setIsStepValid] = useState<boolean>(false);
+    
     
     // Data passed from listing table to prepopulate form
     const location = useLocation();
     const { generate_file_name } = useParams();
     const initialData = location?.state?.data;
+    
     const mutation = useMutation({
         mutationFn: fetchDatasetDetails
     });
@@ -113,14 +92,21 @@ const DataGenerator = () => {
         if (generate_file_name && !mutation.data) {
             mutation.mutate(generate_file_name);
         }
-        if (mutation.data && mutation?.data?.dataset) {
-            form.setFieldsValue({
-                ...initialData,
-                ...(mutation?.data?.dataset as any)
-            });
-        }
-
     }, [generate_file_name]);
+
+    useEffect(() => {
+        if (mutation.data && mutation?.data?.dataset) {
+            const dataset = mutation?.data?.dataset as any;
+            const values = {
+                ...initialData,
+                ...dataset,
+                workflow_type: dataset.technique === 'freeform' ? 
+                    WorkflowType.FREE_FORM_DATA_GENERATION : WorkflowType.CUSTOM_DATA_GENERATION
+            }
+            form.setFieldsValue(values);
+            formData.current = values;
+        }
+    }, [mutation.data]);
     
 
     if (initialData?.technique) {
@@ -152,10 +138,42 @@ const DataGenerator = () => {
         initialData.doc_paths = [];
     }
 
-
     const formData = useRef(initialData || { num_questions: 20, topics: [] });
 
     const [form] = Form.useForm<FormInstance>();
+
+
+
+
+    const steps: WizardStepConfig[] = [
+        {
+            title: 'Configure',
+            key: DataGenWizardSteps.CONFIGURE,
+            content: <Configure />,
+            required: true,
+        },
+        {
+            title: 'Examples',
+            key: DataGenWizardSteps.EXAMPLES,
+            content: <Examples />
+        },
+        {
+            title: 'Prompt',
+            key: DataGenWizardSteps.PROMPT,
+            content: <Prompt />,
+        },
+        {
+            title: 'Summary',
+            key: DataGenWizardSteps.SUMMARY,
+            content: <Summary/>
+        },
+        {
+            title: 'Finish',
+            key: DataGenWizardSteps.FINISH,
+            content: <Finish/>
+        },
+    
+    ];
 
     const onStepChange = (value: number) => {
         setCurrent(value);
@@ -168,12 +186,12 @@ const DataGenerator = () => {
         }
     };
 
-    const prev = () => setCurrent(Math.max(0, current - 1))
+    const prev = () => setCurrent(Math.max(0, current - 1));
 
     return (
         <WizardCtx.Provider value={{ setIsStepValid }}>
             <Layout style={{ paddingBottom: 45 }}>
-                <StyledTitle>{'Synthetic Dataset Studio'}</StyledTitle>
+                <StyledTitle>{'Configure Synthetic Dataset'}</StyledTitle>
                 <Wizard
                     current={current}
                     onChange={onStepChange}

@@ -120,3 +120,8 @@ export enum TechniqueType {
     CUSTOME_WORKFLOW = 'custom_workflow',
     FREE_FORM = 'freeform'
 }
+
+export enum ExampleType {
+    FREE_FORM = 'freeform',
+    PROMPT_COMPLETION = 'promptcompletion'
+}

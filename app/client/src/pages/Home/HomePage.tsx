@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Button, Col, Flex, Layout, Row, Tabs } from 'antd'
+import { Button, Card, Col, Flex, Layout, Row, Tabs } from 'antd'
 import type { TabsProps } from 'antd';
 import DatasetsTab from './DatasetsTab';
 import EvaluationsTab from './EvaluationsTab';
-import DatasetIcon from '../../assets/ic-datasets.svg';
-import ArrowRightIcon from '../../assets/ic-arrow-right.svg';
-import EvaluateIcon from '../../assets/ic-evaluations.svg';
-import EvaluateButton from './EvaluateButton';
+import DatasetIcon from '../../assets/ic-brand-alternative-data.svg';
+import DataAugmentationIcon from '../../assets/ic-data-augmentation.svg';
 import ExportsTab from './ExportsTab';
+import TemplatesSection from './TemplatesSection';
+import { useNavigate } from 'react-router-dom';
+import EvaluateSection from './EvaluateSection';
+import ArrowRightIcon from '../../assets/ic-arrow-right.svg';
 
 
 const { Content } = Layout;
@@ -18,33 +20,46 @@ const StyledContent = styled(Content)`
     background-color: #f5f7f8;
 `;
 
-const HeaderSection = styled.div`
+export const HeaderSection = styled.div`
   display: flex;
+  flex-direction: column;
   margin-bottom: 1rem;
-  height: 100px;
+  height: 150px;
   width: 50%;
   padding: 16px;
   background-color: #ffffff;
+  cursor: pointer;
+  .top-section {
+    display: flex;
+    flex-direction: row;
+  }
+  .bottom-section {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
   .left-section {
     width: 66px;
-    height: 66px;
+    height: 46px;
     flex-grow: 0;
     margin: 0 8px 9px 0;
     padding: 14.4px 14.4px 14.4px 14.4px;
-    background-color: #e5ffe5;
+    background-color: #ffffff;
   }
   .middle-section {
       display: flex;
       flex-direction: column;
       justify-content: center;
       margin-left: 8px;
+      margin-top: 12px;
       width: 70%;
       .section-title {
         width: 186px;
         height: 24px;
         flex-grow: 0;
         font-size: 16px;
-        font-weight: 500;
+        font-weight: normal;
         font-stretch: normal;
         font-style: normal;
         line-height: 1.5;
@@ -52,13 +67,26 @@ const HeaderSection = styled.div`
         text-align: left;
         color: #1b2329;
       }
-   }
-   .right-section {
+      .section-description {
+        align-self: stretch;
+        flex-grow: 1;
+        font-size: 12px;
+        font-weight: normal;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: 1.33;
+        letter-spacing: normal;
+        text-align: left;
+        color: #1b2329;
+        min-height: 50px;
+      }
+    }
+    .right-section {
       display: flex;
       flex-direction: column-reverse;
     }
     .evaluate-icon {
-      background-color: #fff4cd;
+      background-color: #ffffff;
     }     
 `;
 
@@ -69,23 +97,24 @@ export enum ViewType {
 }
 
 const HomePage: React.FC = () => {
+    const navigate = useNavigate();
     const [tabViewType, setTabViewType] = useState<ViewType>(ViewType.DATASETS);
 
     const items: TabsProps['items'] = [
         {
             key: ViewType.DATASETS,
             label: 'Datasets',
-            children: <DatasetsTab />,
+            children: <DatasetsTab hideSearch={true} />,
         },
         {
             key: ViewType.EVALUATIONS,
             label: 'Evaluations',
-            children: <EvaluationsTab />,
+            children: <EvaluationsTab hideSearch={true} />,
         },
         {
             key: ViewType.EXPORTS,
             label: 'Exports',
-            children: <ExportsTab refetchOnRender={tabViewType === ViewType.EXPORTS} />,
+            children: <ExportsTab refetchOnRender={tabViewType === ViewType.EXPORTS} hideSearch={true} hidePagination={true}/>,
         }
     ];
 
@@ -97,50 +126,69 @@ const HomePage: React.FC = () => {
         <Layout>
             <StyledContent>
                 <Flex>
-                    <HeaderSection>
+                    <HeaderSection onClick={() => navigate('/data-generator')}>
+                        <div className="top-section">
                         <div className="left-section">
                             <img src={DatasetIcon} alt="Datasets" />
                         </div>
                         <div className="middle-section">
-                            <div className="section-title">Create Datasets</div>
+                            <div className="section-title">Generation</div>
                             <div className="section-description">
-                                <p>Generate synthetic datasets for training models</p>
+                              Create synthetic data from scratch using examples, documents, seed instructions and AI assisted prompts.
                             </div>
                         </div>
-                        <div className="right-section">
+                        </div>
+                        
+                        <div className="bottom-section">
                             <div>
                                 <Button href="/data-generator">
                                     Get Started
                                     <img src={ArrowRightIcon} alt="Get Started" />
                                 </Button>
                             </div>
-                        </div>
+                        </div>    
                     </HeaderSection>
-                    <HeaderSection style={{ marginLeft: '1rem' }}>
-                        <div className="left-section evaluate-icon">
-                            <img src={EvaluateIcon} alt="Datasets" />
-                        </div>
-                        <div className="middle-section">
-                            <div className="section-title">Evaluate</div>
-                            <div className="section-description">
-                                <p>Evaluate generated datasets for fine tuning LLMs</p>
+
+                    <HeaderSection style={{ marginLeft: '1rem' }} onClick={() => navigate('/data-augmentation')}>
+                        <div className="top-section">
+                            <div className="left-section" style={{ padding: '5px' }}>
+                                <img src={DataAugmentationIcon} alt="augmentation" />
+                            </div>
+                            <div className="middle-section">
+                                <div className="section-title">Augmentation</div>
+                                <div className="section-description">
+                                    Add synthetic rows or field to existing data to fill gaps or balance datasets such as language translations.
+                                </div>
                             </div>
                         </div>
-                        <div className="right-section">
+                        
+                        <div className="bottom-section">
                             <div>
-                                <EvaluateButton />
+                                <Button href="/data-augmentation">
+                                    Get Started
+                                    <img src={ArrowRightIcon} alt="Get Started" />
+                                </Button>
                             </div>
                         </div>
                     </HeaderSection>
+                    <EvaluateSection />
                 </Flex>
                 <Row>
                     <Col span={24}>
-                        <Tabs
-                            defaultActiveKey={tabViewType}
-                            items={items}
-                            onChange={onTabChange} />
+                        <Card title="Recents">
+                            <Tabs
+                                defaultActiveKey={tabViewType}
+                                items={items}
+                                onChange={onTabChange}
+                            />
+                        </Card>
                     </Col>
                 </Row>
+                <Row style={{ marginTop: '1rem' }}>
+                    <Col span={24}>
+                        <TemplatesSection />
+                    </Col>
+                </Row>    
             </StyledContent>
         </Layout>
     );

@@ -4,7 +4,8 @@ import toNumber from 'lodash/toNumber';
 import isEmpty from 'lodash/isEmpty';
 import isString from 'lodash/isString';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { WorkflowType } from './types';
+import { ExampleType, WorkflowType } from './types';
+import { first } from 'lodash';
 
 const BASE_API_URL = import.meta.env.VITE_AMP_URL;
 
@@ -245,3 +246,83 @@ export const useDatasetSize = (
       error    
     };
  }
+
+ export const fetchUseCases = async () => {
+    const resp = await fetch(`${BASE_API_URL}/use-cases`, {
+        method: 'GET'
+    });
+    const body = await resp.json();
+    return body;
+}
+
+export const useGetUseCases = () => {
+    const { data, isLoading, isError, error, isFetching } = useQuery(
+        {
+            queryKey: ['useCases'],
+            queryFn: () => fetchUseCases(),
+            refetchOnWindowFocus: false,
+        }
+    );
+    return {
+      data,
+      isLoading: isLoading || isFetching,
+      isError,
+      error    
+    };
+}
+
+export const fetchExamplesByUseCase = async (use_case: string) => {
+    const resp = await fetch(`${BASE_API_URL}/${isEmpty(use_case) ? 'custom' : use_case}/gen_examples`, {
+        method: 'GET'
+    });
+    const body = await resp.json();
+    return body;
+}
+
+export const useGetExamplesByUseCase = (use_case: string) => {
+    const { data, isLoading, isError, error, isFetching, refetch } = useQuery(
+        {
+            queryKey: ['fetchUseCaseTopics', fetchExamplesByUseCase],
+            queryFn: () => fetchExamplesByUseCase(use_case),
+            refetchOnWindowFocus: false,
+        }
+    );
+
+    if (isError) {
+        notification.error({
+          message: 'Error',
+          description: `An error occurred while fetching the use case examples.\n ${error?.message}`
+        });
+    }
+    
+    
+    let examples = [];
+    let exmpleFormat: ExampleType | null = null;
+    if (!isEmpty(data) && !isEmpty(data?.examples)) {
+        examples = get(data, 'examples', []);
+        exmpleFormat = getExampleType(examples);
+    }
+
+    return {
+      data,
+      isLoading: isLoading || isFetching,
+      isError,
+      error,
+      examples,
+      exmpleFormat,
+      refetch
+    };
+} 
+
+export const getExampleType = (data: object[]) => {
+    if (!isEmpty(data)) {
+        const row = first(data);
+        const keys = Object.keys(row as object);
+        if (keys.length === 2) {
+            return ExampleType.PROMPT_COMPLETION;
+        }
+        return ExampleType.FREE_FORM;
+    }
+    return null;    
+}
+

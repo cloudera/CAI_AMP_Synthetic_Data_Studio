@@ -708,9 +708,10 @@ async def create_custom_prompt(request: CustomPromptRequest, request_id = None):
         prompt = PromptBuilder.build_custom_prompt(
                 model_id=request.model_id,
                 custom_prompt=request.custom_prompt,
-                example_path= request.example_path
+                example_path= request.example_path,
+                example = request.example
             )
-        print(prompt)
+        #print(prompt)
         prompt_gen = model_handler.generate_response(prompt, request_id=request_id)
 
         return {"generated_prompt":prompt_gen}
@@ -767,14 +768,15 @@ async def get_model_id_filtered():
 async def get_use_cases():
     """Get available use cases"""
     return {
-        "usecases": [
-            {"id": UseCase.CODE_GENERATION, "name": "Code Generation"},
-            {"id": UseCase.TEXT2SQL, "name": "Text to SQL"},
-            {"id": UseCase.CUSTOM, "name": "Custom"},
-            {"id": UseCase.LENDING_DATA, "name": "Lending Data"},
-            {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data"},
-        ]
-    }
+   "usecases": [
+       {"id": UseCase.CODE_GENERATION, "name": "Code Generation", "description": "Generates paired programming questions and answers with runnable, well-formatted code plus explanations. Ideal for building Q-and-A datasets across programming languages like Python.", "tag": ["Supervised Finetuning", "Data Generation"]},
+       {"id": UseCase.TEXT2SQL, "name": "Text to SQL", "description": "Creates natural-language questions matched to clean, executable SQL queries spanning basics, joins, aggregates, subqueries, and window functions. Great for training and evaluation.", "tag": ["Supervised Finetuning", "Data Generation"]},
+       {"id": UseCase.CUSTOM, "name": "Custom", "description": "A blank template meant for any user-defined synthetic data task.", "tag": []},
+       {"id": UseCase.LENDING_DATA, "name": "Lending Data", "description": "Produces realistic LendingClub-style loan records—complete borrower, loan, and credit-profile fields—while respecting privacy and intricate cross-field logic (grades, DTI, employment, etc.).", "tag": ["Data Generation", "Tabular Data"]},
+       {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data", "description": "Builds user profiles with chronological credit-status histories, maintaining ID consistency and evolving payment behavior. Supports training for credit scoring models without real user data.", "tag": ["Data Generation", "Tabular Data"]},
+       {"id": UseCase.TICKETING_DATASET, "name": "Ticketing Dataset", "description": "Generates support queries with labelled ticket classification intent (cancel_ticket, customer_service, or report_payment_issue). Perfect for intent-classification or help-desk automation training.", "tag": ["Data Generation", "Intent Classification"]},
+   ]
+}
 
 @app.get("/model/parameters", include_in_schema=True)
 async def get_model_parameters() -> Dict:
@@ -985,7 +987,8 @@ async def get_generation_history(
         db_manager.update_job_statuses_generate(job_status_map)
     
     # Get paginated data
-    total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    #total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    total_count, results = db_manager.get_paginated_generate_metadata_light(page, page_size)
     
     # Return in the structure expected by the frontend
     return {
@@ -1420,13 +1423,22 @@ async def perform_upgrade():
 
         # 2. Database migrations
         try:
-            db_success, db_message = await alembic_manager.handle_database_upgrade()
-            if db_success:
-                db_upgraded = True
-                messages.append(db_message)
-            else:
-                messages.append(f"Database upgrade failed: {db_message}")
-                raise HTTPException(status_code=500, detail=db_message)
+            # In your upgrade endpoint, you can add this debug line:
+            print(f"Current working directory: {os.getcwd()}")
+            print(f"Alembic.ini exists: {os.path.exists('alembic.ini')}")
+            print("--- Starting database migration via external script ---")
+            # Use `uv run` to ensure the script runs within the project's virtual environment
+            # This is more robust than just calling 'python'
+            result = subprocess.run(
+                ["uv", "run", "python", "run_migrations.py"],
+                capture_output=True,
+                text=True,
+                check=True  # This will raise CalledProcessError on failure
+            )
+            
+            print(result.stdout) # Log the output from the script
+            db_upgraded = True
+            messages.append("Database migration check completed successfully.")
         except Exception as e:
             messages.append(f"Database migration failed: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))

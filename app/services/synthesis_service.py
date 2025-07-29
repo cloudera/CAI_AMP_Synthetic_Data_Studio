@@ -1007,19 +1007,24 @@ class SynthesisService:
                     json.dump(final_output, indent=2, fp=f)
                 self.logger.info(f"Saved {len(final_output)} results to {file_path}")
 
-            # Check if we have any critical model errors across all topics
-            has_critical_model_error = any(
-                topic_errors and any("ModelHandlerError" in error for error in topic_errors)
-                for _, _, topic_errors, _ in completed_topics
-            )
+            # Find the first critical model error message
+            first_critical_error = None
+            for _, _, topic_errors, _ in completed_topics:
+                if topic_errors:
+                    for error in topic_errors:
+                        if "ModelHandlerError" in error:
+                            first_critical_error = error
+                            break
+                    if first_critical_error:
+                        break
 
             # After saving (or if no data), check for critical errors
-            if has_critical_model_error:
+            if first_critical_error:
                 if final_output:
                     self.logger.info(f"Saved {len(final_output)} results before failing due to model errors")
                 else:
                     self.logger.info("No results to save before failing due to model errors")
-                raise APIError("Critical model errors encountered during generation")
+                raise APIError(first_critical_error)
 
             # Handle custom prompt, examples and schema
             custom_prompt_str = PromptHandler.get_default_custom_prompt(request.use_case, request.custom_prompt)
@@ -1093,7 +1098,8 @@ class SynthesisService:
                 'input_path': input_path_str,
                 'input_key': request.input_key,
                 'output_key': request.output_key,
-                'output_value': request.output_value
+                'output_value': request.output_value,
+                'completed_rows': len(final_output) if final_output else 0
             }
             
             if is_demo:
@@ -1109,7 +1115,7 @@ class SynthesisService:
                 generate_file_name = os.path.basename(file_path) if final_output else ''
                 final_output_path = file_path if final_output else ''
                 
-                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status, len(final_output) if final_output else 0)
                 self.db.backup_and_restore_db()
                 return {
                     "status": "completed" if final_output else "failed",
@@ -1157,13 +1163,14 @@ class SynthesisService:
                 if saved_partial_results:
                     # Update with actual file information for partial results
                     generate_file_name = os.path.basename(file_path)
-                    final_output_path = file_path
+                    final_output_path = file_path   
+                    completed_rows = len(final_output) if final_output else 0
                 else:
                     # No results saved, use empty values
                     generate_file_name = ''
                     final_output_path = ''
-                
-                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status)
+                    completed_rows = 0
+                self.db.update_job_generate(job_name, generate_file_name, final_output_path, timestamp, job_status, completed_rows = completed_rows )
                 raise
 
     def get_health_check(self) -> Dict:

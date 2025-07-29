@@ -16,6 +16,8 @@ const { Text, Link, Paragraph } = Typography;
 const Container = styled.div`
   background-color: #ffffff;
   padding: 1rem;
+  padding-left: 0;
+  padding-right: 0;
 `;
 
 const StyledTable = styled(Table<ExportResponse>)`
@@ -51,6 +53,8 @@ const StyledParagraph = styled(Paragraph)`
 
 export type ExportsTabProps = {
     refetchOnRender: boolean;
+    hideSearch?: boolean;
+    hidePagination?: boolean;
 };
 
 const columns: TableProps<ExportResponse>['columns'] = [
@@ -108,7 +112,7 @@ const columns: TableProps<ExportResponse>['columns'] = [
     }
 ];
 
-const ExportsTab: React.FC<ExportsTabProps> = ({ refetchOnRender }) => {
+const ExportsTab: React.FC<ExportsTabProps> = ({ refetchOnRender, hideSearch, hidePagination }) => {
     const [pagination, setPagination] = useState({ page: 1, pageSize: 20 });
     const { isLoading, data, refetch } = useGetExportJobs(pagination.page, pagination.pageSize);
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -137,7 +141,7 @@ const ExportsTab: React.FC<ExportsTabProps> = ({ refetchOnRender }) => {
 
     return (
         <Container>
-            <Row style={{ marginBottom: 16 }}>
+            {!hideSearch && <Row style={{ marginBottom: 16 }}>
                 <Col span={24}>
                     <Search
                         placeholder="Search Exports"
@@ -147,12 +151,12 @@ const ExportsTab: React.FC<ExportsTabProps> = ({ refetchOnRender }) => {
                         }}
                         style={{ width: 350 }} />
                 </Col>
-            </Row>
+            </Row>}
             <StyledTable
                 rowKey={(row) => row.id}
                 columns={columns}
                 tableLayout="fixed"
-                pagination={{
+                pagination={hidePagination ? false : {
                     current: pagination.page,
                     pageSize: pagination.pageSize,
                     total: data?.pagination?.total || 0,

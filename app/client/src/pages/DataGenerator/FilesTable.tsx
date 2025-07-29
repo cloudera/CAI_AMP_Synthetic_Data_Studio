@@ -3,6 +3,7 @@ import filter from 'lodash/filter';
 import clone from 'lodash/clone';
 import set from 'lodash/set';
 import forEach from 'lodash/forEach';
+import isString from 'lodash/isString';
 import React, { useEffect, useState } from 'react';
 import { Badge, Breadcrumb, Button, Col, Flex, List, Popover, Row, Table, Tooltip, Typography } from 'antd';
 import styled from 'styled-components';
@@ -19,6 +20,7 @@ interface Props {
   workflowType: WorkflowType;
   files: File[];
   onSelectedRows: (selectedRows: File[]) => void;
+  allowFileTypes?: string[];
 }
 
 const StyledTable = styled(Table)`
@@ -78,8 +80,14 @@ export const getSelectedRows = (fileSelectionMap: FileSelectionMap) => {
   return rows;
 }
 
+export function getFileExtension(filename: string): string | null {
+  const lastDot = filename.lastIndexOf('.');
+  if (lastDot === -1 || lastDot === 0) return null;
+  return filename.slice(lastDot + 1).toLowerCase();
+}
 
-const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType }) => {
+
+const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType, allowFileTypes }) => {
   const [paths, setPaths] = useState<string[] | null>(null);
   const [path, setPath] = useState<string | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -106,7 +114,12 @@ const FilesTable: React.FC<Props> = ({ onSelectedRows, workflowType }) => {
     if (isDirectory(record)) {
       return true;
     }
-
+    if (Array.isArray(allowFileTypes) && !isEmpty(allowFileTypes)) {
+      const extension = getFileExtension(record.name);
+      if (isString(extension)) {
+        return !allowFileTypes.includes(extension as string); 
+      }
+    }
     if (workflowType === WorkflowType.SUPERVISED_FINE_TUNING) {
       return !endsWith(record.name, '.pdf');
     } else if (workflowType === WorkflowType.CUSTOM_DATA_GENERATION) {

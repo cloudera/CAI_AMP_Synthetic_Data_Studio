@@ -5,10 +5,13 @@ set -eox pipefail
 export UV_HTTP_TIMEOUT=3600
 
 # Ensure uv is installed
-if ! command -v uv &> /dev/null; then
-    echo "Installing uv package manager..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    export PATH="$HOME/.cargo/bin:$PATH"
+set +e
+uv --version >/dev/null 2>&1
+return_code=$?
+set -e
+if [ $return_code -ne 0 ]; then
+    echo "Installing uv package manager via pip..."
+    python -m pip install uv
 fi
 
 # Setup virtual environment and dependencies
