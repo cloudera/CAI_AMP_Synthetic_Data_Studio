@@ -149,7 +149,7 @@ const Examples: FunctionComponent = () => {
                     </Space>
                 </StyledTitle>
                 <Flex align='center' gap={15}>       
-                    {workflowType === WorkflowType.FREE_FORM_DATA_GENERATION && 
+                    {(workflowType === WorkflowType.FREE_FORM_DATA_GENERATION || workflowType === WorkflowType.CUSTOM_DATA_GENERATION) && 
                       <>
                         <Form.Item
                             name="example_path"

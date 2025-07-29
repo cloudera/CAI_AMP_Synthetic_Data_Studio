@@ -258,13 +258,27 @@ const Configure: FunctionComponent = () => {
                  <UseCaseSelector form={form} />}
 
                 {(
-                    formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
-                    formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) && 
+                    formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION || 
+                    formData?.use_case === 'custom')  && 
+                    <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) =>
+                      prevValues.doc_paths !== currentValues.doc_paths ||
+                      prevValues.use_case !== currentValues.use_case
+                    }
+                  >
+                    {({}) => {
+                           const useCase = form.getFieldValue('use_case');
+                           if (useCase === 'custom') {
+   
+                           }
+                      return (
+                     
                 <Form.Item
                     name='doc_paths'
-                    label='Input File'
+                    label={useCase === 'custom' ? 'Context' : 'Input File'}
                     labelCol={labelCol}
-                    dependencies={['workflow_type']}
+                    dependencies={['workflow_type', 'use_case]']}
                     shouldUpdate
                     validateTrigger="['onBlur','onChange']"
                     tooltip='Select a file from your project that contains the initial data to be augmented.'
@@ -302,9 +316,9 @@ const Configure: FunctionComponent = () => {
                 >
                     <Flex>
                         <Select placeholder={'Select project files'} mode="multiple" value={selectedFiles || []} onChange={onFilesChange} allowClear/>    
-                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} allowFileTypes={['pdf', 'docx']}/>
+                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} allowFileTypes={['pdf', 'docx', 'json']}/>
                     </Flex>
-                </Form.Item>}
+                </Form.Item>)}}</Form.Item>}
                 {formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && 
                 <>
                     <Form.Item
