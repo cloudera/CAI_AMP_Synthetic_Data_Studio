@@ -6,10 +6,11 @@ import get from "lodash/get";
 
 interface Props {
     form: FormInstance<any>;
+    hidden?: boolean;
 }
 
 
-const UseCaseSelector: FunctionComponent<Props> = ({ form }) => {
+const UseCaseSelector: FunctionComponent<Props> = ({ form, hidden }) => {
   const [useCases, setUseCases] = useState<UseCase[]>([]);
   const useCasesReq = useGetUseCases();  
 
@@ -45,6 +46,7 @@ const UseCaseSelector: FunctionComponent<Props> = ({ form }) => {
         labelCol={{
             span: 8
         }}
+        hidden={hidden}
         shouldUpdate
         >
             <Select placeholder={'Select a template'} onChange={onChange}>

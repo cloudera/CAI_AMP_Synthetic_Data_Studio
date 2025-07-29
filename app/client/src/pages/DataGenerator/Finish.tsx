@@ -202,7 +202,8 @@ const Finish = () => {
     }
 
     let topicTabs = [];
-    if (!hasDocSeeds && formValues.workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION && 
+    console.log('Preparing topics...', formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION)
+    if (!hasDocSeeds && formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && formValues.use_case !== 'custom' && 
         hasTopics(genDatasetResp) && !isEmpty(genDatasetResp?.results)) {
             const values = Object.values(genDatasetResp?.results);
             
@@ -297,6 +298,10 @@ const Finish = () => {
             </>
         )
     }
+    console.log('Finish >> ');
+    console.log('hasTopics', hasTopics(genDatasetResp));
+    console.log('formValues', formValues);
+    console.log('isDemo', isDemo, topicTabs);
 
     return (
         <div>
@@ -322,12 +327,12 @@ const Finish = () => {
                     </StyledButton>
                 </Flex>
             )}
-            {isDemo && formValues.workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION && hasTopics(genDatasetResp && !hasDocSeeds) && (
+            {(isDemo && formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && formValues.use_case !== 'custom' && hasTopics(genDatasetResp) && !hasDocSeeds) && (
                 <TabsContainer title={'Generated Dataset'}>
                     <Tabs tabPosition='left' items={topicTabs}/>
                 </TabsContainer>
             )}
-            {formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && 
+            {formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && formValues.use_case === 'custom' && 
                 <CustomResultTable results={genDatasetResp?.results || []} />
             }
             {hasDocSeeds && <SeedResultTable results={genDatasetResp?.results || {}} />}

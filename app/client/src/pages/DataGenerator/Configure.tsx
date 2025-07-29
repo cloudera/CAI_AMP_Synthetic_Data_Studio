@@ -55,20 +55,28 @@ const Configure: FunctionComponent = () => {
     const location = useLocation();
     const { template_name, generate_file_name } = useParams();
     const [wizardModeType, setWizardModeType] = useState(getWizardModeType(location));
+    console.log('wizardModeType', wizardModeType);
 
     useEffect(() => {
         if (wizardModeType === WizardModeType.DATA_AUGMENTATION) {
             setWizardModeType(WizardModeType.DATA_AUGMENTATION);
-            form.setFieldValue('workflow_type', 'freeform');
+            form.setFieldValue('workflow_type', 'custom');
         } else {
             setWizardModeType(WizardModeType.DATA_GENERATION);
-            form.setFieldValue('workflow_type', 'custom');
+            form.setFieldValue('workflow_type', 'freeform');
         }
     }, [location, wizardModeType]);
 
+    console.log('wizardModeType', wizardModeType);
+
     useEffect(() => {
+        console.log('useEffect 2');
         if (template_name) {
-            form.setFieldValue('use_case', template_name);
+            setTimeout(() => {
+                console.log('setting template name');
+                form.setFieldValue('use_case', template_name);
+            }, 1000);
+            
         }
     }, [template_name]);
 
@@ -85,6 +93,7 @@ const Configure: FunctionComponent = () => {
         delete values.doc_paths;
         delete values.output_key;
         delete values.output_value;
+        console.log('validateForm', values);
         
         const allFieldsFilled = Object.values(values).every(value => Boolean(value));
         if (allFieldsFilled && isFunction(setIsStepValid)) {
@@ -99,10 +108,11 @@ const Configure: FunctionComponent = () => {
 
     
     useEffect(() => {
+        console.log('useEffect 1');
         if (formData && formData?.inference_type === undefined && isEmpty(generate_file_name)) {
             form.setFieldValue('inference_type', ModelProviders.CAII);
             setTimeout(() => {
-                form.setFieldValue('use_case','custom');
+                form.setFieldValue('use_case', template_name ? template_name : 'custom');
             }, 1000);
         }
     }, [formData]);
@@ -253,18 +263,31 @@ const Configure: FunctionComponent = () => {
                         )}
                     </Select>
                 </Form.Item>
-                {(formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
-                 formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) && 
-                 <UseCaseSelector form={form} />}
+                 <UseCaseSelector form={form} hidden={formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION} />
 
                 {(
-                    formData?.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING || 
-                    formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) && 
+                    formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION || 
+                    (formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION &&
+                    formData?.use_case === 'custom'))  && 
+                    <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) =>
+                      prevValues.doc_paths !== currentValues.doc_paths ||
+                      prevValues.use_case !== currentValues.use_case
+                    }
+                  >
+                    {({}) => {
+                           const useCase = form.getFieldValue('use_case');
+                           if (useCase === 'custom') {
+   
+                           }
+                      return (
+                     
                 <Form.Item
                     name='doc_paths'
-                    label='Input File'
+                    label={(useCase === 'custom' && formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION)  ? 'Context' : 'Input File'}
                     labelCol={labelCol}
-                    dependencies={['workflow_type']}
+                    dependencies={['workflow_type', 'use_case]']}
                     shouldUpdate
                     validateTrigger="['onBlur','onChange']"
                     tooltip='Select a file from your project that contains the initial data to be augmented.'
@@ -302,9 +325,9 @@ const Configure: FunctionComponent = () => {
                 >
                     <Flex>
                         <Select placeholder={'Select project files'} mode="multiple" value={selectedFiles || []} onChange={onFilesChange} allowClear/>    
-                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} allowFileTypes={['pdf', 'docx']}/>
+                        <FileSelectorButton onAddFiles={onAddFiles} workflowType={form.getFieldValue('workflow_type')} allowFileTypes={['pdf', 'docx', 'json']}/>
                     </Flex>
-                </Form.Item>}
+                </Form.Item>)}}</Form.Item>}
                 {formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && 
                 <>
                     <Form.Item
