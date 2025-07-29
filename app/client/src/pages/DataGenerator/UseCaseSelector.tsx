@@ -26,7 +26,6 @@ const UseCaseSelector: FunctionComponent<Props> = ({ form }) => {
   }, [useCasesReq.data]);
 
   const onChange = (value: string) => {
-    console.log('value', value);
     form.setFieldValue('use_case', value);
     if (value !== 'custom') {
         form.setFieldValue('example_path', null);

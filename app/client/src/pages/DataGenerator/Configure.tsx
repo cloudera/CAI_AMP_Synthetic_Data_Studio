@@ -1,8 +1,8 @@
 import endsWith from 'lodash/endsWith';
 import isEmpty from 'lodash/isEmpty';
 import isFunction from 'lodash/isFunction';
-import { useEffect, useState } from 'react';
-import { Flex, Form, Input, Select, Typography } from 'antd';
+import { FunctionComponent, useEffect, useState } from 'react';
+import { Flex, Form, FormInstance, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
 import { File, WorkflowType } from './types';
 import { useFetchModels } from '../../api/api';
@@ -49,7 +49,9 @@ export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
     { label: MODEL_PROVIDER_LABELS[ModelProviders.CAII], value: ModelProviders.CAII },
 ];
 
-const Configure = () => {
+const Configure: FunctionComponent = () => {
+    const form = Form.useFormInstance();
+    const formData = Form.useWatch((values) => values, form);
     const location = useLocation();
     const { template_name, generate_file_name } = useParams();
     const [wizardModeType, setWizardModeType] = useState(getWizardModeType(location));
@@ -57,10 +59,10 @@ const Configure = () => {
     useEffect(() => {
         if (wizardModeType === WizardModeType.DATA_AUGMENTATION) {
             setWizardModeType(WizardModeType.DATA_AUGMENTATION);
-            form.setFieldValue('workflow_type', 'custom');
+            form.setFieldValue('workflow_type', 'freeform');
         } else {
             setWizardModeType(WizardModeType.DATA_GENERATION);
-            form.setFieldValue('workflow_type', 'freeform');
+            form.setFieldValue('workflow_type', 'custom');
         }
     }, [location, wizardModeType]);
 
@@ -70,8 +72,8 @@ const Configure = () => {
         }
     }, [template_name]);
 
-    const form = Form.useFormInstance();
-    const formData = Form.useWatch((values) => values, form);
+    
+    // let formData = Form.useWatch((values) => values, form);
     const { setIsStepValid } = useWizardCtx();
     const { data } = useFetchModels();
     const [selectedFiles, setSelectedFiles] = useState(

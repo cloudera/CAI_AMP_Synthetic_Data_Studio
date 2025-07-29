@@ -28,13 +28,11 @@ const StyledContainer = styled.div`
 
 const TemplatesSection: React.FC = () => {
     const useCasesReq = useGetUseCases();
-    console.log("useCasesReq", useCasesReq);
     if (useCasesReq.isLoading) {
         return <Container><Loading /></Container>;
     }
     
     const useCases: Template[] = get(useCasesReq, 'data.usecases', []);
-    console.log("useCases", useCases);
     
 
     return (

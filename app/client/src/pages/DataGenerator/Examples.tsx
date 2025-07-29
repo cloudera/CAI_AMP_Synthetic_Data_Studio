@@ -18,6 +18,7 @@ import FreeFormExampleTable from './FreeFormExampleTable';
 import { L } from 'vitest/dist/chunks/reporters.DTtkbAtP.js';
 import Loading from '../Evaluator/Loading';
 import { isEqual, set } from 'lodash';
+import { useParams } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 const Container = styled.div`
@@ -52,6 +53,7 @@ const StyledContainer = styled.div`
 
 const Examples: FunctionComponent = () => {
     const form = Form.useFormInstance();
+    const { generate_file_name } = useParams();
     const [records, setRecords] = useState<Record<string, string>[]>([]);
     const workflowType = form.getFieldValue('workflow_type');
 
@@ -64,9 +66,13 @@ const Examples: FunctionComponent = () => {
     });
 
     useEffect(() => {
-        const useCase = form.getFieldValue('use_case');
-        restore_mutation.mutate(useCase);
-    }, [form.getFieldValue('use_case')]);
+        if (isEmpty(generate_file_name)) {
+            const useCase = form.getFieldValue('use_case');
+            restore_mutation.mutate(useCase);
+        } else {
+            setRecords(form.getFieldValue('examples'));
+        }
+    }, [form.getFieldValue('use_case'), generate_file_name]);
 
 
     useEffect(() => {
@@ -95,6 +101,12 @@ const Examples: FunctionComponent = () => {
             setRecords(examples);
         }
     }, [restore_mutation.data]);
+
+    useEffect(() => {
+        if (generate_file_name) {
+            setRecords(form.getFieldValue('examples'));
+        }
+    }, [generate_file_name]);
     
     const onRestoreDefaults = async() => {
         const useCase = form.getFieldValue('use_case');
