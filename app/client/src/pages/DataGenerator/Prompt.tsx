@@ -107,7 +107,9 @@ const Prompt = () => {
         doc_paths,
         input_key,
         input_value,
-        output_key
+        output_key,
+        useCase
+
     );
 
     console.log('values', form.getFieldsValue(true));

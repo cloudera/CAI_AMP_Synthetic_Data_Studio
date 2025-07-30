@@ -285,7 +285,7 @@ const Configure: FunctionComponent = () => {
                      
                 <Form.Item
                     name='doc_paths'
-                    label={(useCase === 'custom' && formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION)  ? 'Context' : 'Input File'}
+                    label={'Context'}
                     labelCol={labelCol}
                     dependencies={['workflow_type', 'use_case]']}
                     shouldUpdate
