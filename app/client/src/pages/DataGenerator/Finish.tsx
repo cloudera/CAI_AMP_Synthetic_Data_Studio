@@ -21,6 +21,8 @@ import CustomResultTable from './CustomResultTable';
 import SeedResultTable from './SeedResultTable';
 import { getFilesURL } from '../Evaluator/util';
 import FreeFormTable from './FreeFormTable';
+import forEach from 'lodash/forEach';
+import { concat, isObject } from 'lodash';
 
 const { Title } = Typography;
 
@@ -118,7 +120,7 @@ const isDemoMode = (numQuestions: number, topics: [], form: FormInstance) => {
         return true
     }
     // set dataset size for SFT & CDG
-    if (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING && !isEmpty(doc_paths)) {
+    if (workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION && !isEmpty(doc_paths)) {
         const dataset_size = form.getFieldValue('num_questions');
         return dataset_size <= DEMO_MODE_THRESHOLD;
     }
@@ -137,10 +139,9 @@ const Finish = () => {
         
         const doc_paths = formValues.doc_paths;
         if (Array.isArray(doc_paths) && !isEmpty(doc_paths)) {
-            if (formValues.workflow_type === WorkflowType.SUPERVISED_FINE_TUNING) {
+            if (formValues.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION && formValues.use_case === 'custom') {
                 formValues.doc_paths = doc_paths.map(item => item.value);
             } else if (formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) {
-
                 formValues.input_path = doc_paths.map(item => item.value);
                 delete formValues.doc_paths;
                 // delete formValues.examples;
@@ -192,6 +193,23 @@ const Finish = () => {
         return !Array.isArray(genDatasetResp?.results)
     }
 
+    const getRawData = (genDatasetResp: unknown) => {
+        if (genDatasetResp === null || isEmpty(genDatasetResp)) {
+            return null;
+        }
+        if (Array.isArray(genDatasetResp?.results)) {
+            return genDatasetResp?.results;
+        } else if (!isEmpty(genDatasetResp?.results) && isObject(genDatasetResp?.results)) {
+            let data: any[] = [];
+            const values = Object.values(genDatasetResp?.results);
+            forEach(values, (value: any[]) => {
+                data = data.concat(value);
+            });
+            return data;
+        }
+        return null;
+    }
+
     
     const formValues = form.getFieldsValue(true);
     let hasDocSeeds = false;
@@ -202,8 +220,8 @@ const Finish = () => {
     }
 
     let topicTabs = [];
-    console.log('Preparing topics...', formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION)
-    if (!hasDocSeeds && formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && formValues.use_case !== 'custom' && 
+    console.log('Preparing topics...', formValues.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION)
+    if (!hasDocSeeds && formValues.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION && formValues.use_case !== 'custom' && 
         hasTopics(genDatasetResp) && !isEmpty(genDatasetResp?.results)) {
             const values = Object.values(genDatasetResp?.results);
             
@@ -298,10 +316,13 @@ const Finish = () => {
             </>
         )
     }
-    console.log('Finish >> ');
-    console.log('hasTopics', hasTopics(genDatasetResp));
+    console.log('isDemo', isDemo);
     console.log('formValues', formValues);
-    console.log('isDemo', isDemo, topicTabs);
+    console.log('hasTopics', hasTopics(genDatasetResp));
+    console.log('genDatasetResp', genDatasetResp);
+    console.log(getRawData(genDatasetResp));
+
+    const rawData = genDatasetResp !== null && hasTopics(genDatasetResp) ?  getRawData(genDatasetResp) : genDatasetResp?.results
 
     return (
         <div>
@@ -327,7 +348,10 @@ const Finish = () => {
                     </StyledButton>
                 </Flex>
             )}
-            {(isDemo && formValues.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && formValues.use_case !== 'custom' && hasTopics(genDatasetResp) && !hasDocSeeds) && (
+            {isDemo && !isEmpty(rawData) && formValues.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION && formValues.use_case === 'custom' && 
+              <FreeFormTable data={rawData} />}
+
+            {(isDemo && formValues.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION && formValues.use_case !== 'custom' && hasTopics(genDatasetResp) && !hasDocSeeds) && (
                 <TabsContainer title={'Generated Dataset'}>
                     <Tabs tabPosition='left' items={topicTabs}/>
                 </TabsContainer>

@@ -24,7 +24,7 @@ export const HeaderSection = styled.div`
   display: flex;
   flex-direction: column;
   margin-bottom: 1rem;
-  height: 150px;
+  height: 130px;
   width: 50%;
   padding: 16px;
   background-color: #ffffff;
@@ -38,6 +38,8 @@ export const HeaderSection = styled.div`
     flex-direction: row;
     justify-content: flex-end;
     margin-top: 8px;
+    position: relative;
+    top: -20px;
   }
   .left-section {
     width: 66px;
@@ -137,6 +139,14 @@ const HomePage: React.FC = () => {
                               Create synthetic data from scratch using examples, documents, seed instructions and AI assisted prompts.
                             </div>
                         </div>
+                        {/* <div className="right-section">
+                        <div>
+                            <Button href="/data-generator">
+                                Get Started
+                                <img src={ArrowRightIcon} alt="Get Started" />
+                            </Button>
+                        </div>
+                        </div> */}
                         </div>
                         
                         <div className="bottom-section">
@@ -149,7 +159,7 @@ const HomePage: React.FC = () => {
                         </div>    
                     </HeaderSection>
 
-                    <HeaderSection style={{ marginLeft: '1rem' }} onClick={() => navigate('/data-augmentation')}>
+                    {/* <HeaderSection style={{ marginLeft: '1rem' }} onClick={() => navigate('/data-augmentation')}>
                         <div className="top-section">
                             <div className="left-section" style={{ padding: '5px' }}>
                                 <img src={DataAugmentationIcon} alt="augmentation" />
@@ -170,7 +180,7 @@ const HomePage: React.FC = () => {
                                 </Button>
                             </div>
                         </div>
-                    </HeaderSection>
+                    </HeaderSection> */}
                     <EvaluateSection />
                 </Flex>
                 <Row>

@@ -211,9 +211,11 @@ export const useDatasetSize = (
     doc_paths: string[],
     input_key: string,
     input_value: string,
-    output_key: string
+    output_key: string,
+    use_case: string
  ) => {
-    if (workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION && isEmpty(doc_paths)) {
+    if ((workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && use_case === 'custom' && isEmpty(doc_paths))
+    || workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION) {
         return {
           data: 0
         }
