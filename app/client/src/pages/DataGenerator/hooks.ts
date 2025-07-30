@@ -213,13 +213,13 @@ export const useDatasetSize = (
     input_value: string,
     output_key: string
  ) => {
-    if (workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION || isEmpty(doc_paths)) {
+    if (workflow_type !== WorkflowType.CUSTOM_DATA_GENERATION && isEmpty(doc_paths)) {
         return {
           data: 0
         }
     }
     const params = {
-        input_path: doc_paths.map(item => item.value),
+        input_path: Array.isArray(doc_paths) ? doc_paths.map(item => item.value) : [],
         input_key,
         input_value,
         output_key

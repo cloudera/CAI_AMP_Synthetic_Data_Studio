@@ -109,12 +109,11 @@ export const getHttpStatusCodeVerb = (statusCode: number) => {
 
 export const getWizardModeType = (location: any) => {
   const pathname = location?.pathname || '';
-  switch (pathname) {
-    case '/data-augmentation':
-      return WizardModeType.DATA_AUGMENTATION;
-    case '/data-generator':
-      return WizardModeType.DATA_GENERATION;
-    default:
-      return null;
+  console.log('pathname', pathname);
+  if (pathname.includes('/data-augmentation')) {
+    return WizardModeType.DATA_AUGMENTATION;
+  } else if (pathname.includes('/data-generator')) {
+    return WizardModeType.DATA_GENERATION;
   }
+  return null;
 }
