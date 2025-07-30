@@ -266,9 +266,9 @@ const Configure: FunctionComponent = () => {
                  <UseCaseSelector form={form} hidden={formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION} />
 
                 {(
-                    formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION || 
-                    (formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION &&
-                    formData?.use_case === 'custom'))  && 
+                    (formData?.workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION || 
+                    formData?.workflow_type === WorkflowType.CUSTOM_DATA_GENERATION) &&
+                    formData?.use_case === 'custom')  && 
                     <Form.Item
                     noStyle
                     shouldUpdate={(prevValues, currentValues) =>

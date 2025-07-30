@@ -109,7 +109,6 @@ const Prompt = () => {
         input_value,
         output_key,
         useCase
-
     );
 
     console.log('values', form.getFieldsValue(true));
@@ -303,7 +302,7 @@ const Prompt = () => {
                         
                     </div>
                     {((workflow_type === WorkflowType.CUSTOM_DATA_GENERATION && !isEmpty(doc_paths)) ||
-                    (workflow_type === WorkflowType.SUPERVISED_FINE_TUNING && !isEmpty(doc_paths))) && 
+                    (workflow_type === WorkflowType.FREE_FORM_DATA_GENERATION && !isEmpty(doc_paths))) && 
                         <StyledFormItem
                             name={'num_questions'}
                             label={
