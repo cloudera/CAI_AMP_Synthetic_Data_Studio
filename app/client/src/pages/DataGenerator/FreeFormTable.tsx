@@ -51,7 +51,6 @@ const FreeFormTable: FunctionComponent<Props> = ({ data }) => {
     
     useEffect(() => {
         if (!isEmpty(data)) {
-            console.log('data', data);
             const columnNames = Object.keys(first(data));
             const columnDefs = columnNames.map((colName) => ({
                 field: colName,

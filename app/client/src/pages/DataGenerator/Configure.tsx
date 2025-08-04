@@ -55,7 +55,6 @@ const Configure: FunctionComponent = () => {
     const location = useLocation();
     const { template_name, generate_file_name } = useParams();
     const [wizardModeType, setWizardModeType] = useState(getWizardModeType(location));
-    console.log('wizardModeType', wizardModeType);
 
     useEffect(() => {
         if (wizardModeType === WizardModeType.DATA_AUGMENTATION) {
@@ -67,10 +66,8 @@ const Configure: FunctionComponent = () => {
         }
     }, [location, wizardModeType]);
 
-    console.log('wizardModeType', wizardModeType);
 
     useEffect(() => {
-        console.log('useEffect 2');
         if (template_name) {
             setTimeout(() => {
                 console.log('setting template name');
@@ -93,7 +90,6 @@ const Configure: FunctionComponent = () => {
         delete values.doc_paths;
         delete values.output_key;
         delete values.output_value;
-        console.log('validateForm', values);
         
         const allFieldsFilled = Object.values(values).every(value => Boolean(value));
         if (allFieldsFilled && isFunction(setIsStepValid)) {

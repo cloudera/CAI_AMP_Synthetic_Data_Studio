@@ -22,7 +22,7 @@ import SeedResultTable from './SeedResultTable';
 import { getFilesURL } from '../Evaluator/util';
 import FreeFormTable from './FreeFormTable';
 import forEach from 'lodash/forEach';
-import { concat, isObject } from 'lodash';
+import isObject from 'lodash/isObject';
 
 const { Title } = Typography;
 
@@ -316,13 +316,9 @@ const Finish = () => {
             </>
         )
     }
-    console.log('isDemo', isDemo);
-    console.log('formValues', formValues);
-    console.log('hasTopics', hasTopics(genDatasetResp));
-    console.log('genDatasetResp', genDatasetResp);
-    console.log(getRawData(genDatasetResp));
 
-    const rawData = genDatasetResp !== null && hasTopics(genDatasetResp) ?  getRawData(genDatasetResp) : genDatasetResp?.results
+    const rawData = genDatasetResp !== null && hasTopics(genDatasetResp) ?  
+        getRawData(genDatasetResp) : genDatasetResp?.results
 
     return (
         <div>

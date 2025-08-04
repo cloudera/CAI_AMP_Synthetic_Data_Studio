@@ -76,7 +76,6 @@ const SeedsFormItem = styled(StyledFormItem)`
 
 const Prompt = () => {
     const form = Form.useFormInstance();
-    console.log('form', form);
     const selectedTopics = Form.useWatch('topics');
     const numQuestions = Form.useWatch('num_questions');
     const datasetSize = Form.useWatch('num_questions');
@@ -110,12 +109,7 @@ const Prompt = () => {
         output_key,
         useCase
     );
-
-    console.log('values', form.getFieldsValue(true));
-    console.log('values', form);
-    console.log('workflow_type', workflow_type);
-    console.log('useCase', useCase);
-    console.log('dataset_size', dataset_size);
+    
     const mutation = useMutation({
         mutationFn: fetchSeedList
     });
