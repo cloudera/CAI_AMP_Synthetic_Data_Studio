@@ -52,9 +52,8 @@ const TopicsTable: FC<TopicsTableProps> = ({ formData, topic }) => {
             render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.solution}</>
         },
     ]
-    console.log('topic', topic);
     const dataSource = formData.results[topic];
-    console.log('dataSource', dataSource);
+    
     return (
         <StyledTable
             columns={cols}
