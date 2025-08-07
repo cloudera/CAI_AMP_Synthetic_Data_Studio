@@ -1,10 +1,13 @@
 export enum Pages {
     GENERATOR = 'data-generator',
+    DATA_AUGMENTATION = 'data-augmentation',
     REGENERATE = 're-generate',
     EVALUATOR = 'evaluator',
     HISTORY = 'history',
     HOME = 'home',
     DATASETS = 'datasets',
+    EVALUATIONS = 'evaluations',
+    EXPORTS = 'exports',
     WELCOME = 'welcome',
     FEEDBACK = 'feedback',
     UPGRADE = 'upgrade'
@@ -46,3 +49,15 @@ export type JobStatus = 'ENGINE_STOPPED' | 'ENGINE_SUCCEEDED' | 'ENGINE_TIMEDOUT
 
 
 export const HuggingFaceIconUrl = "https://huggingface.co/front/assets/huggingface_logo-noborder.svg";
+
+export interface UseCase {
+    name: string;
+    id: string;
+    label: string;
+    value: string;
+}
+
+export enum WizardModeType {
+    DATA_GENERATION = 'data-generation',
+    DATA_AUGMENTATION = 'data-augmentation'
+}

@@ -17,6 +17,7 @@ class UseCase(str, Enum):
     LENDING_DATA = "lending_data"
     #HOUSING_DATA = "housing_data"
     CREDIT_CARD_DATA = "credit_card_data"
+    TICKETING_DATASET = "ticketing_dataset"
 
 class Technique(str, Enum):
     SFT = "sft"
@@ -87,7 +88,8 @@ bedrock_list = ['us.anthropic.claude-3-5-haiku-20241022-v1:0', 'us.anthropic.cla
 USE_CASE_CONFIGS = {
     UseCase.CODE_GENERATION: UseCaseMetadata(
         name="Code Generation",
-        description="Generate programming questions and solutions with code examples",
+        description="""Generates paired programming questions and fully-worked answers that include runnable, 
+        well-formatted code plus concise explanations. Ideal for building Q-and-A datasets across programming languages like Python.""",
         topics=["Python Basics", "Data Manipulation", "Web Development", "Machine Learning", "Algorithms"],
         default_examples=[
             {
@@ -114,7 +116,9 @@ USE_CASE_CONFIGS = {
 
     UseCase.TEXT2SQL: UseCaseMetadata(
         name="Text to SQL",
-        description="Generate natural language to SQL query pairs",
+        description="""Creates natural-language questions matched to clean, 
+        executable SQL queries (with optional brief clarifications) spanning basics, joins, aggregates, 
+        subqueries, and window functions. Ensures each pair is consistently formatted for training or evaluation.""",
         topics=[
             "Basic Queries",
             "Joins",
@@ -147,7 +151,7 @@ USE_CASE_CONFIGS = {
 
     UseCase.CUSTOM: UseCaseMetadata(
         name="Custom",
-        description="Custom use case for user-defined data generation",
+        description="""A blank template meant for any user-defined synthetic data task.""",
         topics=[],
         default_examples=[],
         prompt = " ",
@@ -156,7 +160,10 @@ USE_CASE_CONFIGS = {
 
     UseCase.LENDING_DATA: UseCaseMetadata(
         name="Lending Data",
-        description="Generate synthetic lending data",
+        description="""Produces realistic LendingClub-style loan records—complete borrower,
+         loan, and credit-profile fields—while respecting privacy
+     and intricate cross-field logic (grades, DTI, employment, etc.).
+      Useful for credit-risk modeling or analytics demos.""",
         topics=['Business loans', 'Personal loans', 'Auto loans', 'Home equity loans', "Asset-backed loans"],
         default_examples=[
             {
@@ -318,205 +325,63 @@ USE_CASE_CONFIGS = {
 
 
     UseCase.CREDIT_CARD_DATA: UseCaseMetadata(
-        name="Credit Card Data",
-        description="Synthetic data for credit card profile data",
-        topics=[
-    "High income person",
-    "Low income person",
-    "Four-person family",
-    "Three-person family",
-    "Two-person family",
-    "Five-person family",
-    "more than 10 credit records",
-    "more than 20 credit records"
-
-  ],
-        default_examples=[
-  {
-    "ID": 100001,
-    "CODE_GENDER": "M",
-    "FLAG_OWN_CAR": "Y",
-    "FLAG_OWN_REALTY": "Y",
-    "CNT_CHILDREN": 2,
-    "AMT_INCOME_TOTAL": 85000,
-    "NAME_INCOME_TYPE": "Commercial associate",
-    "NAME_EDUCATION_TYPE": "Higher education",
-    "NAME_FAMILY_STATUS": "Married",
-    "NAME_HOUSING_TYPE": "House / apartment",
-    "DAYS_BIRTH": -12775,
-    "DAYS_EMPLOYED": -2890,
-    "FLAG_MOBIL": "Y",
-    "FLAG_WORK_PHONE": "Y",
-    "FLAG_PHONE": "Y",
-    "FLAG_EMAIL": "Y",
-    "OCCUPATION_TYPE": "Manager",
-    "CNT_FAM_MEMBERS": 4,
-    "CREDIT_RECORDS": [
-      {"ID": 100001, "MONTHS_BALANCE": -24, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -23, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -22, "STATUS": "1"},
-      {"ID": 100001, "MONTHS_BALANCE": -21, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -20, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -19, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -18, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -17, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -16, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -15, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -14, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -13, "STATUS": "1"},
-      {"ID": 100001, "MONTHS_BALANCE": -12, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -11, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -10, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -9, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -8, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -7, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -6, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -5, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": -4, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -3, "STATUS": "0"},
-      {"ID": 100001, "MONTHS_BALANCE": -2, "STATUS": "1"},
-      {"ID": 100001, "MONTHS_BALANCE": -1, "STATUS": "C"},
-      {"ID": 100001, "MONTHS_BALANCE": 0, "STATUS": "C"}
-    ]
-  },
-  {
-    "ID": 100002,
-    "CODE_GENDER": "F",
-    "FLAG_OWN_CAR": "N",
-    "FLAG_OWN_REALTY": "N",
-    "CNT_CHILDREN": 0,
-    "AMT_INCOME_TOTAL": 42000,
-    "NAME_INCOME_TYPE": "Working",
-    "NAME_EDUCATION_TYPE": "Secondary / secondary special",
-    "NAME_FAMILY_STATUS": "Single / not married",
-    "NAME_HOUSING_TYPE": "Rented apartment",
-    "DAYS_BIRTH": -9850,
-    "DAYS_EMPLOYED": -1825,
-    "FLAG_MOBIL": "Y",
-    "FLAG_WORK_PHONE": "N",
-    "FLAG_PHONE": "Y",
-    "FLAG_EMAIL": "Y",
-    "OCCUPATION_TYPE": "Sales staff",
-    "CNT_FAM_MEMBERS": 1,
-    "CREDIT_RECORDS": [
-      {"ID": 100002, "MONTHS_BALANCE": -18, "STATUS": "X"},
-      {"ID": 100002, "MONTHS_BALANCE": -17, "STATUS": "X"},
-      {"ID": 100002, "MONTHS_BALANCE": -16, "STATUS": "0"},
-      {"ID": 100002, "MONTHS_BALANCE": -15, "STATUS": "1"},
-      {"ID": 100002, "MONTHS_BALANCE": -14, "STATUS": "2"},
-      {"ID": 100002, "MONTHS_BALANCE": -13, "STATUS": "3"},
-      {"ID": 100002, "MONTHS_BALANCE": -12, "STATUS": "C"},
-      {"ID": 100002, "MONTHS_BALANCE": -11, "STATUS": "0"},
-      {"ID": 100002, "MONTHS_BALANCE": -10, "STATUS": "C"},
-      {"ID": 100002, "MONTHS_BALANCE": -9, "STATUS": "0"},
-      {"ID": 100002, "MONTHS_BALANCE": -8, "STATUS": "1"},
-      {"ID": 100002, "MONTHS_BALANCE": -7, "STATUS": "C"},
-      {"ID": 100002, "MONTHS_BALANCE": -6, "STATUS": "0"},
-      {"ID": 100002, "MONTHS_BALANCE": -5, "STATUS": "C"},
-      {"ID": 100002, "MONTHS_BALANCE": -4, "STATUS": "0"},
-      {"ID": 100002, "MONTHS_BALANCE": -3, "STATUS": "0"},
-      {"ID": 100002, "MONTHS_BALANCE": -2, "STATUS": "1"},
-      {"ID": 100002, "MONTHS_BALANCE": -1, "STATUS": "2"},
-      {"ID": 100002, "MONTHS_BALANCE": 0, "STATUS": "C"}
-    ]
-  },
-  {
-    "ID": 100003,
-    "CODE_GENDER": "M",
-    "FLAG_OWN_CAR": "Y",
-    "FLAG_OWN_REALTY": "Y",
-    "CNT_CHILDREN": 1,
-    "AMT_INCOME_TOTAL": 95000,
-    "NAME_INCOME_TYPE": "State servant",
-    "NAME_EDUCATION_TYPE": "Higher education",
-    "NAME_FAMILY_STATUS": "Married",
-    "NAME_HOUSING_TYPE": "House / apartment",
-    "DAYS_BIRTH": -15330,
-    "DAYS_EMPLOYED": -4380,
-    "FLAG_MOBIL": "Y",
-    "FLAG_WORK_PHONE": "Y",
-    "FLAG_PHONE": "Y",
-    "FLAG_EMAIL": "Y",
-    "OCCUPATION_TYPE": "Core staff",
-    "CNT_FAM_MEMBERS": 3,
-    "CREDIT_RECORDS": [
-      {"ID": 100003, "MONTHS_BALANCE": -36, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -35, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -34, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -33, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -32, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -31, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -30, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -29, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -28, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -27, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -26, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -25, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -24, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -23, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -22, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -21, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -20, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -19, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -18, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -17, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -16, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -15, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -14, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -13, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -12, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -11, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -10, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -9, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -8, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -7, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -6, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -5, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -4, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -3, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -2, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": -1, "STATUS": "C"},
-      {"ID": 100003, "MONTHS_BALANCE": 0, "STATUS": "C"}
-    ]
-  },
-  {
-    "ID": 100004,
-    "CODE_GENDER": "F",
-    "FLAG_OWN_CAR": "N",
-    "FLAG_OWN_REALTY": "N",
-    "CNT_CHILDREN": 3,
-    "AMT_INCOME_TOTAL": 28000,
-    "NAME_INCOME_TYPE": "Pensioner",
-    "NAME_EDUCATION_TYPE": "Secondary / secondary special",
-    "NAME_FAMILY_STATUS": "Widow/Widower",
-    "NAME_HOUSING_TYPE": "Rented apartment",
-    "DAYS_BIRTH": -23725,
-    "DAYS_EMPLOYED": 365,
-    "FLAG_MOBIL": "Y",
-    "FLAG_WORK_PHONE": "N",
-    "FLAG_PHONE": "N",
-    "FLAG_EMAIL": "N",
-    "OCCUPATION_TYPE": "Pensioner",
-    "CNT_FAM_MEMBERS": 4,
-    "CREDIT_RECORDS": [
-      {"ID": 100004, "MONTHS_BALANCE": -12, "STATUS": "0"},
-      {"ID": 100004, "MONTHS_BALANCE": -11, "STATUS": "1"},
-      {"ID": 100004, "MONTHS_BALANCE": -10, "STATUS": "2"},
-      {"ID": 100004, "MONTHS_BALANCE": -9, "STATUS": "3"},
-      {"ID": 100004, "MONTHS_BALANCE": -8, "STATUS": "4"},
-      {"ID": 100004, "MONTHS_BALANCE": -7, "STATUS": "5"},
-      {"ID": 100004, "MONTHS_BALANCE": -6, "STATUS": "5"},
-      {"ID": 100004, "MONTHS_BALANCE": -5, "STATUS": "5"},
-      {"ID": 100004, "MONTHS_BALANCE": -4, "STATUS": "5"},
-      {"ID": 100004, "MONTHS_BALANCE": -3, "STATUS": "5"},
-      {"ID": 100004, "MONTHS_BALANCE": -2, "STATUS": "5"},
-      {"ID": 100004, "MONTHS_BALANCE": -1, "STATUS": "5"},
-      {"ID": 100004, "MONTHS_BALANCE": 0, "STATUS": "X"}
-    ]
-  }
-],
-    prompt= """
-
+    name="Credit Card Data",
+    description="""Synthesizes comprehensive user profiles plus chronological credit-status histories,
+     maintaining ID consistency and plausibly evolving payment behavior.
+     Designed for training credit-scoring models without exposing real customer information.""",
+    topics=[
+        "High income person",
+        "Low income person",
+        "Four-person family",
+        "Three-person family",
+        "Two-person family",
+        "Five-person family",
+        "more than 10 credit records",
+        "more than 20 credit records"
+    ],
+    default_examples=[
+        {
+            "ID": 100001, "CODE_GENDER": "M", "FLAG_OWN_CAR": "Y", "FLAG_OWN_REALTY": "Y",
+            "CNT_CHILDREN": 2, "AMT_INCOME_TOTAL": 85000, "NAME_INCOME_TYPE": "Commercial associate",
+            "NAME_EDUCATION_TYPE": "Higher education", "NAME_FAMILY_STATUS": "Married",
+            "NAME_HOUSING_TYPE": "House / apartment", "DAYS_BIRTH": -12775, "DAYS_EMPLOYED": -2890,
+            "FLAG_MOBIL": "Y", "FLAG_WORK_PHONE": "Y", "FLAG_PHONE": "Y", "FLAG_EMAIL": "Y",
+            "OCCUPATION_TYPE": "Manager", "CNT_FAM_MEMBERS": 4, "MONTHS_BALANCE": -24, "STATUS": "C"
+        },
+        {
+            "ID": 100001, "CODE_GENDER": "M", "FLAG_OWN_CAR": "Y", "FLAG_OWN_REALTY": "Y",
+            "CNT_CHILDREN": 2, "AMT_INCOME_TOTAL": 85000, "NAME_INCOME_TYPE": "Commercial associate",
+            "NAME_EDUCATION_TYPE": "Higher education", "NAME_FAMILY_STATUS": "Married",
+            "NAME_HOUSING_TYPE": "House / apartment", "DAYS_BIRTH": -12775, "DAYS_EMPLOYED": -2890,
+            "FLAG_MOBIL": "Y", "FLAG_WORK_PHONE": "Y", "FLAG_PHONE": "Y", "FLAG_EMAIL": "Y",
+            "OCCUPATION_TYPE": "Manager", "CNT_FAM_MEMBERS": 4, "MONTHS_BALANCE": -23, "STATUS": "0"
+        },
+        {
+            "ID": 100002, "CODE_GENDER": "F", "FLAG_OWN_CAR": "N", "FLAG_OWN_REALTY": "N",
+            "CNT_CHILDREN": 0, "AMT_INCOME_TOTAL": 42000, "NAME_INCOME_TYPE": "Working",
+            "NAME_EDUCATION_TYPE": "Secondary / secondary special", "NAME_FAMILY_STATUS": "Single / not married",
+            "NAME_HOUSING_TYPE": "Rented apartment", "DAYS_BIRTH": -9850, "DAYS_EMPLOYED": -1825,
+            "FLAG_MOBIL": "Y", "FLAG_WORK_PHONE": "N", "FLAG_PHONE": "Y", "FLAG_EMAIL": "Y",
+            "OCCUPATION_TYPE": "Sales staff", "CNT_FAM_MEMBERS": 1, "MONTHS_BALANCE": -18, "STATUS": "X"
+        },
+        {
+            "ID": 100002, "CODE_GENDER": "F", "FLAG_OWN_CAR": "N", "FLAG_OWN_REALTY": "N",
+            "CNT_CHILDREN": 0, "AMT_INCOME_TOTAL": 42000, "NAME_INCOME_TYPE": "Working",
+            "NAME_EDUCATION_TYPE": "Secondary / secondary special", "NAME_FAMILY_STATUS": "Single / not married",
+            "NAME_HOUSING_TYPE": "Rented apartment", "DAYS_BIRTH": -9850, "DAYS_EMPLOYED": -1825,
+            "FLAG_MOBIL": "Y", "FLAG_WORK_PHONE": "N", "FLAG_PHONE": "Y", "FLAG_EMAIL": "Y",
+            "OCCUPATION_TYPE": "Sales staff", "CNT_FAM_MEMBERS": 1, "MONTHS_BALANCE": -17, "STATUS": "X"
+        },
+        {
+            "ID": 100002, "CODE_GENDER": "F", "FLAG_OWN_CAR": "N", "FLAG_OWN_REALTY": "N",
+            "CNT_CHILDREN": 0, "AMT_INCOME_TOTAL": 42000, "NAME_INCOME_TYPE": "Working",
+            "NAME_EDUCATION_TYPE": "Secondary / secondary special", "NAME_FAMILY_STATUS": "Single / not married",
+            "NAME_HOUSING_TYPE": "Rented apartment", "DAYS_BIRTH": -9850, "DAYS_EMPLOYED": -1825,
+            "FLAG_MOBIL": "Y", "FLAG_WORK_PHONE": "N", "FLAG_PHONE": "Y", "FLAG_EMAIL": "Y",
+            "OCCUPATION_TYPE": "Sales staff", "CNT_FAM_MEMBERS": 1, "MONTHS_BALANCE": -16, "STATUS": "0"
+        }
+    ],
+    prompt="""
     Generate synthetic data for a credit card dataset. Here is the context about the dataset:
 
     Credit score cards are a common risk control method in the financial industry. It uses personal information and data submitted by credit card applicants to predict the probability of future defaults and credit card borrowings. The bank is able to decide whether to issue a credit card to the applicant. Credit scores can objectively quantify the magnitude of risk.
@@ -524,80 +389,103 @@ USE_CASE_CONFIGS = {
     At present, with the development of machine learning algorithms. More predictive methods such as Boosting, Random Forest, and Support Vector Machines have been introduced into credit card scoring. However, these methods often do not have good transparency. It may be difficult to provide customers and regulators with a reason for rejection or acceptance.
 
 
-    The dataset consists of two tables: `User Records` and `Credit Records`, merged by `ID`. The output must create field values with the following specifications:
+    The dataset is a single flat table where each row represents one month of a user's credit history. User information is repeated for each monthly record. The output must create field values with the following specifications:
 
-    User Records Fields (static per user):
-    - ID: Unique client number (e.g., 100001, 100002).
+    Fields:
+    - ID: Unique client number (e.g., 100001, 100002). This ID will be the same across multiple rows for the same user.
     - CODE_GENDER: Gender ('F' or 'M').
     - FLAG_OWN_CAR: Car ownership ('Y' or 'N').
     - FLAG_OWN_REALTY: Property ownership ('Y' or 'N').
-    - CNT_CHILDREN`: Number of children (0 or more).
-    - AMT_INCOME_TOTAL`: Annual income.
-    - NAME_INCOME_TYPE`: Income category (e.g., 'Commercial associate', 'State servant').
-    - NAME_EDUCATION_TYPE`: Education level (e.g., 'Higher education', 'Secondary').
-    - NAME_FAMILY_STATUS`: Marital status (e.g., 'Married', 'Single').
-    - NAME_HOUSING_TYPE`: Way of living. 
-    - DAYS_BIRTH`: Birthday	Count backwards from current day (0), -1 means yesterday.
-    - DAYS_EMPLOYED: Start date of employment	Count backwards from current day(0). If positive, it means the person currently unemployed. (negative for employed; positive for unemployed).
-    - FLAG_MOBIL: Is there a mobile phone ('Y'/'N')
-    - FLAG_WORK_PHONE:	Is there a work phone ('Y'/'N')	
-    - FLAG_PHONE: Is there a phone ('Y'/'N')
-    - FLAG_EMAIL: Is there an email ('Y'/'N')	
+    - CNT_CHILDREN: Number of children (0 or more).
+    - AMT_INCOME_TOTAL: Annual income.
+    - NAME_INCOME_TYPE: Income category (e.g., 'Commercial associate', 'State servant').
+    - NAME_EDUCATION_TYPE: Education level (e.g., 'Higher education', 'Secondary').
+    - NAME_FAMILY_STATUS: Marital status (e.g., 'Married', 'Single').
+    - NAME_HOUSING_TYPE: Way of living.
+    - DAYS_BIRTH: Birthday, counted backwards from the current day (0), where -1 means yesterday.
+    - DAYS_EMPLOYED: Start date of employment, counted backwards from the current day(0). A positive value indicates the person is currently unemployed.
+    - FLAG_MOBIL: Is there a mobile phone ('Y'/'N').
+    - FLAG_WORK_PHONE: Is there a work phone ('Y'/'N').
+    - FLAG_PHONE: Is there a phone ('Y'/'N').
+    - FLAG_EMAIL: Is there an email ('Y'/'N').
     - OCCUPATION_TYPE: Occupation (e.g., 'Manager', 'Sales staff').
     - CNT_FAM_MEMBERS: Family size (1 or more).
-
-    Credit records Fields (nested array):
-    - ID: needs to be the same as the User Records Fields ID.
-    - MONTHS_BALANCE: Refers to Record month.	The month of the extracted data is the starting point, backwards, 0 is the current month, -1 is the previous month, and so on.
-    - STATUS: 
+    - MONTHS_BALANCE: The month of the record, relative to the present. 0 is the current month, -1 is the previous month, and so on.
+    - STATUS:
         Must be one of ['0', '1', '2', '3', '4', '5', 'C', 'X'].
-        Values description:	0: 1-29 days past due 1: 30-59 days past due 2: 60-89 days overdue 3: 90-119 days overdue 4: 120-149 days overdue 5: Overdue or bad debts, write-offs for more than 150 days C: paid off that month X: No loan for the month
-        
+        Values description: 0: 1-29 days past due, 1: 30-59 days past due, 2: 60-89 days overdue, 3: 90-119 days overdue, 4: 120-149 days overdue, 5: Overdue or bad debts (150+ days), C: paid off that month, X: No loan for the month.
+
 
     3. Requirements:
-    - Consistency: Ensure `ID` consistency between the application and its nested credit records.
     - Avoid real personal data (use synthetic values).
-    - Format output as three separate JSON objects, each with the structure shown in the examples.
+    - Format output as three separate JSON objects, each with the flat structure shown in the examples.
 
     When generating the data, make sure to adhere to the following guidelines:
 
     Privacy guidelines:
     - Avoid real PII.
-    - Ensure examples are not leaked into the synthetic data
+    - Ensure examples are not leaked into the synthetic data.
 
-    Cross-row entries guidelines (applies to Credit Records):
-    - Entries must be ordered from oldest (`MONTHS_BALANCE=-60`) to newest (`MONTHS_BALANCE=0`).  
-    - No duplicate `MONTHS_BALANCE` values for a single client.
-    - The time-series credit record entries need to be logical and consistent when read in the correct sequence.
-    - Ensure there are no other cross-row Credit Records inconsistencies not listed above. 
+    Data Series Guidelines (for records with the same ID):
+    - Rows for the same ID must be ordered chronologically by MONTHS_BALANCE (e.g., -60 to 0).
+    - No duplicate MONTHS_BALANCE values for a single ID.
+    - The time-series credit record entries should be logical. For instance, delinquencies can progress (e.g., STATUS '0' -> '1' -> '2') as months advance (e.g., MONTHS_BALANCE -2 -> -1 -> 0).
+    - If the most recent MONTHS_BALANCE is 0, the STATUS should logically be 'X' (no loan) or 'C' (paid off).
 
     Formatting guidelines:
-    - `CNT_CHILDREN`, `AMT_INCOME_TOTAL`, `DAYS_BIRTH`, `DAYS_EMPLOYED`, etc., must be integers.  
-    - `MONTHS_BALANCE` must be an integer 0 or less.
-    - Ensure no other formatting problems or inconsistencies appear that are not listed above. 
+    - CNT_CHILDREN, AMT_INCOME_TOTAL, DAYS_BIRTH, DAYS_EMPLOYED, etc., must be integers.
+    - MONTHS_BALANCE must be an integer 0 or less.
+    - Ensure no other formatting problems or inconsistencies appear.
 
-    Cross-row entries guidelines (applies to Credit Records):
-    - Entries must be ordered from oldest (`MONTHS_BALANCE=-60`) to newest (`MONTHS_BALANCE=0`).  
-    - No duplicate `MONTHS_BALANCE` values for a single client.
-    - If a Recent `MONTHS_BALANCE` is 0 there  should be an "X" (no loan) or "C" (paid off).  
-    - The time-series credit record entries need to be logical and consistent when read in the correct sequence. (e.g. delinquencies can appear in progression as "0" → "1" → "2" as months progress from  "-2" → "-1" → "0"  etc).  
-    - Ensure there are no other Credit Records inconsistencies appear that not listed above.
-
-
-    Cross-Column guidelines:  
-    - Check cross-column inconsistencies such as:
-        If `FLAG_OWN_REALTY="Y"`, `NAME_HOUSING_TYPE` must **not** be "Rented apartment".  
-        If `DAYS_EMPLOYED > 0` (unemployed), `AMT_INCOME_TOTAL` should be lower (e.g., ≤ $50,000).  
-        `OCCUPATION_TYPE` must align with `NAME_INCOME_TYPE` (e.g., "Pensioner" cannot have "Manager" as occupation).  
-        `CNT_FAM_MEMBERS` ≥ `CNT_CHILDREN` + 1 (accounting for at least one parent).  
-    - Ensure there are no other cross-field Credit Records inconsistencies appear that are not listed above.
-
-
+    Cross-Column guidelines:
+    - Ensure cross-column consistency. For example:
+        If FLAG_OWN_REALTY is "Y", NAME_HOUSING_TYPE must not be "Rented apartment".
+        If DAYS_EMPLOYED > 0 (unemployed), AMT_INCOME_TOTAL should be lower (e.g., <= $50,000).
+        OCCUPATION_TYPE must align with NAME_INCOME_TYPE (e.g., a "Pensioner" should not have "Manager" as an occupation).
+        CNT_FAM_MEMBERS must be greater than or equal to CNT_CHILDREN + 1 (to account for at least one parent).
+    - Ensure no other cross-field inconsistencies appear.
     """,
-
     schema=None
-    ),
-}
+),
+
+    UseCase.TICKETING_DATASET: UseCaseMetadata(
+        name="Ticketing Dataset",
+        description= """Generates polite, professional customer-support prompts and assigns a single classification intent (cancel_ticket, customer_service, or report_payment_issue). 
+        Perfect for intent-classification or help-desk automation training.""",
+        topics=["Technical Issues", "Billing Queries", "Payment queries"],
+        default_examples=[
+    {
+        "Prompt": "I have received this message that I owe $300 and I was instructed to pay the bill online. I already paid this amount and I am wondering why I received this message.",
+        "Completion": "report_payment_issue"
+    },
+    {
+        "Prompt": "I will not be able to attend the presentation and would like to cancel my rsvp.",
+        "Completion": "cancel_ticket"
+    },
+    {
+        "Prompt": "I am having questions regarding the exact time, location, and requirements of the event and would like to talk to customer service.",
+        "Completion": "Customer_service"
+    }
+    ]
+    ,
+        prompt= """
+            Generate authentic customer support ticket interactions that have a user query and system response. 
+    For each user query, the system generates a keyword that is used to forward the user to the specific subsystem.
+    Requirements for user queries:
+    - Use professional, respectful language
+    - Follow standard customer service best practices
+    Each response should be a single id from the following list:
+    cancel_ticket,customer_service,report_payment_issue
+    Here are the explanations of the responses:
+    cancel_ticket means that the customer wants to cancel the ticket.
+    customer_service means that customer wants to talk to customer service.
+    report_payment_issue means that the customer is facing payment issues and wants to be forwarded to the billing department to resolve the issue. 
+
+            """,
+        schema=None
+        )
+    }
+
 
 
 USE_CASE_CONFIGS_EVALS = {
@@ -818,104 +706,129 @@ Points are accumulated based on the satisfaction of each criterion:
         ),
 
         UseCase.CREDIT_CARD_DATA: UseCaseMetadataEval(
-        name="Crdit Card Data",
-        
+    name="Credit Card Data",
+    
+    default_examples=[
+        {
+            "score": 10,
+            "justification": """- No privacy violations were detected (no PII leakage).
+- All fields adhere to the required formatting (e.g., integers where necessary, valid `MONTHS_BALANCE`).
+- The data series for each ID is ordered correctly by `MONTHS_BALANCE`, contains no duplicates, and the `STATUS` values progress logically over time.
+- Cross-column consistency is maintained:
+  - `FLAG_OWN_REALTY` aligns with `NAME_HOUSING_TYPE`.
+  - Unemployed individuals (`DAYS_EMPLOYED` > 0) have appropriately lower incomes.
+  - `OCCUPATION_TYPE` matches `NAME_INCOME_TYPE`.
+  - `CNT_FAM_MEMBERS` is consistent with `CNT_CHILDREN`.
+- No other critical errors were found.
+"""
+        }
+    ],
+    prompt="""
+    Evaluate the quality of the provided synthetic credit data and return a score between 1 and 10. The score should reflect how well the data adheres to the following criteria.
+
+    Here is the context about the dataset:
+
+    Credit score cards are a common risk control method in the financial industry. It uses personal information and data submitted by credit card applicants to predict the probability of future defaults and credit card borrowings. The bank is able to decide whether to issue a credit card to the applicant. Credit scores can objectively quantify the magnitude of risk.
+    Generally speaking, credit score cards are based on historical data. Once encountering large economic fluctuations, past models may lose their original predictive power. With the development of machine learning, more predictive methods like Boosting and Random Forests have been introduced, but they often lack transparency.
+
+    The dataset is a **single flat table** where each row represents one month of a user's credit history. User information is repeated for each monthly record.
+
+    **Fields:**
+    - **ID**: Unique client number (e.g., 100001). This ID is the same across multiple rows for the same user.
+    - **CODE_GENDER**: Gender ('F' or 'M').
+    - **FLAG_OWN_CAR**: Car ownership ('Y' or 'N').
+    - **FLAG_OWN_REALTY**: Property ownership ('Y' or 'N').
+    - **CNT_CHILDREN**: Number of children (0 or more).
+    - **AMT_INCOME_TOTAL**: Annual income.
+    - **NAME_INCOME_TYPE**: Income category (e.g., 'Commercial associate', 'State servant').
+    - **NAME_EDUCATION_TYPE**: Education level (e.g., 'Higher education', 'Secondary').
+    - **NAME_FAMILY_STATUS**: Marital status (e.g., 'Married', 'Single').
+    - **NAME_HOUSING_TYPE**: Way of living.
+    - **DAYS_BIRTH**: Birthday, counted backwards from the current day (0).
+    - **DAYS_EMPLOYED**: Start date of employment, counted backwards from the current day(0). A positive value means the person is currently unemployed.
+    - **FLAG_MOBIL**: Has a mobile phone ('Y'/'N').
+    - **FLAG_WORK_PHONE**: Has a work phone ('Y'/'N').
+    - **FLAG_PHONE**: Has a phone ('Y'/'N').
+    - **FLAG_EMAIL**: Has an email ('Y'/'N').
+    - **OCCUPATION_TYPE**: Occupation (e.g., 'Manager', 'Sales staff').
+    - **CNT_FAM_MEMBERS**: Family size (1 or more).
+    - **MONTHS_BALANCE**: The record month, relative to the present (0 is current, -1 is previous, etc.).
+    - **STATUS**: Must be one of ['0', '1', '2', '3', '4', '5', 'C', 'X'].
+        - **Values**: 0: 1-29 days past due, 1: 30-59, 2: 60-89, 3: 90-119, 4: 120-149, 5: 150+ days overdue/bad debt, C: Paid off, X: No loan.
+
+    Evaluate whether the data adheres to the following guidelines:
+
+    **Privacy Guidelines:**
+    - Ensure fictitious entries do not leak real PII.
+
+    **Formatting Guidelines:**
+    - `CNT_CHILDREN`, `AMT_INCOME_TOTAL`, `DAYS_BIRTH`, `DAYS_EMPLOYED` must be integers.
+    - `MONTHS_BALANCE` must be an integer ≤ 0.
+    - Ensure no other formatting inconsistencies exist.
+
+    **Data Series Guidelines (for rows with the same ID):**
+    - Rows for a single ID must be ordered chronologically by `MONTHS_BALANCE` (e.g., from -60 to 0).
+    - No duplicate `MONTHS_BALANCE` values for a single ID.
+    - The time-series data for an ID must be logical (e.g., records shouldn't start with a high delinquency number like '2'; they should start from '0', 'C', or 'X').
+    - Consecutive 'C' statuses are allowed.
+    - Ensure no other inconsistencies exist within a user's data series.
+
+    **Cross-Column Guidelines:**
+    - Check for inconsistencies such as:
+        - If `FLAG_OWN_REALTY` is "Y", `NAME_HOUSING_TYPE` must **not** be "Rented apartment".
+        - If `DAYS_EMPLOYED` > 0 (unemployed), `AMT_INCOME_TOTAL` should be low (e.g., ≤ $50,000).
+        - `OCCUPATION_TYPE` must align with `NAME_INCOME_TYPE` (e.g., "Pensioner" occupation for "Pensioner" income type).
+        - `CNT_FAM_MEMBERS` ≥ `CNT_CHILDREN` + 1 (to account for at least one parent).
+        - Variables like `DAYS_BIRTH`, `DAYS_EMPLOYED`, and `OCCUPATION_TYPE` must be reasonable when considered together.
+    - Ensure no other cross-field inconsistencies exist.
+
+    **Scoring Workflow:**
+    Start at 10 and deduct points for violations:
+    - **Subtract 2 points** for any Privacy Guideline violations.
+    - **Subtract 1 point** for any Formatting Guideline violations.
+    - **Subtract 4 points** for any Data Series Guideline violations.
+    - **Subtract 1 point** for any Cross-Column Guideline violations.
+    - **Subtract 2 points** for any other problems not listed above.
+    The minimum score is 1. If any critical errors are present (e.g., missing `ID`, PII leakage), the score should be capped at 1.
+
+    Provide a score from 1-10 for the data and list your justifications.
+    """
+),
+        UseCase.TICKETING_DATASET: UseCaseMetadataEval(
+        name="Ticketing Dataset",
         default_examples=[
                 {
-                    "score": 10,
-                    "justification": """- No privacy violations detected (no PII leakage).  
-        - All fields adhere to formatting requirements (integers where required, valid `MONTHS_BALANCE`, etc.).  
-        - Cross-row entries are ordered correctly, no duplicates, and statuses progress logically (e.g., "0" → "1" → "2").  
-        - Cross-column consistency:  
-        - `FLAG_OWN_REALTY="Y"` aligns with `NAME_HOUSING_TYPE`.  
-        - Unemployed (`DAYS_EMPLOYED > 0`) have lower incomes.  
-        - `OCCUPATION_TYPE` matches `NAME_INCOME_TYPE`.  
-        - `CNT_FAM_MEMBERS` ≥ `CNT_CHILDREN` + 1.  
-        - No other critical errors.  
+                    "score": 5,
+                    "justification": """
+                    The query is professionally written, respectful, and follows customer service best practices.
+                    The response 'report_payment_issue' is one of the allowed keywords.
+                    The matching between the query and response is perfect according to the provided definitions.
+
+        """},
+        {
+            "score": 3,
+        "justification": """
+        The query is professionally written and respectful.
+        The response 'cancel_ticket' is one of the allowed keywords.
+        While the response uses a valid keyword, it doesn't match the most appropriate category for the specific query content.
         """
+        },
 
-                }
             ],
-        prompt = """
-        Evaluate the quality of the provided synthetic credit data  and return a score between 1 and 10. The score should reflect how well the data adheres to the following criteria:  
+        prompt= """
+        You are given a user query for a ticketing support system and the system responses which is a keyword that is used to forward the user to the specific subsystem.
+        Evaluate whether the queries:
+        - Use professional, respectful language
+        - Follow standard customer service best practices
+        Evaluate whether the responses use only one of the the following keywords: cancel_ticket,customer_service,report_payment_issue
+        Evaluate whether the solutions and responses are correctly matched based on the following definitions:
+        cancel_ticket means that the customer wants to cancel the ticket.
+        customer_service means that customer wants to talk to customer service.
+        report_payment_issue means that the customer is facing payment issues and wants to be forwarded to the billing department to resolve the issue. 
+        Give a score of 1-5 based on the following instructions:
+        If the responses don’t match the four keywords give always value 1.
+        Rate the quality of the queries and responses based on the instructions give a rating between 1 to 5. 
 
-        Here is the context about the dataset:
-
-        Credit score cards are a common risk control method in the financial industry. It uses personal information and data submitted by credit card applicants to predict the probability of future defaults and credit card borrowings. The bank is able to decide whether to issue a credit card to the applicant. Credit scores can objectively quantify the magnitude of risk.
-        Generally speaking, credit score cards are based on historical data. Once encountering large economic fluctuations. Past models may lose their original predictive power. Logistic model is a common method for credit scoring. Because Logistic is suitable for binary classification tasks and can calculate the coefficients of each feature. In order to facilitate understanding and operation, the score card will multiply the logistic regression coefficient by a certain value (such as 100) and round it.
-        At present, with the development of machine learning algorithms. More predictive methods such as Boosting, Random Forest, and Support Vector Machines have been introduced into credit card scoring. However, these methods often do not have good transparency. It may be difficult to provide customers and regulators with a reason for rejection or acceptance.
-
-
-        The dataset consists of two tables: `User Records` and `Credit Records`, merged by `ID`. The output must create field values with the following specifications:
-
-        User Records Fields (static per user):
-        - ID: Unique client number (e.g., 100001, 100002).
-        - CODE_GENDER: Gender ('F' or 'M').
-        - FLAG_OWN_CAR: Car ownership ('Y' or 'N').
-        - FLAG_OWN_REALTY: Property ownership ('Y' or 'N').
-        - CNT_CHILDREN`: Number of children (0 or more).
-        - AMT_INCOME_TOTAL`: Annual income.
-        - NAME_INCOME_TYPE`: Income category (e.g., 'Commercial associate', 'State servant').
-        - NAME_EDUCATION_TYPE`: Education level (e.g., 'Higher education', 'Secondary').
-        - NAME_FAMILY_STATUS`: Marital status (e.g., 'Married', 'Single').
-        - NAME_HOUSING_TYPE`: Way of living. 
-        - DAYS_BIRTH`: Birthday	Count backwards from current day (0), -1 means yesterday.
-        - DAYS_EMPLOYED: Start date of employment	Count backwards from current day(0). If positive, it means the person currently unemployed. (negative for employed; positive for unemployed).
-        - FLAG_MOBIL: Is there a mobile phone ('Y'/'N')
-        - FLAG_WORK_PHONE:	Is there a work phone ('Y'/'N')	
-        - FLAG_PHONE: Is there a phone ('Y'/'N')
-        - FLAG_EMAIL: Is there an email ('Y'/'N')	
-        - OCCUPATION_TYPE: Occupation (e.g., 'Manager', 'Sales staff').
-        - CNT_FAM_MEMBERS: Family size (1 or more).
-
-        Credit Records Fields (nested array):
-        - ID: needs to be the same as the User Records Fields ID.
-        - MONTHS_BALANCE: Refers to Record month.	The month of the extracted data is the starting point, backwards, 0 is the current month, -1 is the previous month, and so on.
-        - STATUS: 
-            Must be one of ['0', '1', '2', '3', '4', '5', 'C', 'X'].
-            Values description:	0: 1-29 days past due 1: 30-59 days past due 2: 60-89 days overdue 3: 90-119 days overdue 4: 120-149 days overdue 5: Overdue or bad debts, write-offs for more than 150 days C: paid off that month X: No loan for the month
-            
-
-        Evaluate whether the data adhere to the following guidelines:
-
-        Privacy guidelines:
-        - Allow ficticious PII entries that do not leak PII.
-
-        Formatting guidelines:
-        - `CNT_CHILDREN`, `AMT_INCOME_TOTAL`, `DAYS_BIRTH`, `DAYS_EMPLOYED`, etc., must be integers.  
-        - `MONTHS_BALANCE` must be an integer 0 or less.
-        - Ensure no other formatting problems or inconsistencies appear that are not listed above. 
-
-        Cross-row entries guidelines (applies to Credit Records):
-        - Entries must be ordered from oldest (e.g. `MONTHS_BALANCE=-60`) to newest (`MONTHS_BALANCE=0`).  
-        - No duplicate `MONTHS_BALANCE` values for a single client.
-        - Consecutive STATUS=C is allowed since it indicates that each monthly payment and amount owned is paid off.
-        - The time-series credit record entries need to be logical and consistent when read in the correct sequence as months progress from negative to 0.
-        - Ensure the records dont start from deliquency 2 but rather from 0, C or X.
-        - Ensure there are no other Credit Records inconsistencies appear that not listed above.
-
-
-        Cross-Column guidelines:  
-        - Check cross-column inconsistencies such as:
-            If `FLAG_OWN_REALTY="Y"`, `NAME_HOUSING_TYPE` must **not** be "Rented apartment".  
-            If `DAYS_EMPLOYED > 0` (unemployed), `AMT_INCOME_TOTAL` should be lower (e.g., ≤ $50,000).  
-            `OCCUPATION_TYPE` must align with `NAME_INCOME_TYPE` (e.g., "Pensioner" cannot have "Manager" as occupation).  
-            `CNT_FAM_MEMBERS` ≥ `CNT_CHILDREN` + 1 (accounting for at least one parent).  
-            DAYS_BIRTH, DAYS_EMPLOYED, OCCUPATION_TYPE and other variables are reasonable when considered together. 
-        - Ensure there are no other cross-field Credit Records inconsistencies appear that are not listed above.
-
-
-        Scoring Workflow:
-        Start at 10, deduct points for violations:  
-        Subtract 2 points for any Privacy guidelines violations.
-        Subtract 1 point for any formatting guidelines violations.
-        Subtract 1 point for any cross-column violations.
-        Subtract 4 points for any Cross-row guidelines guidelines violations.
-        Subtract 2 points for any other problem with the generated data not listed above.
-        Cap minimum score score at 1 if any critical errors (e.g., missing `ID`, PII, or invalid `STATUS`).  
-
-
-        Give a score rating 1-10 for the given data.  If there are more than 9 points to subtract use 1 as the absolute minimum scoring. List all justification as list.
         """
         )
 }

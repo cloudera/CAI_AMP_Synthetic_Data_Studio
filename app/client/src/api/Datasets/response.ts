@@ -22,6 +22,7 @@ export type DatasetResponse = {
     job_name: string;
     job_status: string;
     inference_type: string;
+    completed_rows: number; // Add this line
 };
 
 export type ModelParameters = {

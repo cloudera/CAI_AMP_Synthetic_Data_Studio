@@ -52,7 +52,8 @@ const TopicsTable: FC<TopicsTableProps> = ({ formData, topic }) => {
             render: (_text: QuestionSolution, record: QuestionSolution) => <>{record.solution}</>
         },
     ]
-    const dataSource = formData.results[topic]
+    const dataSource = formData.results[topic];
+    
     return (
         <StyledTable
             columns={cols}
@@ -87,12 +88,14 @@ interface SuccessProps {
     isDemo?: boolean;
 }
 const Success: FC<SuccessProps> = ({ formData, isDemo = true }) => {
+    console.log('Success', formData);
     const topicTabs = formData?.results && Object.keys(formData.results).map((topic, i) => ({
         key: `tab-${i}`,
         label: <Popover content={topic}><Text>{topic}</Text></Popover>,
         value: topic.replace(/\n/g, ' '),
         children: <TopicsTable formData={formData} topic={topic} />
     }));
+    console.log('topicTabs', topicTabs);
     const nextStepsList = [
         {
             avatar: '',

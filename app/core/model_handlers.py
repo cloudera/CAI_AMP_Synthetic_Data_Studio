@@ -316,9 +316,18 @@ class UnifiedModelHandler:
                 pool=5.0
             )
             
+            # Configure httpx client with certificate verification for private cloud
+            if os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
+                http_client = httpx.Client(
+                    verify="/etc/ssl/certs/ca-certificates.crt",
+                    timeout=timeout_config
+                )
+            else:
+                http_client = httpx.Client(timeout=timeout_config)
+            
             client = OpenAI(
                 api_key=os.getenv('OPENAI_API_KEY'),
-                timeout=timeout_config
+                http_client=http_client
             )
             completion = client.chat.completions.create(
                 model=self.model_id,
@@ -380,10 +389,19 @@ class UnifiedModelHandler:
                 pool=5.0
             )
             
+            # Configure httpx client with certificate verification for private cloud
+            if os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
+                http_client = httpx.Client(
+                    verify="/etc/ssl/certs/ca-certificates.crt",
+                    timeout=timeout_config
+                )
+            else:
+                http_client = httpx.Client(timeout=timeout_config)
+            
             client_ca = OpenAI(
                 base_url=caii_endpoint,
                 api_key=API_KEY,
-                timeout=timeout_config  # Use the comprehensive timeout configuration
+                http_client=http_client
             )
 
             completion = client_ca.chat.completions.create(

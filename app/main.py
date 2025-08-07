@@ -239,11 +239,25 @@ class StudioUpgradeResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for the FastAPI application"""
-    # Create document upload directory on startup
-    #path_manager.make_dirs(path_manager.upload_dir)
+    # Startup code
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     print(f"Document upload directory created at: {UPLOAD_DIR}")
+    
+    # Run database migrations (init_db() already called by DatabaseManager)
+    try:
+        print("Running database migrations via external script...")
+        result = subprocess.run(
+            ["uv", "run", "python", "run_migrations.py"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        print(f"Migration completed: {result.stdout}")
+    except subprocess.CalledProcessError as e:
+        print(f"Migration warning: {e.stderr}")
+    
     yield
+    print("Application shutting down...")
 
 
 app = FastAPI(
@@ -338,12 +352,12 @@ app.add_middleware(
 
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Check for and apply any pending migrations on startup"""
-    success, message = await alembic_manager.handle_database_upgrade()
-    if not success:
-        print(f"Warning: {message}")
+# @app.on_event("startup")
+# async def startup_event():
+#     """Check for and apply any pending migrations on startup"""
+#     success, message = await alembic_manager.handle_database_upgrade()
+#     if not success:
+#         print(f"Warning: {message}")
 
 @app.post("/get_project_files", include_in_schema=True, responses = responses, 
            description = "get project file details")
@@ -708,9 +722,10 @@ async def create_custom_prompt(request: CustomPromptRequest, request_id = None):
         prompt = PromptBuilder.build_custom_prompt(
                 model_id=request.model_id,
                 custom_prompt=request.custom_prompt,
-                example_path= request.example_path
+                example_path= request.example_path,
+                example = request.example
             )
-        print(prompt)
+        #print(prompt)
         prompt_gen = model_handler.generate_response(prompt, request_id=request_id)
 
         return {"generated_prompt":prompt_gen}
@@ -767,14 +782,15 @@ async def get_model_id_filtered():
 async def get_use_cases():
     """Get available use cases"""
     return {
-        "usecases": [
-            {"id": UseCase.CODE_GENERATION, "name": "Code Generation"},
-            {"id": UseCase.TEXT2SQL, "name": "Text to SQL"},
-            {"id": UseCase.CUSTOM, "name": "Custom"},
-            {"id": UseCase.LENDING_DATA, "name": "Lending Data"},
-            {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data"},
-        ]
-    }
+   "usecases": [
+       {"id": UseCase.CODE_GENERATION, "name": "Code Generation", "description": "Generates paired programming questions and answers with runnable, well-formatted code plus explanations. Ideal for building Q-and-A datasets across programming languages like Python.", "tag": ["Supervised Finetuning", "Data Generation"]},
+       {"id": UseCase.TEXT2SQL, "name": "Text to SQL", "description": "Creates natural-language questions matched to clean, executable SQL queries spanning basics, joins, aggregates, subqueries, and window functions. Great for training and evaluation.", "tag": ["Supervised Finetuning", "Data Generation"]},
+       {"id": UseCase.CUSTOM, "name": "Custom", "description": "A blank template meant for any user-defined synthetic data task.", "tag": []},
+       {"id": UseCase.LENDING_DATA, "name": "Lending Data", "description": "Produces realistic LendingClub-style loan records—complete borrower, loan, and credit-profile fields—while respecting privacy and intricate cross-field logic (grades, DTI, employment, etc.).", "tag": ["Data Generation", "Tabular Data"]},
+       {"id": UseCase.CREDIT_CARD_DATA, "name": "Credit Card Data", "description": "Builds user profiles with chronological credit-status histories, maintaining ID consistency and evolving payment behavior. Supports training for credit scoring models without real user data.", "tag": ["Data Generation", "Tabular Data"]},
+       {"id": UseCase.TICKETING_DATASET, "name": "Ticketing Dataset", "description": "Generates support queries with labelled ticket classification intent (cancel_ticket, customer_service, or report_payment_issue). Perfect for intent-classification or help-desk automation training.", "tag": ["Data Generation", "Intent Classification"]},
+   ]
+}
 
 @app.get("/model/parameters", include_in_schema=True)
 async def get_model_parameters() -> Dict:
@@ -985,7 +1001,8 @@ async def get_generation_history(
         db_manager.update_job_statuses_generate(job_status_map)
     
     # Get paginated data
-    total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    #total_count, results = db_manager.get_paginated_generate_metadata(page, page_size)
+    total_count, results = db_manager.get_paginated_generate_metadata_light(page, page_size)
     
     # Return in the structure expected by the frontend
     return {
@@ -1315,12 +1332,10 @@ async def get_example_payloads(use_case:UseCase):
     return payload
 
 
-# Add these two endpoints
 @app.get("/synthesis-studio/check-upgrade", response_model=StudioUpgradeStatus)
 async def check_upgrade_status():
     """Check if any upgrades are available"""
     try:
-    
         # Fetch latest changes
         subprocess.run(["git", "fetch"], check=True, capture_output=True)
         
@@ -1354,39 +1369,22 @@ async def check_upgrade_status():
             git_remote_commit=remote_commit,
             updates_available=updates_available
         )
+        
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=f"Git error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
-# Ensure uv is installed
-def ensure_uv_installed():
-    try:
-        print(subprocess.run(["uv", "--version"], check=True, capture_output=True))
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print(subprocess.run(["curl -LsSf https://astral.sh/uv/install.sh | sh"], shell=True, check=True))
-        os.environ["PATH"] = f"{os.environ['HOME']}/.cargo/bin:{os.environ['PATH']}"
 
-# Setup virtual environment and dependencies
-def setup_environment(PROJECT_ROOT):
-    
-    venv_dir = PROJECT_ROOT / ".venv"
-    
-    # Create venv if it doesn't exist - specifying the path explicitly
-    if not venv_dir.exists():
-        print(subprocess.run(["uv", "venv", ".venv"], cwd=PROJECT_ROOT, check=True))
-    
-    # Install dependencies with uv pip instead of sync to avoid pyproject.toml parsing issues
-    print(subprocess.run(["uv", "pip", "install", "-e", "."], cwd=PROJECT_ROOT, check=True))
 
 @app.post("/synthesis-studio/upgrade", response_model=StudioUpgradeResponse)
 async def perform_upgrade():
     """
     Perform upgrade process:
     1. Pull latest code
-    2. Run database migrations with Alembic
-    3. Run build_client.sh
-    4. Run start_application.py
-    5. Restart CML application
+    2. Run database migrations
+    3. Build frontend (includes dependency sync)
+    4. Restart application
     """
     try:
         messages = []
@@ -1395,24 +1393,23 @@ async def perform_upgrade():
         db_upgraded = False
         
         PROJECT_ROOT = Path(os.getcwd())
+        
         # 1. Git operations
         try:
-            
             # Stash any changes
-            print(subprocess.run(["git", "stash"], check=True, capture_output=True))
+            subprocess.run(["git", "stash"], check=True, capture_output=True)
             
             # Pull updates
-            print(subprocess.run(["git", "pull"], check=True, capture_output=True))
+            subprocess.run(["git", "pull"], check=True, capture_output=True)
             
             # Try to pop stash
             try:
-                print(subprocess.run(["git", "stash", "pop"], check=True, capture_output=True))
+                subprocess.run(["git", "stash", "pop"], check=True, capture_output=True)
             except subprocess.CalledProcessError:
                 messages.append("Warning: Could not restore local changes")
             
             git_updated = True
             messages.append("Git repository updated")
-            print(messages)
             
         except subprocess.CalledProcessError as e:
             messages.append(f"Git update failed: {e}")
@@ -1420,41 +1417,41 @@ async def perform_upgrade():
 
         # 2. Database migrations
         try:
-            db_success, db_message = await alembic_manager.handle_database_upgrade()
-            if db_success:
-                db_upgraded = True
-                messages.append(db_message)
-            else:
-                messages.append(f"Database upgrade failed: {db_message}")
-                raise HTTPException(status_code=500, detail=db_message)
-        except Exception as e:
+            result = subprocess.run(
+                ["uv", "run", "python", "run_migrations.py"],
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd=PROJECT_ROOT
+            )
+            
+            print(result.stdout)
+            db_upgraded = True
+            messages.append("Database migrations completed")
+        except subprocess.CalledProcessError as e:
             messages.append(f"Database migration failed: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
         
-        # 3. Run build_client.sh
+        # 3. Build frontend (build_client.sh handles uv and dependencies)
         try:
-            
-            ensure_uv_installed()
-            
-            setup_environment(PROJECT_ROOT)
-
-            subprocess.run(["bash build/shell_scripts/build_client.sh"], shell=True, check=True)
+            subprocess.run(
+                ["bash", "build/shell_scripts/build_client.sh"], 
+                check=True,
+                cwd=PROJECT_ROOT
+            )
             frontend_rebuilt = True
             messages.append("Frontend rebuilt successfully")
         except subprocess.CalledProcessError as e:
             messages.append(f"Frontend build failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
         
-       
+        # 4. Restart application
         if git_updated or frontend_rebuilt or db_upgraded:
             try:
-                # Small delay to ensure logs are captured
-                time.sleep(10)
-                print("application restart will happen now")
+                time.sleep(5)
                 restart_application()
                 messages.append("Application restart initiated")
                 
-                # Note: This response might not reach the client due to the restart
                 return StudioUpgradeResponse(
                     success=True,
                     message="; ".join(messages),
@@ -1467,10 +1464,7 @@ async def perform_upgrade():
                 raise HTTPException(status_code=500, detail=str(e))
         
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Upgrade failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Upgrade failed: {str(e)}")
 #****** comment below for testing just backend**************
 current_directory = os.path.dirname(os.path.abspath(__file__))
 client_build_path = os.path.join(current_directory, "client", "dist")

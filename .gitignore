@@ -84,3 +84,5 @@ sample_200x100.csv
 Raw_Web_Visit_sample.csv
 Raw_Web_Visit_Sample.csv
 Raw_Web_Visit_Sample.csv
+app/test_models.py
+credit_card_example.json

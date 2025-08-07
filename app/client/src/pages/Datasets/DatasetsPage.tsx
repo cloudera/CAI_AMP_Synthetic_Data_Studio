@@ -1,28 +1,34 @@
 import throttle from 'lodash/throttle';
-import { Col, Flex, Input, Row, Table, TableProps, Tooltip, notification } from 'antd';
-import { SearchProps } from 'antd/es/input';
+import React, { SyntheticEvent, useEffect } from 'react';
+import { Col, Flex, Input, Layout, Row, Table, TableProps, Tooltip, notification } from 'antd';
 import styled from 'styled-components';
-import { useDatasets } from './hooks';
+import Paragraph from 'antd/es/typography/Paragraph';
+import { useDatasets } from '../Home/hooks';
+import { ExportResult } from '../../components/Export/ExportModal';
+import { SearchProps } from 'antd/es/input';
 import Loading from '../Evaluator/Loading';
 import { Dataset } from '../Evaluator/types';
-import Paragraph from 'antd/es/typography/Paragraph';
 import { JOB_EXECUTION_TOTAL_COUNT_THRESHOLD, TRANSLATIONS } from '../../constants';
+import DatasetExportModal, { ExportResult } from '../../components/Export/ExportModal';
 import DateTime from '../../components/DateTime/DateTime';
 import DatasetActions from './DatasetActions';
 import { sortItemsByKey } from '../../utils/sortutils';
-import { SyntheticEvent, useEffect } from 'react';
-import DatasetExportModal, { ExportResult } from '../../components/Export/ExportModal';
-import React from 'react';
+
 import { JobStatus } from '../../types';
 import JobStatusIcon from '../../components/JobStatus/jobStatusIcon';
+import StyledTitle from '../Evaluator/StyledTitle';
 
+const { Content } = Layout;
 const { Search } = Input;
+
+const StyledContent = styled(Content)`
+    padding: 24px;
+    background-color: #f5f7f8;
+`;
 
 const Container = styled.div`
   background-color: #ffffff;
   padding: 1rem;
-  padding-left: 0;
-  padding-right: 0;
   overflow-x: auto;
 `;
 
@@ -57,12 +63,8 @@ const StyledParagraph = styled(Paragraph)`
     color:  #5a656d;
 `;
 
-interface Props {
-    hideSearch?: boolean;
-}
-
-const DatasetsTab: React.FC<Props> = ({ hideSearch = false }) => {
-    const { data, isLoading, isError, refetch, setSearchQuery, pagination } = useDatasets();
+const DatasetsPage: React.FC = () => {
+  const { data, isLoading, isError, refetch, setSearchQuery, pagination } = useDatasets();
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [exportResult, setExportResult] = React.useState<ExportResult>();
     const [toggleDatasetExportModal, setToggleDatasetExportModal] = React.useState(false);
@@ -147,16 +149,7 @@ const DatasetsTab: React.FC<Props> = ({ hideSearch = false }) => {
             width: 80,
             align: 'center',
             sorter: sortItemsByKey('total_count')
-        }, 
-        {
-            key: 'completed_rows',
-            title: 'Completed Rows',
-            dataIndex: 'completed_rows',
-            width: 80,
-            align: 'center',
-            sorter: sortItemsByKey('completed_rows')
-        },
-        {
+        }, {
             key: 'use_case',
             title: 'Use Case',
             dataIndex: 'use_case',
@@ -180,10 +173,12 @@ const DatasetsTab: React.FC<Props> = ({ hideSearch = false }) => {
             )
         },
     ];
-
-    return (
-        <Container>
-            {!hideSearch && <Row style={{ marginBottom: 16 }}>
+  return (
+    <Layout>
+        <StyledContent>
+           <StyledTitle style={{ fontWeight: 600}}>{'Datasets'}</StyledTitle>
+           <Container>
+            <Row style={{ marginBottom: 16 }}>
                 <Col span={24}>
                     <Search
                         placeholder="Search Datasets"
@@ -191,12 +186,12 @@ const DatasetsTab: React.FC<Props> = ({ hideSearch = false }) => {
                         onChange={onChange}
                         style={{ width: 350 }} />
                 </Col>
-            </Row>}
+            </Row>
             {isLoading && <Loading />}
             <StyledTable
                 rowKey={(row: Dataset) => `${row?.display_name}_${row?.generate_file_name}`}
                 tableLayout="fixed"
-                // pagination={pagination}
+                pagination={pagination}
                 columns={columns}
                 dataSource={data?.data || [] as Dataset[]}
                 onRow={(row: Dataset) =>
@@ -209,7 +204,10 @@ const DatasetsTab: React.FC<Props> = ({ hideSearch = false }) => {
             <DatasetExportModal setExportResult={setExportResult} datasetDetails={datasetDetails} isModalActive={toggleDatasetExportModal} setIsModalActive={setToggleDatasetExportModal} />
             {notificationContextHolder}
         </Container>
-    )
-}
+            
+        </StyledContent>
+    </Layout>
+  );
+};
 
-export default DatasetsTab;
+export default DatasetsPage; 

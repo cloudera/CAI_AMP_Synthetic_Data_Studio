@@ -71,8 +71,9 @@ class DatabaseManager:
                         job_id TEXT,
                         job_name TEXT UNIQUE,
                         job_status TEXT,
-                        job_creator_name TEXT
-                       
+                        job_creator_name TEXT,
+                        completed_rows INTEGER
+
                     )
                 """)
                 
@@ -163,8 +164,8 @@ class DatabaseManager:
                     custom_prompt, model_parameters, input_key, output_key, output_value, generate_file_name,
                     display_name, local_export_path, hf_export_path, s3_export_path,
                     num_questions, total_count, topics, examples, 
-                    schema, doc_paths, input_path, job_id, job_name, job_status, job_creator_name
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    schema, doc_paths, input_path, job_id, job_name, job_status, job_creator_name, completed_rows
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 
                 values = (
@@ -194,7 +195,8 @@ class DatabaseManager:
                     metadata.get('job_id', None),
                     metadata.get('job_name', None),
                     metadata.get('job_status', None),
-                    metadata.get('job_creator_name', None)
+                    metadata.get('job_creator_name', None),
+                    metadata.get('completed_rows', None)
                 )
                 
                 cursor.execute(query, values)
@@ -212,7 +214,7 @@ class DatabaseManager:
             print(f"Error saving metadata to database: {str(e)}")
             raise
 
-    def update_job_generate(self, job_name: str, generate_file_name: str, local_export_path: str, timestamp: str, job_status):
+    def update_job_generate(self, job_name: str, generate_file_name: str, local_export_path: str, timestamp: str, job_status, completed_rows):
         """Update job generate with retry mechanism"""
         max_retries = 3
         retry_delay = 1  # seconds
@@ -244,11 +246,12 @@ class DatabaseManager:
                         SET generate_file_name = ?,
                             local_export_path = ?,
                             timestamp = ?,
-                            job_status = ?
+                            job_status = ?,
+                            completed_rows = ?
                         WHERE job_name = ?
                         AND job_name IS NOT NULL 
                         AND job_name != ''
-                    """, (generate_file_name, local_export_path, timestamp, job_status, job_name))
+                    """, (generate_file_name, local_export_path, timestamp, job_status, completed_rows,job_name))
                     
                     rows_affected = cursor.rowcount
                     conn.commit()
@@ -818,6 +821,39 @@ class DatabaseManager:
             print(f"Error retrieving all metadata: {str(e)}")
             return []
     
+    def get_paginated_generate_metadata_light(self, page: int, page_size: int) -> Tuple[int, List[Dict]]:
+        """Retrieve paginated metadata with only fields needed for list view"""
+        try:
+            with self.get_connection() as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+
+                # Get total count
+                count_query = "SELECT COUNT(*) FROM generation_metadata"
+                cursor.execute(count_query)
+                total_count = cursor.fetchone()[0]
+
+                # Get only fields needed for list view
+                offset = (page - 1) * page_size
+                query = """
+                    SELECT 
+                        id, timestamp, display_name, generate_file_name, model_id, 
+                        num_questions, total_count, use_case, job_status, 
+                        local_export_path, hf_export_path, completed_rows
+                    FROM generation_metadata 
+                    ORDER BY timestamp DESC 
+                    LIMIT ? OFFSET ?
+                """
+                cursor.execute(query, (page_size, offset))
+
+                results = [dict(row) for row in cursor.fetchall()]
+                return total_count, results
+
+        except Exception as e:
+            print(f"Error retrieving paginated metadata: {str(e)}")
+            return 0, []
+
+
     def get_paginated_generate_metadata(self, page: int, page_size: int) -> Tuple[int, List[Dict]]:
         """Retrieve paginated metadata entries for generations"""
         try:

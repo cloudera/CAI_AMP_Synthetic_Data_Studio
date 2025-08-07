@@ -77,6 +77,25 @@ const pages: MenuItem[] = [
       <Link to={`${Pages.GENERATOR}`}>{LABELS[Pages.GENERATOR]}</Link>
     ),
   },
+  {
+    key: Pages.DATASETS,
+    label: (
+      <Link to={`${Pages.DATASETS}`}>{LABELS[Pages.DATASETS]}</Link>
+    ),
+  },
+  {
+    key: Pages.EVALUATIONS,
+    label: (
+      <Link to={`${Pages.EVALUATIONS}`}>{LABELS[Pages.EVALUATIONS]}</Link>
+    ),
+  },
+  {
+    key: Pages.EXPORTS,
+    label: (
+      <Link to={`${Pages.EXPORTS}`}>{LABELS[Pages.EXPORTS]}</Link>
+    ),
+  },
+  
   // {
   //   key: Pages.TELEMETRY,  
   //   label: (
@@ -107,7 +126,7 @@ const pages: MenuItem[] = [
           </div>
           <Flex justify='center' align='center' vertical style={{ marginTop: '12px' }}>
             <StyledSection>
-              {`SDS-1.0.2`}
+              {`SDS-1.0.3`}
             </StyledSection>
           </Flex>
           </Flex>
