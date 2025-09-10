@@ -123,6 +123,7 @@ class SynthesisRequest(BaseModel):
     # Optional fields that can override defaults
     inference_type: Optional[str] = "aws_bedrock"
     caii_endpoint: Optional[str] = None
+    openai_compatible_endpoint: Optional[str] = None
     topics: Optional[List[str]] = None
     doc_paths: Optional[List[str]] = None
     input_path: Optional[List[str]] = None
