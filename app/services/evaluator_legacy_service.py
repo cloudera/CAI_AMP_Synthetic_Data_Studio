@@ -24,7 +24,7 @@ class EvaluatorLegacyService:
     def __init__(self, max_workers: int = 4):
         self.bedrock_client = get_bedrock_client()
         self.db = DatabaseManager()
-        self.max_workers = max_workers
+        self.max_workers = max_workers  # Default max workers (configurable via request)
         self.guard = ContentGuardrail()
         self._setup_logging()
 
@@ -155,7 +155,8 @@ class EvaluatorLegacyService:
             failed_pairs = []
 
             try:
-                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                max_workers = request.max_workers or self.max_workers
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     try:
                         evaluate_func = partial(
                             self.evaluate_single_pair,
@@ -287,8 +288,9 @@ class EvaluatorLegacyService:
                 # Add to appropriate topic list
                 transformed_data['results'][topic].append(qa_pair)
             
-            self.logger.info(f"Processing {len(transformed_data['results'])} topics with {self.max_workers} workers")
-            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            max_workers = request.max_workers or self.max_workers
+            self.logger.info(f"Processing {len(transformed_data['results'])} topics with {max_workers} workers")
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_topic = {
                     executor.submit(
                         self.evaluate_topic,

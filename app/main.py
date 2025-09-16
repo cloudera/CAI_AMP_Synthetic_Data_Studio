@@ -1262,6 +1262,7 @@ async def get_example_payloads(use_case:UseCase):
                     "technique": "sft",
                     "topics": ["python_basics", "data_structures"],
                     "is_demo": True,
+                    "max_concurrent_topics": 5,
                     "examples":  [
                 {
                     "question": "How do you create a list in Python and add elements to it?",
@@ -1288,6 +1289,7 @@ async def get_example_payloads(use_case:UseCase):
                     "technique": "sft",
                     "topics": ["basic_queries", "joins"],
                     "is_demo": True,
+                    "max_concurrent_topics": 5,
                     "schema": "CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255));\nCREATE TABLE orders (id INT PRIMARY KEY, user_id INT, amount DECIMAL(10,2), FOREIGN KEY (user_id) REFERENCES users(id));",
                     "examples":[
                                 {
@@ -1316,6 +1318,7 @@ async def get_example_payloads(use_case:UseCase):
             "topics": ["topic 1", "topic 2"],
             "custom_prompt": "Give your instructions here",
             "is_demo": True,
+            "max_concurrent_topics": 5,
             
             "examples":[
                         {

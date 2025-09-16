@@ -138,7 +138,13 @@ class SynthesisRequest(BaseModel):
     example_path: Optional[str] = None
     schema: Optional[str] = None  # Added schema field
     custom_prompt: Optional[str] = None 
-    display_name: Optional[str] = None 
+    display_name: Optional[str] = None
+    max_concurrent_topics: Optional[int] = Field(
+        default=5, 
+        ge=1, 
+        le=100, 
+        description="Maximum number of concurrent topics to process (1-100)"
+    ) 
     
     # Optional model parameters with defaults
     model_params: Optional[ModelParameters] = Field(
@@ -156,7 +162,7 @@ class SynthesisRequest(BaseModel):
                 "technique": "sft",
                 "topics": ["python_basics", "data_structures"],
                 "is_demo": True,
-                
+                "max_concurrent_topics": 5
                 
             }
         }
@@ -209,6 +215,12 @@ class EvaluationRequest(BaseModel):
     display_name: Optional[str] = None 
     output_key: Optional[str] = 'Prompt'
     output_value: Optional[str] = 'Completion'
+    max_workers: Optional[int] = Field(
+        default=4, 
+        ge=1, 
+        le=100, 
+        description="Maximum number of worker threads for parallel evaluation (1-100)"
+    )
 
     # Export configuration
     export_type: str = "local"  # "local" or "s3"
@@ -227,7 +239,8 @@ class EvaluationRequest(BaseModel):
                 "inference_type": "aws_bedrock",
                 "import_path": "qa_pairs_llama3-1-70b-instruct-v1:0_20241114_212837_test.json",
                 "import_type": "local",
-                "export_type":"local"
+                "export_type":"local",
+                "max_workers": 4
                 
             }
         }

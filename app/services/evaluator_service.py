@@ -21,10 +21,10 @@ from functools import partial
 class EvaluatorService:
     """Service for evaluating freeform data rows using Claude with parallel processing (Freeform technique only)"""
     
-    def __init__(self, max_workers: int = 4):
+    def __init__(self, max_workers: int = 5):
         self.bedrock_client = get_bedrock_client()
         self.db = DatabaseManager()
-        self.max_workers = max_workers
+        self.max_workers = max_workers  # Default max workers (configurable via request)
         self.guard = ContentGuardrail()
         self._setup_logging()
 
@@ -143,7 +143,8 @@ class EvaluatorService:
             failed_rows = []
 
             try:
-                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                max_workers = request.max_workers or self.max_workers
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     try:
                         evaluate_func = partial(
                             self.evaluate_single_row,

@@ -36,7 +36,7 @@ import uuid
 class SynthesisLegacyService:
     """Legacy service for generating synthetic QA pairs (SFT and Custom_Workflow only)"""
     QUESTIONS_PER_BATCH = 5  # Maximum questions per batch
-    MAX_CONCURRENT_TOPICS = 5  # Limit concurrent I/O operations
+    MAX_CONCURRENT_TOPICS = 5  # Default limit for concurrent I/O operations (configurable via request)
 
 
     def __init__(self):
@@ -313,7 +313,8 @@ class SynthesisLegacyService:
             
             # Create thread pool
             loop = asyncio.get_event_loop()
-            with ThreadPoolExecutor(max_workers=self.MAX_CONCURRENT_TOPICS) as executor:
+            max_workers = request.max_concurrent_topics or self.MAX_CONCURRENT_TOPICS
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 topic_futures = [
                     loop.run_in_executor(
                         executor,
