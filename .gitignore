@@ -55,6 +55,16 @@ qa_pairs*
 Khauneesh/
 *job_args*
 
+# Generated data files
+freeform_data_*.json
+row_data_*.json
+lending_*.json
+seeds_*.json
+SeedsInstructions.json
+*_example.json
+nm.json
+french_input.json
+
 # DB
 *metadata.db-shm
 *metadata.db-wal

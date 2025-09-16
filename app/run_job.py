@@ -32,6 +32,7 @@ else:
 import json
 from app.models.request_models import SynthesisRequest
 from app.services.synthesis_service import SynthesisService
+from app.services.synthesis_legacy_service import SynthesisLegacyService
 import asyncio
 import nest_asyncio  # Add this import
 
@@ -41,7 +42,7 @@ nest_asyncio.apply()
 async def run_synthesis(request, job_name, request_id):
     """Run standard synthesis job for question-answer pairs"""
     try:
-        job = SynthesisService()
+        job = SynthesisLegacyService()
         if request.input_path:
             result = await job.generate_result(request, job_name, is_demo=False, request_id=request_id)
         else:

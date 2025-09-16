@@ -18,8 +18,8 @@ from logging.handlers import RotatingFileHandler
 from app.core.telemetry_integration import track_llm_operation
 from functools import partial
 
-class EvaluatorService:
-    """Service for evaluating freeform data rows using Claude with parallel processing (Freeform technique only)"""
+class EvaluatorLegacyService:
+    """Legacy service for evaluating generated QA pairs using Claude with parallel processing (SFT and Custom_Workflow only)"""
     
     def __init__(self, max_workers: int = 4):
         self.bedrock_client = get_bedrock_client()
@@ -32,14 +32,14 @@ class EvaluatorService:
         """Set up logging configuration"""
         os.makedirs('logs', exist_ok=True)
         
-        self.logger = logging.getLogger('evaluator_service')
+        self.logger = logging.getLogger('evaluator_legacy_service')
         self.logger.setLevel(logging.INFO)
         
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         
         # File handler for general logs
         file_handler = RotatingFileHandler(
-            'logs/evaluator_service.log',
+            'logs/evaluator_legacy_service.log',
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
@@ -48,7 +48,7 @@ class EvaluatorService:
         
         # File handler for errors
         error_handler = RotatingFileHandler(
-            'logs/evaluator_service_errors.log',
+            'logs/evaluator_legacy_service_errors.log',
             maxBytes=10*1024*1024,
             backupCount=5
         )
@@ -56,12 +56,15 @@ class EvaluatorService:
         error_handler.setFormatter(formatter)
         self.logger.addHandler(error_handler)
 
-    def evaluate_single_row(self, row: Dict[str, Any], model_handler, request: EvaluationRequest, request_id = None) -> Dict:
-        """Evaluate a single data row"""
+    
+    #@track_llm_operation("evaluate_single_pair")
+    def evaluate_single_pair(self, qa_pair: Dict, model_handler, request: EvaluationRequest, request_id=None) -> Dict:
+        """Evaluate a single QA pair"""
         try:
             # Default error response
             error_response = {
-                "row": row,
+                request.output_key: qa_pair.get(request.output_key, "Unknown"),
+                request.output_value: qa_pair.get(request.output_value, "Unknown"),
                 "evaluation": {
                     "score": 0,
                     "justification": "Error during evaluation"
@@ -69,21 +72,29 @@ class EvaluatorService:
             }
 
             try:
-                self.logger.info(f"Evaluating row data...")
+                self.logger.info(f"Evaluating QA pair: {qa_pair.get(request.output_key, '')[:50]}...")
             except Exception as e:
-                self.logger.error(f"Error logging row data: {str(e)}")
+                self.logger.error(f"Error logging QA pair: {str(e)}")
 
             try:
-                # Build prompt for row evaluation
-                prompt = PromptBuilder.build_freeform_eval_prompt(
+                # Validate input qa_pair structure
+                if not all(key in qa_pair for key in [request.output_key, request.output_value]):
+                    error_msg = "Missing required keys in qa_pair"
+                    self.logger.error(error_msg)
+                    error_response["evaluation"]["justification"] = error_msg
+                    return error_response
+
+                prompt = PromptBuilder.build_eval_prompt(
                     request.model_id,
                     request.use_case,
-                    row,
+                    qa_pair[request.output_key],
+                    qa_pair[request.output_value],
                     request.examples,
                     request.custom_prompt
                 )
+                #print(prompt)
             except Exception as e:
-                error_msg = f"Error building row evaluation prompt: {str(e)}"
+                error_msg = f"Error building evaluation prompt: {str(e)}"
                 self.logger.error(error_msg)
                 error_response["evaluation"]["justification"] = error_msg
                 return error_response
@@ -108,15 +119,16 @@ class EvaluatorService:
             try:
                 score = response[0].get('score', "no score key")
                 justification = response[0].get('justification', 'No justification provided')
-                if score == "no score key":
-                    self.logger.info(f"Unsuccessful row evaluation with score: {score}")
-                    justification = "The evaluated row did not generate valid score and justification"
+                if score== "no score key":
+                    self.logger.info(f"Unsuccessful QA pair evaluation with score: {score}")
+                    justification = "The evaluated pair did not generate valid score and justification"
                     score = 0
                 else:
-                    self.logger.info(f"Successfully evaluated row with score: {score}")
+                    self.logger.info(f"Successfully evaluated QA pair with score: {score}")
                 
                 return {
-                    "row": row,
+                    "question": qa_pair[request.output_key],
+                    "solution": qa_pair[request.output_value],
                     "evaluation": {
                         "score": score,
                         "justification": justification
@@ -131,43 +143,43 @@ class EvaluatorService:
         except ModelHandlerError:
             raise 
         except Exception as e:
-            self.logger.error(f"Critical error in evaluate_single_row: {str(e)}")
+            self.logger.error(f"Critical error in evaluate_single_pair: {str(e)}")
             return error_response
         
-    #@track_llm_operation("evaluate_all_rows")
-    def evaluate_rows(self, rows: List[Dict[str, Any]], model_handler, request: EvaluationRequest, request_id=None) -> Dict:
-        """Evaluate all data rows in parallel"""
+    #@track_llm_operation("evaluate_topic")
+    def evaluate_topic(self, topic: str, qa_pairs: List[Dict], model_handler, request: EvaluationRequest, request_id=None) -> Dict:
+        """Evaluate all QA pairs for a given topic in parallel"""
         try:
-            self.logger.info(f"Starting row evaluation with {len(rows)} rows")
-            evaluated_rows = []
-            failed_rows = []
+            self.logger.info(f"Starting evaluation for topic: {topic} with {len(qa_pairs)} QA pairs")
+            evaluated_pairs = []
+            failed_pairs = []
 
             try:
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                     try:
                         evaluate_func = partial(
-                            self.evaluate_single_row,
+                            self.evaluate_single_pair,
                             model_handler=model_handler,
                             request=request, request_id=request_id
                         )
                         
-                        future_to_row = {
-                            executor.submit(evaluate_func, row): row 
-                            for row in rows
+                        future_to_pair = {
+                            executor.submit(evaluate_func, pair): pair 
+                            for pair in qa_pairs
                         }
                         
-                        for future in as_completed(future_to_row):
+                        for future in as_completed(future_to_pair):
                             try:
                                 result = future.result()
-                                evaluated_rows.append(result)
+                                evaluated_pairs.append(result)
                             except ModelHandlerError:
                                 raise  
                             except Exception as e:
                                 error_msg = f"Error processing future result: {str(e)}"
                                 self.logger.error(error_msg)
-                                failed_rows.append({
+                                failed_pairs.append({
                                     "error": error_msg,
-                                    "row": future_to_row[future]
+                                    "pair": future_to_pair[future]
                                 })
                                 
                     except Exception as e:
@@ -184,7 +196,7 @@ class EvaluatorService:
 
             try:
                 # Calculate statistics only from successful evaluations
-                scores = [row["evaluation"]["score"] for row in evaluated_rows if row.get("evaluation", {}).get("score") is not None]
+                scores = [pair["evaluation"]["score"] for pair in evaluated_pairs if pair.get("evaluation", {}).get("score") is not None]
                 
                 if scores:
                     average_score = sum(scores) / len(scores)
@@ -194,49 +206,49 @@ class EvaluatorService:
                 else:
                     average_score = min_score = max_score = 0
 
-                evaluation_stats = {
+                topic_stats = {
                     "average_score": average_score,
                     "min_score": min_score,
                     "max_score": max_score,
-                    "evaluated_rows": evaluated_rows,
-                    "failed_rows": failed_rows,
-                    "total_evaluated": len(evaluated_rows),
-                    "total_failed": len(failed_rows)
+                    "evaluated_pairs": evaluated_pairs,
+                    "failed_pairs": failed_pairs,
+                    "total_evaluated": len(evaluated_pairs),
+                    "total_failed": len(failed_pairs)
                 }
                 
-                self.logger.info(f"Completed row evaluation. Average score: {evaluation_stats['average_score']:.2f}")
-                return evaluation_stats
+                self.logger.info(f"Completed evaluation for topic: {topic}. Average score: {topic_stats['average_score']:.2f}")
+                return topic_stats
 
             except Exception as e:
-                error_msg = f"Error calculating evaluation statistics: {str(e)}"
+                error_msg = f"Error calculating topic statistics: {str(e)}"
                 self.logger.error(error_msg)
                 return {
                     "average_score": 0,
                     "min_score": 0,
                     "max_score": 0,
-                    "evaluated_rows": evaluated_rows,
-                    "failed_rows": failed_rows,
+                    "evaluated_pairs": evaluated_pairs,
+                    "failed_pairs": failed_pairs,
                     "error": error_msg
                 }
         except ModelHandlerError:
             raise  
         except Exception as e:
-            error_msg = f"Critical error in evaluate_rows: {str(e)}"
+            error_msg = f"Critical error in evaluate_topic: {str(e)}"
             self.logger.error(error_msg)
             return {
                 "average_score": 0,
                 "min_score": 0,
                 "max_score": 0,
-                "evaluated_rows": [],
-                "failed_rows": [],
+                "evaluated_pairs": [],
+                "failed_pairs": [],
                 "error": error_msg
             }
-        
-    #@track_llm_operation("evaluate_freeform_data")
-    def evaluate_row_data(self, request: EvaluationRequest, job_name=None, is_demo: bool = True, request_id = None) -> Dict:
-        """Evaluate rows of data with parallel processing"""
+    
+    #@track_llm_operation("evaluate_results")
+    def evaluate_results(self, request: EvaluationRequest, job_name=None,is_demo: bool = True, request_id=None) -> Dict:
+        """Evaluate all QA pairs with parallel processing"""
         try:
-            self.logger.info(f"Starting row evaluation process - Demo Mode: {is_demo}")
+            self.logger.info(f"Starting evaluation process - Demo Mode: {is_demo}")
             
             model_params = request.model_params or ModelParameters()
             
@@ -245,33 +257,76 @@ class EvaluatorService:
                 request.model_id,
                 self.bedrock_client,
                 model_params=model_params,
-                inference_type=request.inference_type,
-                caii_endpoint=request.caii_endpoint
+                inference_type = request.inference_type,
+                caii_endpoint =  request.caii_endpoint
             )
             
-            self.logger.info(f"Loading data rows from: {request.import_path}")
+            self.logger.info(f"Loading QA pairs from: {request.import_path}")
             with open(request.import_path, 'r') as file:
                 data = json.load(file)
             
-            # Ensure data is a list of rows
-            rows = data if isinstance(data, list) else [data]
+            evaluated_results = {}
+            all_scores = []
+
+            transformed_data = {
+                            "results": {},
+                           }
+            for item in data:
+                topic = item.get('Seeds')
+                
+                # Create topic list if it doesn't exist
+                if topic not in transformed_data['results']:
+                    transformed_data['results'][topic] = []
+                    
+                # Create QA pair
+                qa_pair = {
+                request.output_key: item.get(request.output_key, ''),  # Use get() with default value
+                request.output_value: item.get(request.output_value, '')   # Use get() with default value
+            }
+                
+                # Add to appropriate topic list
+                transformed_data['results'][topic].append(qa_pair)
             
-            # Evaluate all rows
-            evaluated_results = self.evaluate_rows(rows, model_handler, request, request_id=request_id)
-            all_scores = [row["evaluation"]["score"] for row in evaluated_results["evaluated_rows"]]
+            self.logger.info(f"Processing {len(transformed_data['results'])} topics with {self.max_workers} workers")
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                future_to_topic = {
+                    executor.submit(
+                        self.evaluate_topic,
+                        topic,
+                        qa_pairs,
+                        model_handler,
+                        request, request_id=request_id
+                    ): topic
+                    for topic, qa_pairs in transformed_data['results'].items()
+                }
+                
+                for future in as_completed(future_to_topic):
+                    try:
+                        topic = future_to_topic[future]
+                        topic_stats = future.result()
+                        evaluated_results[topic] = topic_stats
+                        all_scores.extend([
+                            pair["evaluation"]["score"] 
+                            for pair in topic_stats["evaluated_pairs"]
+                        ])
+                    except ModelHandlerError as e:
+                        self.logger.error(f"ModelHandlerError in future processing: {str(e)}")
+                        raise APIError(f"Model evaluation failed: {str(e)}")
+
             
             overall_average = sum(all_scores) / len(all_scores) if all_scores else 0
             overall_average = round(overall_average, 2)
             evaluated_results['Overall_Average'] = overall_average
             
-            self.logger.info(f"Row evaluation completed. Overall average score: {overall_average:.2f}")
+            self.logger.info(f"Evaluation completed. Overall average score: {overall_average:.2f}")
+            
             
             timestamp = datetime.now(timezone.utc).isoformat()
             time_file = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3] 
             model_name = get_model_family(request.model_id).split('.')[-1]
-            output_path = f"row_data_{model_name}_{time_file}_evaluated.json"
+            output_path = f"qa_pairs_{model_name}_{time_file}_evaluated.json"
             
-            self.logger.info(f"Saving row evaluation results to: {output_path}")
+            self.logger.info(f"Saving evaluation results to: {output_path}")
             with open(output_path, 'w') as f:
                 json.dump(evaluated_results, f, indent=2)
             
@@ -280,18 +335,20 @@ class EvaluatorService:
                 request.custom_prompt
             )
             
+
             examples_value = (
-                PromptHandler.get_default_eval_example(request.use_case, request.examples) 
-                if hasattr(request, 'examples') 
-                else None
-            )
+            PromptHandler.get_default_eval_example(request.use_case, request.examples) 
+            if hasattr(request, 'examples') 
+            else None
+        )
             examples_str = self.safe_json_dumps(examples_value)
+            #print(examples_value, '\n',examples_str)
             
             metadata = {
                 'timestamp': timestamp,
                 'model_id': request.model_id,
                 'inference_type': request.inference_type,
-                'caii_endpoint': request.caii_endpoint,
+                'caii_endpoint':request.caii_endpoint,
                 'use_case': request.use_case,
                 'custom_prompt': custom_prompt_str,
                 'model_parameters': json.dumps(model_params.model_dump()) if model_params else None,
@@ -300,11 +357,11 @@ class EvaluatorService:
                 'display_name': request.display_name,
                 'local_export_path': output_path,
                 'examples': examples_str,
-                'Overall_Average': overall_average,
-                'evaluation_type': 'row'
+                'Overall_Average': overall_average
             }
             
-            self.logger.info("Saving row evaluation metadata to database")
+            self.logger.info("Saving evaluation metadata to database")
+            
             
             if is_demo:
                 self.db.save_evaluation_metadata(metadata)
@@ -314,6 +371,8 @@ class EvaluatorService:
                     "output_path": output_path
                 }
             else:
+
+                
                 job_status = "ENGINE_SUCCEEDED"
                 evaluate_file_name = os.path.basename(output_path)
                 self.db.update_job_evaluate(job_name, evaluate_file_name, output_path, timestamp, overall_average, job_status)
@@ -323,13 +382,13 @@ class EvaluatorService:
                     "output_path": output_path
                 }
         except APIError:
-            raise      
+            raise   
         except ModelHandlerError as e:
             # Add this specific handler
             self.logger.error(f"ModelHandlerError in evaluation: {str(e)}")
-            raise APIError(str(e))
+            raise APIError(str(e))   
         except Exception as e:
-            error_msg = f"Error in row evaluation process: {str(e)}"
+            error_msg = f"Error in evaluation process: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             if is_demo:
                 raise APIError(str(e))
@@ -339,7 +398,7 @@ class EvaluatorService:
                 file_name = ''
                 output_path = ''
                 overall_average = ''
-                self.db.update_job_evaluate(job_name, file_name, output_path, time_stamp, overall_average, job_status)
+                self.db.update_job_evaluate(job_name,file_name, output_path, time_stamp, job_status)
                 
                 raise
 
