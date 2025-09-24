@@ -209,6 +209,31 @@ class UnifiedModelHandler:
 
     def _handle_bedrock_request(self, prompt: str, retry_with_reduced_tokens: bool):
         """Handle Bedrock requests with retry logic"""
+        
+        # Check for custom endpoint configuration
+        custom_config = get_custom_endpoint_config(self.model_id, "bedrock")
+        
+        if custom_config:
+            # Use custom AWS credentials
+            from botocore.config import Config
+            retry_config = Config(
+                region_name=custom_config.aws_region,
+                retries={"max_attempts": 2, "mode": "standard"},
+                connect_timeout=5,
+                read_timeout=3600
+            )
+            bedrock_client = boto3.client(
+                'bedrock-runtime',
+                aws_access_key_id=custom_config.aws_access_key_id,
+                aws_secret_access_key=custom_config.aws_secret_access_key,
+                region_name=custom_config.aws_region,
+                config=retry_config
+            )
+            print(f"Using custom Bedrock endpoint for model: {self.model_id}")
+        else:
+            # Fallback to default bedrock client (environment/IAM credentials)
+            bedrock_client = self.bedrock_client
+        
         retries = 0
         last_exception = None
         new_max_tokens = 8192
@@ -228,7 +253,7 @@ class UnifiedModelHandler:
                                 "stopSequences": ["\n\nHuman:"],
                               
                              }
-                    response = self.bedrock_client.converse(
+                    response = bedrock_client.converse(
                         modelId=self.model_id,
                         messages=conversation,
                         inferenceConfig=inference_config,
@@ -242,7 +267,7 @@ class UnifiedModelHandler:
                                "stopSequences": []
                              }
                     print(inference_config)
-                    response = self.bedrock_client.converse(
+                    response = bedrock_client.converse(
                         modelId=self.model_id,
                         messages=conversation,
                         inferenceConfig=inference_config
@@ -270,11 +295,29 @@ class UnifiedModelHandler:
                                 self._exponential_backoff(retries)
                                 retries += 1
                                 
-                                # Create a new client on connection errors
-                                self.bedrock_client = boto3.client(
-                                    service_name="bedrock-runtime",
-                                    config=self.bedrock_client.meta.config
-                                )
+                                # Create a new client on connection errors  
+                                if custom_config:
+                                    # Recreate with custom credentials
+                                    from botocore.config import Config
+                                    retry_config = Config(
+                                        region_name=custom_config.aws_region,
+                                        retries={"max_attempts": 2, "mode": "standard"},
+                                        connect_timeout=5,
+                                        read_timeout=3600
+                                    )
+                                    bedrock_client = boto3.client(
+                                        'bedrock-runtime',
+                                        aws_access_key_id=custom_config.aws_access_key_id,
+                                        aws_secret_access_key=custom_config.aws_secret_access_key,
+                                        region_name=custom_config.aws_region,
+                                        config=retry_config
+                                    )
+                                else:
+                                    # Recreate default client
+                                    bedrock_client = boto3.client(
+                                        service_name="bedrock-runtime",
+                                        config=self.bedrock_client.meta.config
+                                    )
                                 continue
                         
                         # Handle other AWS errors
