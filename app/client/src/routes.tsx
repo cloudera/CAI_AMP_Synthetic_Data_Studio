@@ -12,6 +12,7 @@ import EvaluationDetailsPage from "./pages/EvaluationDetails/EvaluationDetailsPa
 import DatasetsPage from "./pages/Datasets/DatasetsPage";
 import EvaluationsPage from "./pages/Evaluations/EvaluationsPage";
 import ExportsPage from "./pages/Exports/ExportsPage";
+import SettingsPage from "./pages/Settings/SettingsPage";
 //import TelemetryDashboard from "./components/TelemetryDashboard";
 
 
@@ -108,6 +109,13 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
         loader: async () => null
       },
+      { 
+        path: Pages.SETTINGS, 
+        element: <SettingsPage key={Pages.HOME}/>, 
+        errorElement: <ErrorPage />,
+        loader: async () => null
+      },
+      
       // {
       //   path: `telemetry`,
       //   element: <TelemetryDashboard />,

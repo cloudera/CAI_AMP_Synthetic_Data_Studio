@@ -132,12 +132,13 @@ const Examples: FunctionComponent = () => {
     };
 
     const showEmptyState = (workflowType === WorkflowType.FREE_FORM_DATA_GENERATION && 
-        isEmpty(mutation.data) &&
+        isEmpty(mutation.data) && Array.isArray(records) &&
         records.length === 0) || 
         (form.getFieldValue('use_case') === 'custom' && 
         isEmpty(form.getFieldValue('examples')));
 
 
+    console.log('records', records);    
     return (
         <Container>
             {mutation?.isPending || restore_mutation.isPending && <Loading />}
