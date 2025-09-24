@@ -18,6 +18,33 @@ load_dotenv()
 import google.generativeai as genai 
 
 
+def get_custom_endpoint_config(model_id: str, provider_type: str):
+    """
+    Get custom endpoint configuration for a model if it exists
+    
+    Args:
+        model_id: The model identifier
+        provider_type: The provider type
+        
+    Returns:
+        Custom endpoint configuration or None
+    """
+    try:
+        from app.core.custom_endpoint_manager import CustomEndpointManager
+        
+        custom_manager = CustomEndpointManager()
+        custom_endpoints = custom_manager.get_endpoints_by_provider(provider_type)
+        
+        # Find endpoint matching the model_id
+        for endpoint in custom_endpoints:
+            if endpoint.model_id == model_id:
+                return endpoint
+                
+        return None
+    except Exception as e:
+        print(f"Warning: Failed to get custom endpoint config: {e}")
+        return None
+
 
 class UnifiedModelHandler:
     """Unified handler for all model types using Bedrock's converse API"""
@@ -310,6 +337,19 @@ class UnifiedModelHandler:
             import httpx
             from openai import OpenAI
             
+            # Check for custom endpoint configuration
+            custom_config = get_custom_endpoint_config(self.model_id, "openai")
+            
+            # Get API key from custom config or environment
+            if custom_config:
+                api_key = custom_config.api_key
+                print(f"Using custom OpenAI endpoint for model: {self.model_id}")
+            else:
+                api_key = os.getenv('OPENAI_API_KEY')
+            
+            if not api_key:
+                raise ModelHandlerError("OpenAI API key not available", 500)
+            
             # Configure timeout for OpenAI client (OpenAI v1.57.2)
             timeout_config = httpx.Timeout(
                 connect=self.OPENAI_CONNECT_TIMEOUT,
@@ -328,7 +368,7 @@ class UnifiedModelHandler:
                 http_client = httpx.Client(timeout=timeout_config)
             
             client = OpenAI(
-                api_key=os.getenv('OPENAI_API_KEY'),
+                api_key=api_key,
                 http_client=http_client
             )
             completion = client.chat.completions.create(
@@ -351,13 +391,22 @@ class UnifiedModelHandler:
             import httpx
             from openai import OpenAI
             
-            # Get API key from environment variable (only credential needed)
-            api_key = os.getenv('OpenAI_Endpoint_Compatible_Key')
-            if not api_key:
-                raise ModelHandlerError("OpenAI_Endpoint_Compatible_Key environment variable not set", 500)
+            # Check for custom endpoint configuration
+            custom_config = get_custom_endpoint_config(self.model_id, "openai_compatible")
             
-            # Base URL comes from caii_endpoint parameter (passed during initialization)
-            openai_compatible_endpoint = self.caii_endpoint
+            if custom_config:
+                # Use custom endpoint configuration
+                api_key = custom_config.api_key
+                openai_compatible_endpoint = custom_config.endpoint_url
+                print(f"Using custom OpenAI compatible endpoint for model: {self.model_id}")
+            else:
+                # Fallback to environment variables and initialization parameters
+                api_key = os.getenv('OpenAI_Endpoint_Compatible_Key')
+                openai_compatible_endpoint = self.caii_endpoint
+            
+            if not api_key:
+                raise ModelHandlerError("OpenAI compatible API key not available", 500)
+            
             if not openai_compatible_endpoint:
                 raise ModelHandlerError("OpenAI compatible endpoint not provided", 500)
             
@@ -412,7 +461,20 @@ class UnifiedModelHandler:
                 500,
             )
         try:
-            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+            # Check for custom endpoint configuration
+            custom_config = get_custom_endpoint_config(self.model_id, "gemini")
+            
+            # Get API key from custom config or environment
+            if custom_config:
+                api_key = custom_config.api_key
+                print(f"Using custom Gemini endpoint for model: {self.model_id}")
+            else:
+                api_key = os.getenv("GEMINI_API_KEY")
+                
+            if not api_key:
+                raise ModelHandlerError("Gemini API key not available", 500)
+                
+            genai.configure(api_key=api_key)
             model = genai.GenerativeModel(self.model_id)  # e.g. 'gemini-1.5-pro-latest'
             resp = model.generate_content(
                 prompt,
@@ -437,9 +499,26 @@ class UnifiedModelHandler:
             import httpx
             from openai import OpenAI
             
-            API_KEY = _get_caii_token()
-            MODEL_ID = self.model_id
-            caii_endpoint = self.caii_endpoint
+            # Check for custom endpoint configuration
+            custom_config = get_custom_endpoint_config(self.model_id, "caii")
+            
+            if custom_config:
+                # Use custom endpoint configuration
+                API_KEY = custom_config.cdp_token
+                MODEL_ID = self.model_id
+                caii_endpoint = custom_config.endpoint_url
+                print(f"Using custom CAII endpoint for model: {self.model_id}")
+            else:
+                # Fallback to environment variables and initialization parameters
+                API_KEY = _get_caii_token()
+                MODEL_ID = self.model_id
+                caii_endpoint = self.caii_endpoint
+            
+            if not API_KEY:
+                raise ModelHandlerError("CAII API key not available", 500)
+                
+            if not caii_endpoint:
+                raise ModelHandlerError("CAII endpoint not provided", 500)
             
             caii_endpoint = caii_endpoint.removesuffix('/chat/completions')
             

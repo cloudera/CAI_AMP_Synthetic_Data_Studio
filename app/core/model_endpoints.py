@@ -324,7 +324,10 @@ async def health_caii(pairs: list[_CaiiPair],
 # Single orchestrator used by the api endpoint
 # ────────────────────────────────────────────────────────────────
 async def collect_model_catalog() -> Dict[str, Dict[str, List[str]]]:
-    """Collect and health-check models from all providers."""
+    """Collect and health-check models from all providers, including custom endpoints."""
+    
+    # Import here to avoid circular imports
+    from app.core.custom_endpoint_manager import CustomEndpointManager
     
     # Bedrock
     bedrock_all = list_bedrock_models()
@@ -350,6 +353,10 @@ async def collect_model_catalog() -> Dict[str, Dict[str, List[str]]]:
         "google_gemini": {
             "enabled": gemini_enabled,
             "disabled": gemini_disabled,
+        },
+        "openai_compatible": {
+            "enabled": [],
+            "disabled": [],
         }
     }
 
@@ -364,5 +371,51 @@ async def collect_model_catalog() -> Dict[str, Dict[str, List[str]]]:
     else:
         catalog["CAII"] = {}
 
+    # Add custom endpoints
+    try:
+        custom_manager = CustomEndpointManager()
+        custom_endpoints = custom_manager.get_all_endpoints()
+        
+        for endpoint in custom_endpoints:
+            provider_key = _get_catalog_key_for_provider(endpoint.provider_type)
+            
+            if provider_key not in catalog:
+                catalog[provider_key] = {"enabled": [], "disabled": []}
+            
+            # For now, assume custom endpoints are enabled (we could add health checks later)
+            if endpoint.provider_type in ["caii"]:
+                # CAII format: {"model": name, "endpoint": url}
+                catalog[provider_key]["enabled"].append({
+                    "model": endpoint.model_id,
+                    "endpoint": getattr(endpoint, 'endpoint_url', ''),
+                    "custom": True,
+                    "endpoint_id": endpoint.endpoint_id,
+                    "display_name": endpoint.display_name
+                })
+            else:
+                # Other providers: just the model name with custom metadata
+                catalog[provider_key]["enabled"].append({
+                    "model": endpoint.model_id,
+                    "custom": True,
+                    "endpoint_id": endpoint.endpoint_id,
+                    "display_name": endpoint.display_name,
+                    "provider_type": endpoint.provider_type
+                })
+                
+    except Exception as e:
+        print(f"Warning: Failed to load custom endpoints: {e}")
+
     return catalog
+
+
+def _get_catalog_key_for_provider(provider_type: str) -> str:
+    """Map provider types to catalog keys"""
+    mapping = {
+        "bedrock": "aws_bedrock",
+        "openai": "openai", 
+        "openai_compatible": "openai_compatible",
+        "gemini": "google_gemini",
+        "caii": "CAII"
+    }
+    return mapping.get(provider_type, provider_type)
 

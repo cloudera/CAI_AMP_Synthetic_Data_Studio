@@ -45,6 +45,12 @@ class Example_eval(BaseModel):
         }
     )
 
+class EvaluationExample(BaseModel):
+    question: str
+    answer: str
+    score: float
+    justification: str
+
 
 # In app/models/request_models.py
 class S3Config(BaseModel):
@@ -275,4 +281,85 @@ class CustomPromptRequest(BaseModel):
             }
         }
     )
- 
+
+
+# Custom Endpoint Models
+class CustomEndpointBase(BaseModel):
+    """Base model for custom endpoints"""
+    endpoint_id: str = Field(..., description="Unique identifier for the custom endpoint")
+    display_name: str = Field(..., description="Human-readable name for the endpoint")
+    model_id: str = Field(..., description="Model identifier")
+    provider_type: str = Field(..., description="Provider type: caii, bedrock, openai, openai_compatible, gemini")
+    created_at: Optional[str] = Field(default=None, description="Creation timestamp")
+    updated_at: Optional[str] = Field(default=None, description="Last update timestamp")
+
+
+class CustomCAIIEndpoint(CustomEndpointBase):
+    """Custom CAII endpoint configuration"""
+    provider_type: str = Field(default="caii", description="Provider type")
+    endpoint_url: str = Field(..., description="CAII endpoint URL")
+    cdp_token: str = Field(..., description="CDP token for authentication")
+
+
+class CustomBedrockEndpoint(CustomEndpointBase):
+    """Custom Bedrock endpoint configuration"""
+    provider_type: str = Field(default="bedrock", description="Provider type")
+    endpoint_url: str = Field(..., description="Custom Bedrock endpoint URL")
+    aws_access_key_id: str = Field(..., description="AWS Access Key ID")
+    aws_secret_access_key: str = Field(..., description="AWS Secret Access Key")
+    aws_region: str = Field(default="us-west-2", description="AWS region")
+
+
+class CustomOpenAIEndpoint(CustomEndpointBase):
+    """Custom OpenAI endpoint configuration"""
+    provider_type: str = Field(default="openai", description="Provider type")
+    api_key: str = Field(..., description="OpenAI API key")
+
+
+class CustomOpenAICompatibleEndpoint(CustomEndpointBase):
+    """Custom OpenAI Compatible endpoint configuration"""
+    provider_type: str = Field(default="openai_compatible", description="Provider type")
+    endpoint_url: str = Field(..., description="OpenAI compatible endpoint URL")
+    api_key: str = Field(..., description="API key for authentication")
+
+
+class CustomGeminiEndpoint(CustomEndpointBase):
+    """Custom Gemini endpoint configuration"""
+    provider_type: str = Field(default="gemini", description="Provider type")
+    api_key: str = Field(..., description="Gemini API key")
+
+
+# Union type for all custom endpoint types
+CustomEndpoint = Union[
+    CustomCAIIEndpoint,
+    CustomBedrockEndpoint, 
+    CustomOpenAIEndpoint,
+    CustomOpenAICompatibleEndpoint,
+    CustomGeminiEndpoint
+]
+
+
+class AddCustomEndpointRequest(BaseModel):
+    """Request model for adding custom endpoints"""
+    endpoint_config: CustomEndpoint = Field(..., description="Custom endpoint configuration")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "endpoint_config": {
+                    "endpoint_id": "my-custom-claude",
+                    "display_name": "My Custom Claude Instance",
+                    "model_id": "claude-3-sonnet-20240229",
+                    "provider_type": "openai_compatible",
+                    "endpoint_url": "https://my-endpoint.com/v1",
+                    "api_key": "sk-..."
+                }
+            }
+        }
+    )
+
+
+class CustomEndpointListResponse(BaseModel):
+    """Response model for listing custom endpoints"""
+    endpoints: List[CustomEndpoint] = Field(default=[], description="List of custom endpoints")
+    total: int = Field(..., description="Total number of custom endpoints")

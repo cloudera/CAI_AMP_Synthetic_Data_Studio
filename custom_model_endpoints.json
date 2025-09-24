@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "endpoints": {
+    "my-caii-llama": {
+      "endpoint_id": "my-caii-llama",
+      "display_name": "My CAII Llama Model",
+      "model_id": "llama-3.1-70b-instruct",
+      "provider_type": "caii",
+      "created_at": "2025-09-24T05:46:04.854909+00:00",
+      "updated_at": "2025-09-24T05:46:04.854909+00:00",
+      "endpoint_url": "https://modelservice.ml.my-cluster.com/model/llamav3/invocations",
+      "cdp_token": "abc123def456"
+    }
+  },
+  "created_at": "2025-09-24T05:24:03.451632+00:00",
+  "last_updated": "2025-09-24T05:46:04.854973+00:00"
+}
