@@ -388,17 +388,13 @@ async def collect_model_catalog() -> Dict[str, Dict[str, List[str]]]:
                 catalog[provider_key]["enabled"].append({
                     "model": endpoint.model_id,
                     "endpoint": getattr(endpoint, 'endpoint_url', ''),
-                    "custom": True,
-                    "endpoint_id": endpoint.endpoint_id,
-                    "display_name": endpoint.display_name
+                    "custom": True
                 })
             else:
                 # Other providers: just the model name with custom metadata
                 catalog[provider_key]["enabled"].append({
                     "model": endpoint.model_id,
                     "custom": True,
-                    "endpoint_id": endpoint.endpoint_id,
-                    "display_name": endpoint.display_name,
                     "provider_type": endpoint.provider_type
                 })
                 

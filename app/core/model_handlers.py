@@ -33,14 +33,8 @@ def get_custom_endpoint_config(model_id: str, provider_type: str):
         from app.core.custom_endpoint_manager import CustomEndpointManager
         
         custom_manager = CustomEndpointManager()
-        custom_endpoints = custom_manager.get_endpoints_by_provider(provider_type)
-        
-        # Find endpoint matching the model_id
-        for endpoint in custom_endpoints:
-            if endpoint.model_id == model_id:
-                return endpoint
+        return custom_manager.get_endpoint(model_id, provider_type)
                 
-        return None
     except Exception as e:
         print(f"Warning: Failed to get custom endpoint config: {e}")
         return None

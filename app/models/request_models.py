@@ -283,48 +283,42 @@ class CustomPromptRequest(BaseModel):
     )
 
 
-# Custom Endpoint Models
-class CustomEndpointBase(BaseModel):
-    """Base model for custom endpoints"""
-    endpoint_id: str = Field(..., description="Unique identifier for the custom endpoint")
-    display_name: Optional[str] = Field(default=None, description="Human-readable name for the endpoint (optional)")
+# Custom Endpoint Models - Ultra Simplified
+class CustomCAIIEndpoint(BaseModel):
+    """Custom CAII endpoint - needs custom URL"""
     model_id: str = Field(..., description="Model identifier")
-    provider_type: str = Field(..., description="Provider type: caii, bedrock, openai, openai_compatible, gemini")
-    created_at: Optional[str] = Field(default=None, description="Creation timestamp")
-    updated_at: Optional[str] = Field(default=None, description="Last update timestamp")
-
-
-class CustomCAIIEndpoint(CustomEndpointBase):
-    """Custom CAII endpoint configuration"""
     provider_type: str = Field(default="caii", description="Provider type")
     endpoint_url: str = Field(..., description="CAII endpoint URL")
     cdp_token: str = Field(..., description="CDP token for authentication")
 
 
-class CustomBedrockEndpoint(CustomEndpointBase):
-    """Custom Bedrock endpoint configuration"""
+class CustomBedrockEndpoint(BaseModel):
+    """Custom Bedrock endpoint - uses standard AWS Bedrock API"""
+    model_id: str = Field(..., description="Model identifier")
     provider_type: str = Field(default="bedrock", description="Provider type")
-    endpoint_url: str = Field(..., description="Custom Bedrock endpoint URL")
     aws_access_key_id: str = Field(..., description="AWS Access Key ID")
     aws_secret_access_key: str = Field(..., description="AWS Secret Access Key")
     aws_region: str = Field(default="us-west-2", description="AWS region")
 
 
-class CustomOpenAIEndpoint(CustomEndpointBase):
-    """Custom OpenAI endpoint configuration"""
+class CustomOpenAIEndpoint(BaseModel):
+    """Custom OpenAI endpoint - uses standard OpenAI API"""
+    model_id: str = Field(..., description="Model identifier")
     provider_type: str = Field(default="openai", description="Provider type")
     api_key: str = Field(..., description="OpenAI API key")
 
 
-class CustomOpenAICompatibleEndpoint(CustomEndpointBase):
-    """Custom OpenAI Compatible endpoint configuration"""
+class CustomOpenAICompatibleEndpoint(BaseModel):
+    """Custom OpenAI Compatible endpoint - needs custom URL"""
+    model_id: str = Field(..., description="Model identifier")
     provider_type: str = Field(default="openai_compatible", description="Provider type")
     endpoint_url: str = Field(..., description="OpenAI compatible endpoint URL")
     api_key: str = Field(..., description="API key for authentication")
 
 
-class CustomGeminiEndpoint(CustomEndpointBase):
-    """Custom Gemini endpoint configuration"""
+class CustomGeminiEndpoint(BaseModel):
+    """Custom Gemini endpoint - uses standard Gemini API"""
+    model_id: str = Field(..., description="Model identifier")
     provider_type: str = Field(default="gemini", description="Provider type")
     api_key: str = Field(..., description="Gemini API key")
 
@@ -347,8 +341,6 @@ class AddCustomEndpointRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "endpoint_config": {
-                    "endpoint_id": "my-custom-claude",
-                    "display_name": "My Custom Claude Instance",
                     "model_id": "claude-3-sonnet-20240229",
                     "provider_type": "openai_compatible",
                     "endpoint_url": "https://my-endpoint.com/v1",

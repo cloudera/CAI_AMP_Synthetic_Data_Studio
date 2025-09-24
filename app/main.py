@@ -1488,19 +1488,14 @@ async def perform_upgrade():
 async def add_custom_model_endpoint(request: AddCustomEndpointRequest):
     """Add a new custom model endpoint"""
     try:
-        # Validate endpoint ID format
-        if not custom_endpoint_manager.validate_endpoint_id(request.endpoint_config.endpoint_id):
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid endpoint ID. Use only alphanumeric characters, hyphens, and underscores."
-            )
-        
-        endpoint_id = custom_endpoint_manager.add_endpoint(request.endpoint_config)
+        unique_key = custom_endpoint_manager.add_endpoint(request.endpoint_config)
         
         return {
             "status": "success",
-            "message": f"Custom endpoint '{endpoint_id}' added successfully",
-            "endpoint_id": endpoint_id
+            "message": f"Custom endpoint for '{request.endpoint_config.model_id}' ({request.endpoint_config.provider_type}) added successfully",
+            "model_id": request.endpoint_config.model_id,
+            "provider_type": request.endpoint_config.provider_type,
+            "unique_key": unique_key
         }
         
     except APIError as e:
@@ -1530,17 +1525,17 @@ async def list_custom_model_endpoints(provider_type: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Failed to list custom endpoints: {str(e)}")
 
 
-@app.get("/custom_model_endpoints/{endpoint_id}", include_in_schema=True, responses=responses,
+@app.get("/custom_model_endpoints/{model_id}/{provider_type}", include_in_schema=True, responses=responses,
          description="Get a specific custom model endpoint")
-async def get_custom_model_endpoint(endpoint_id: str):
+async def get_custom_model_endpoint(model_id: str, provider_type: str):
     """Get details of a specific custom model endpoint"""
     try:
-        endpoint = custom_endpoint_manager.get_endpoint(endpoint_id)
+        endpoint = custom_endpoint_manager.get_endpoint(model_id, provider_type)
         
         if not endpoint:
             raise HTTPException(
                 status_code=404,
-                detail=f"Custom endpoint '{endpoint_id}' not found"
+                detail=f"Custom endpoint for model '{model_id}' with provider '{provider_type}' not found"
             )
         
         return {
@@ -1554,29 +1549,29 @@ async def get_custom_model_endpoint(endpoint_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get custom endpoint: {str(e)}")
 
 
-@app.put("/custom_model_endpoints/{endpoint_id}", include_in_schema=True, responses=responses,
+@app.put("/custom_model_endpoints/{model_id}/{provider_type}", include_in_schema=True, responses=responses,
          description="Update a custom model endpoint")
-async def update_custom_model_endpoint(endpoint_id: str, request: AddCustomEndpointRequest):
+async def update_custom_model_endpoint(model_id: str, provider_type: str, request: AddCustomEndpointRequest):
     """Update an existing custom model endpoint"""
     try:
-        # Ensure the endpoint ID in the request matches the URL parameter
-        if request.endpoint_config.endpoint_id != endpoint_id:
+        # Ensure the model_id and provider_type in the request match the URL parameters
+        if request.endpoint_config.model_id != model_id or request.endpoint_config.provider_type != provider_type:
             raise HTTPException(
                 status_code=400,
-                detail="Endpoint ID in request body must match the URL parameter"
+                detail="Model ID and provider type in request body must match the URL parameters"
             )
         
-        success = custom_endpoint_manager.update_endpoint(endpoint_id, request.endpoint_config)
+        success = custom_endpoint_manager.update_endpoint(model_id, provider_type, request.endpoint_config)
         
         if not success:
             raise HTTPException(
                 status_code=404,
-                detail=f"Custom endpoint '{endpoint_id}' not found"
+                detail=f"Custom endpoint for model '{model_id}' with provider '{provider_type}' not found"
             )
         
         return {
             "status": "success",
-            "message": f"Custom endpoint '{endpoint_id}' updated successfully"
+            "message": f"Custom endpoint for '{model_id}' ({provider_type}) updated successfully"
         }
         
     except APIError as e:
@@ -1585,22 +1580,22 @@ async def update_custom_model_endpoint(endpoint_id: str, request: AddCustomEndpo
         raise HTTPException(status_code=500, detail=f"Failed to update custom endpoint: {str(e)}")
 
 
-@app.delete("/custom_model_endpoints/{endpoint_id}", include_in_schema=True, responses=responses,
+@app.delete("/custom_model_endpoints/{model_id}/{provider_type}", include_in_schema=True, responses=responses,
            description="Delete a custom model endpoint")
-async def delete_custom_model_endpoint(endpoint_id: str):
+async def delete_custom_model_endpoint(model_id: str, provider_type: str):
     """Delete a custom model endpoint"""
     try:
-        success = custom_endpoint_manager.delete_endpoint(endpoint_id)
+        success = custom_endpoint_manager.delete_endpoint(model_id, provider_type)
         
         if not success:
             raise HTTPException(
                 status_code=404,
-                detail=f"Custom endpoint '{endpoint_id}' not found"
+                detail=f"Custom endpoint for model '{model_id}' with provider '{provider_type}' not found"
             )
         
         return {
             "status": "success",
-            "message": f"Custom endpoint '{endpoint_id}' deleted successfully"
+            "message": f"Custom endpoint for '{model_id}' ({provider_type}) deleted successfully"
         }
         
     except APIError as e:
