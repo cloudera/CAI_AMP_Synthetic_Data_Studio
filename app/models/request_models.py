@@ -287,7 +287,7 @@ class CustomPromptRequest(BaseModel):
 class CustomEndpointBase(BaseModel):
     """Base model for custom endpoints"""
     endpoint_id: str = Field(..., description="Unique identifier for the custom endpoint")
-    display_name: str = Field(..., description="Human-readable name for the endpoint")
+    display_name: Optional[str] = Field(default=None, description="Human-readable name for the endpoint (optional)")
     model_id: str = Field(..., description="Model identifier")
     provider_type: str = Field(..., description="Provider type: caii, bedrock, openai, openai_compatible, gemini")
     created_at: Optional[str] = Field(default=None, description="Creation timestamp")
