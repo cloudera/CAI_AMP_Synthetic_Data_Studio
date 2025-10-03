@@ -48,6 +48,7 @@ interface Props {
 const FreeFormExampleTable: FunctionComponent<Props> = ({ data }) => {
     const [colDefs, setColDefs] = useState([]);
     const [rowData, setRowData] = useState([]);
+    console.log('FreeFormExampleTable', data);
     
     useEffect(() => {
         if (!isEmpty(data)) {

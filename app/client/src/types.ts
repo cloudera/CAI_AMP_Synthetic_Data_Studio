@@ -10,7 +10,8 @@ export enum Pages {
     EXPORTS = 'exports',
     WELCOME = 'welcome',
     FEEDBACK = 'feedback',
-    UPGRADE = 'upgrade'
+    UPGRADE = 'upgrade',
+    SETTINGS = 'settings'
     //TELEMETRY = 'telemetry' 
 }
 

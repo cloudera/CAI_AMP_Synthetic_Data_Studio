@@ -4,7 +4,6 @@ import { Col, Flex, Input, Layout, Row, Table, TableProps, Tooltip, notification
 import styled from 'styled-components';
 import Paragraph from 'antd/es/typography/Paragraph';
 import { useDatasets } from '../Home/hooks';
-import { ExportResult } from '../../components/Export/ExportModal';
 import { SearchProps } from 'antd/es/input';
 import Loading from '../Evaluator/Loading';
 import { Dataset } from '../Evaluator/types';
