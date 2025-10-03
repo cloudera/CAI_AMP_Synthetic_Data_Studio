@@ -24,15 +24,7 @@ const modelProviderTypeOptions: CheckboxGroupProps<string>['options'] = [
 const OPENAI_MODELS = [
     "gpt-4.1",               // Latest GPT-4.1 series (April 2025)
     "gpt-4.1-mini", 
-    "gpt-4.1-nano",
-    "o3",                    // Latest reasoning models (April 2025) 
-    "o4-mini",
-    "o3-mini",               // January 2025
-    "o1",                    // December 2024
-    "gpt-4o",                // November 2024
-    "gpt-4o-mini",           // July 2024
-    "gpt-4-turbo",           // April 2024
-    "gpt-3.5-turbo"          // Legacy but still widely used
+    "gpt-4.1-nano"
 ];
 
 const OPENAI_MODELS_OPTIONS = OPENAI_MODELS.map((model: string) => ({
@@ -43,12 +35,7 @@ const OPENAI_MODELS_OPTIONS = OPENAI_MODELS.map((model: string) => ({
 const GEMINI_MODELS = [
     "gemini-2.5-pro",           // June 2025 - most powerful thinking model
     "gemini-2.5-flash",         // June 2025 - best price-performance  
-    "gemini-2.5-flash-lite",    // June 2025 - cost-efficient
-    "gemini-2.0-flash",         // February 2025 - next-gen features
-    "gemini-2.0-flash-lite",    // February 2025 - low latency
-    "gemini-1.5-pro",           // September 2024 - complex reasoning
-    "gemini-1.5-flash",         // September 2024 - fast & versatile
-    "gemini-1.5-flash-8b"       // October 2024 - lightweight
+    "gemini-2.5-flash-lite"    // June 2025 - cost-efficient
 ];
 
 const GEMINI_MODELS_OPTIONS = GEMINI_MODELS.map((model: string) => ({
