@@ -16,6 +16,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import EditModelProvider from "./EditModelProvider";
+import isEmpty from "lodash/isEmpty";
 
 
 
@@ -116,13 +117,12 @@ const SettingsPage: React.FC = () => {
     }
 
     const modelProvidersColumns = [{
-        key: 'display_name',
-        title: 'Display Name',
-        dataIndex: 'display_name',
+        key: 'model_id',
+        title: 'Model ID',
+        dataIndex: 'model_id',
         width: 200,
-        sorter: sortItemsByKey('display_name')
-           
-    }, {
+        sorter: sortItemsByKey('model_id') 
+      },{
         key: 'provider_type',
         title: 'Provider Type',
         dataIndex: 'provider_type',
@@ -131,6 +131,8 @@ const SettingsPage: React.FC = () => {
         render: (provider_type: string) => {
             if (provider_type === 'openai') {
                 return 'OpenAI';
+            } else if (provider_type === 'openai_compatible') {
+                return 'OpenAI Compatible';    
             } else if (provider_type === ModelProviderType.GEMINI) {
                 return 'Gemini';
             } else if (provider_type === ModelProviderType.CAII) {
@@ -139,27 +141,30 @@ const SettingsPage: React.FC = () => {
             return 'N/A'
         }
     }, {
-        key: 'model_id',
-        title: 'Model ID',
-        dataIndex: 'model_id',
-        width: 200,
-        sorter: sortItemsByKey('model_id')
-           
-    }, {
-        key: 'created_at',
-        title: 'Created At',
-        dataIndex: 'created_at',
-        width: 200,
-        sorter: sortItemsByKey('created_at'),
-        render: (timestamp: string) => <>{timestamp == null ? 'N/A' : <DateTime dateTime={timestamp}/>}</>
-           
-    }, {
+    //     key: 'created_at',
+    //     title: 'Created At',
+    //     dataIndex: 'created_at',
+    //     width: 200,
+    //     sorter: sortItemsByKey('created_at'),
+    //     render: (timestamp: string) => <>{timestamp == null ? 'N/A' : <DateTime dateTime={timestamp}/>}</>
+    // }, {
         key: 'endpoint_url',
         title: 'Endpoint',
         dataIndex: 'endpoint_url',
         width: 300,
         sorter: sortItemsByKey('endpoint_url'),
-        render: (endpoint_url: string) => <StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{endpoint_url}</StyledParagraph>
+        render: (endpoint_url: string) => {
+          if (isEmpty(endpoint_url)) {
+            return 'N/A';
+          }
+
+          return (
+            <Tooltip title={endpoint_url}>
+               <StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{endpoint_url}</StyledParagraph>
+            </Tooltip>
+          )
+
+        }
     }, {
         title: 'Actions',
         width: 100,
@@ -180,6 +185,7 @@ const SettingsPage: React.FC = () => {
                     <Tooltip title="Edit">
                         <StyledButton
                             type="link"
+                            disabled={model?.provider_type === ModelProviderType.CAII}
                             key={`${model.endpoint_id}-deploy`}
                             onClick={() => onEdit(model)}
                             data-event-category="User Action"
