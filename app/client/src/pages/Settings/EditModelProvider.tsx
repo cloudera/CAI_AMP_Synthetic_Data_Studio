@@ -9,54 +9,8 @@ import { addModelProvider, useGetModelProvider } from './hooks';
 import Loading from '../Evaluator/Loading';
 import { CustomModel } from './SettingsPage';
 import isEmpty from 'lodash/isEmpty';
+import { GEMINI_MODELS_OPTIONS, ModelProviderType, modelProviderTypeOptions, OPENAI_MODELS_OPTIONS } from './AddModelProviderButton';
 
-export enum ModelProviderType {
-    OPENAI = 'openai',
-    GEMINIE = 'gemini',
-    CAII = 'caii'
-}
-
-
-const modelProviderTypeOptions: CheckboxGroupProps<string>['options'] = [
-  { label: 'OpenAI', value: 'openai' },
-  // { label: 'CAII', value: 'caii' },
-  { label: 'Gemini', value: 'gemini' },
-];
-
-const OPENAI_MODELS = [
-    "gpt-4.1",               // Latest GPT-4.1 series (April 2025)
-    "gpt-4.1-mini", 
-    "gpt-4.1-nano",
-    "o3",                    // Latest reasoning models (April 2025) 
-    "o4-mini",
-    "o3-mini",               // January 2025
-    "o1",                    // December 2024
-    "gpt-4o",                // November 2024
-    "gpt-4o-mini",           // July 2024
-    "gpt-4-turbo",           // April 2024
-    "gpt-3.5-turbo"          // Legacy but still widely used
-];
-
-const OPENAI_MODELS_OPTIONS = OPENAI_MODELS.map((model: string) => ({
-    label: model,
-    value: model
-}));
-
-const GEMINI_MODELS = [
-    "gemini-2.5-pro",           // June 2025 - most powerful thinking model
-    "gemini-2.5-flash",         // June 2025 - best price-performance  
-    "gemini-2.5-flash-lite",    // June 2025 - cost-efficient
-    "gemini-2.0-flash",         // February 2025 - next-gen features
-    "gemini-2.0-flash-lite",    // February 2025 - low latency
-    "gemini-1.5-pro",           // September 2024 - complex reasoning
-    "gemini-1.5-flash",         // September 2024 - fast & versatile
-    "gemini-1.5-flash-8b"       // October 2024 - lightweight
-];
-
-const GEMINI_MODELS_OPTIONS = GEMINI_MODELS.map((model: string) => ({
-    label: model,
-    value: model
-}));
 
 interface Props {
     refetch: () => void;
@@ -66,7 +20,8 @@ interface Props {
 
 const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
     const [form] = Form.useForm();
-    const modelProviderReq = useGetModelProvider(model.endpoint_id);
+    const [modelProviderType, setModelProviderType] = useState<ModelProviderType>(ModelProviderType.OPENAI);
+    const modelProviderReq = useGetModelProvider(model);
     const [models, setModels] = useState(OPENAI_MODELS_OPTIONS);
     const mutation = useMutation({
         mutationFn: addModelProvider
@@ -75,9 +30,12 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
     useEffect(() => {
         if (!isEmpty(modelProviderReq.data)) {
             const endpoint = get(modelProviderReq, 'data.endpoint');
-            form.setFieldsValue({
-                ...endpoint
-            });
+            if (!isEmpty(endpoint)) {
+                form.setFieldsValue({
+                    ...endpoint
+                });
+                setModelProviderType(endpoint?.provider_type as ModelProviderType);
+            }
         }
     }, [modelProviderReq.data]);
 
@@ -167,31 +125,9 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                             defaultValue="openai"
                             optionType="button"
                             buttonStyle="solid"
-                            style={{ width: '40%' }}
+                            style={{ width: '100%',  whiteSpace: 'nowrap' }}
                             onChange={onChange}
                         />
-                    </Form.Item>
-                    <Form.Item 
-                        name="display_name" 
-                        label="Display Name" 
-                        rules={[
-                            {
-                                required: true,
-                                message: 'This field is required.'
-                            }
-                        ]}>
-                            <Input />
-                    </Form.Item>
-                    <Form.Item 
-                        name="endpoint_id" 
-                        label="Endpoint ID" 
-                        rules={[
-                            {
-                                required: true,
-                                message: 'This field is required.'
-                            }
-                        ]}>
-                            <Input />
                     </Form.Item>
                     <Form.Item 
                         name="model_id" 
@@ -204,7 +140,7 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                         ]}>
                             <Select options={models} />
                     </Form.Item>
-                    <Form.Item 
+                    {modelProviderType !== ModelProviderType.OPENAI && modelProviderType !== ModelProviderType.GEMINI && <Form.Item 
                         name="endpoint_url" 
                         label="Endpoint URL" 
                         rules={[
@@ -214,8 +150,8 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                             }
                         ]}>
                             <Input />
-                    </Form.Item>
-                    <Form.Item 
+                    </Form.Item>}
+                    {modelProviderType !== ModelProviderType.AWS_BEDROCK && modelProviderType !== ModelProviderType.CAII && <Form.Item 
                         name="api_key" 
                         label="API Key"
                         rules={[
@@ -225,7 +161,55 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                             }
                         ]}>
                        <Input.Password />
+                    </Form.Item>}
+                    {modelProviderType === ModelProviderType.CAII && <Form.Item 
+                        name="cdp_token" 
+                        label="CDP Token"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'This field is required.'
+                            }
+                        ]}>
+                       <Input.Password />
+                    </Form.Item>}
+                    {modelProviderType === ModelProviderType.AWS_BEDROCK && 
+                    <>
+                      <Form.Item 
+                        name="aws_access_key_id:" 
+                        label="Access Key"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'This field is required.'
+                            }
+                        ]}>
+                       <Input.Password />
                     </Form.Item>
+                    <Form.Item 
+                        name="aws_secret_access_key:" 
+                        label="Secret Key"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'This field is required.'
+                            }
+                        ]}>
+                       <Input.Password />
+                    </Form.Item>
+                    <Form.Item 
+                        name="region:" 
+                        label="Region"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'This field is required.'
+                            }
+                        ]}>
+                       <Input />
+                    </Form.Item>
+                    </>
+                   }
                 </Form>
             </Modal>    
         </>
