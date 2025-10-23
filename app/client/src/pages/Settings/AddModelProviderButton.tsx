@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { Alert, AutoComplete, Button, Form, Input, Modal, notification, Radio, Select } from 'antd';
+import { Alert, AutoComplete, Button, Form, Input, Modal, notification, Radio, Select, Tooltip } from 'antd';
 import type { CheckboxGroupProps } from 'antd/es/checkbox';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
@@ -18,11 +18,11 @@ export enum ModelProviderType {
 
 
 export const modelProviderTypeOptions: CheckboxGroupProps<string>['options'] = [
+  { label: <Tooltip title="Cloudera AI Inferencing">{'Cloudera'}</Tooltip>, value: 'caii' },  
   { label: 'OpenAI', value: 'openai' },
   { label: 'OpenAI Compatible', value: 'openai_compatible' },
   { label: 'Gemini', value: 'gemini' },
-  { label: 'AWS Bedrock', value: 'aws_bedrock' },
-  { label: 'CAII', value: 'caii' },
+  { label: 'AWS Bedrock', value: 'aws_bedrock' }
 ];
 
 const OPENAI_MODELS = [

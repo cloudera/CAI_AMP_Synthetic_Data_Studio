@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PlusCircleOutlined } from '@ant-design/icons';
-import { Alert, Button, Form, Input, Modal, notification, Radio, Select } from 'antd';
-import type { CheckboxGroupProps } from 'antd/es/checkbox';
+import { Alert, Form, Input, Modal, notification, Radio, Select } from 'antd';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 import { useMutation } from "@tanstack/react-query";
