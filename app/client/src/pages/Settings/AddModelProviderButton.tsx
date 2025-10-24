@@ -153,6 +153,8 @@ const AddModelProviderButton: React.FC<Props> = ({ refetch }) => {
             setModels(GEMINI_MODELS_OPTIONS);
         } else if (value === 'aws_bedrock' && !isEqual(GEMINI_MODELS_OPTIONS, models)) {
             setModels(AWS_BEDROCK_MODELS_OPTIONS);
+        } else if (value === 'caii' && !isEqual(GEMINI_MODELS_OPTIONS, models)) {
+            setModels([]);
         }
     }
 
@@ -192,17 +194,6 @@ const AddModelProviderButton: React.FC<Props> = ({ refetch }) => {
                             style={{ width: '100%', whiteSpace: 'nowrap' }}
                             onChange={onChange}
                         />
-                    </Form.Item>
-                    <Form.Item 
-                        name="display_name" 
-                        label="Display Name" 
-                        rules={[
-                            {
-                                required: true,
-                                message: 'This field is required.'
-                            }
-                        ]}>
-                            <Input />
                     </Form.Item>
                     <Form.Item 
                         name="model_id" 
