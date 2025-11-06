@@ -65,6 +65,9 @@ SeedsInstructions.json
 nm.json
 french_input.json
 
+# Custom endpoint configurations (contains sensitive credentials)
+custom_model_endpoints.json
+
 # DB
 *metadata.db-shm
 *metadata.db-wal
