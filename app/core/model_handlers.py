@@ -541,7 +541,8 @@ class UnifiedModelHandler:
             
             if custom_config:
                 # Use custom endpoint configuration
-                API_KEY = custom_config.cdp_token
+                # If cdp_token is provided in custom config, use it; otherwise fall back to environment/JWT
+                API_KEY = custom_config.cdp_token if custom_config.cdp_token else _get_caii_token()
                 MODEL_ID = self.model_id
                 caii_endpoint = custom_config.endpoint_url
                 print(f"Using custom CAII endpoint for model: {self.model_id}")

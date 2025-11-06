@@ -283,13 +283,13 @@ class CustomPromptRequest(BaseModel):
     )
 
 
-# Custom Endpoint Models - Ultra Simplified
+# Custom Endpoint Models 
 class CustomCAIIEndpoint(BaseModel):
     """Custom CAII endpoint - needs custom URL"""
     model_id: str = Field(..., description="Model identifier")
     provider_type: str = Field(default="caii", description="Provider type")
     endpoint_url: str = Field(..., description="CAII endpoint URL")
-    cdp_token: str = Field(..., description="CDP token for authentication")
+    cdp_token: Optional[str] = Field(default=None, description="CDP token for authentication (optional, falls back to CDP_TOKEN env var or /tmp/jwt)")
 
 
 class CustomBedrockEndpoint(BaseModel):
