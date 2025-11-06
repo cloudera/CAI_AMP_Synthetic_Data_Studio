@@ -180,6 +180,8 @@ class UnifiedModelHandler:
             return self._handle_caii_request(prompt)
         if self.inference_type == "openai":
             return self._handle_openai_request(prompt)
+        if self.inference_type == "openai_compatible":
+            return self._handle_openai_compatible_request(prompt)
         if self.inference_type == "gemini":
             return self._handle_gemini_request(prompt)
         raise ModelHandlerError(f"Unsupported inference_type={self.inference_type}", 400)
@@ -341,6 +343,66 @@ class UnifiedModelHandler:
             return self._extract_json_from_text(text) if not self.custom_p else text
         except Exception as e:
             raise ModelHandlerError(f"OpenAI request failed: {e}", 500)
+
+    # ---------- OpenAI Compatible -------------------------------------------------------
+    def _handle_openai_compatible_request(self, prompt: str):
+        """Handle OpenAI compatible endpoints with proper timeout configuration"""
+        try:
+            import httpx
+            from openai import OpenAI
+            
+            # Get API key from environment variable (only credential needed)
+            api_key = os.getenv('OpenAI_Endpoint_Compatible_Key')
+            if not api_key:
+                raise ModelHandlerError("OpenAI_Endpoint_Compatible_Key environment variable not set", 500)
+            
+            # Base URL comes from caii_endpoint parameter (passed during initialization)
+            openai_compatible_endpoint = self.caii_endpoint
+            if not openai_compatible_endpoint:
+                raise ModelHandlerError("OpenAI compatible endpoint not provided", 500)
+            
+            # Configure timeout for OpenAI compatible client (same as OpenAI v1.57.2)
+            timeout_config = httpx.Timeout(
+                connect=self.OPENAI_CONNECT_TIMEOUT,
+                read=self.OPENAI_READ_TIMEOUT,
+                write=10.0,
+                pool=5.0
+            )
+            
+            # Configure httpx client with certificate verification for private cloud
+            if os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
+                http_client = httpx.Client(
+                    verify="/etc/ssl/certs/ca-certificates.crt",
+                    timeout=timeout_config
+                )
+            else:
+                http_client = httpx.Client(timeout=timeout_config)
+            
+            # Remove trailing '/chat/completions' if present (similar to CAII handling)
+            openai_compatible_endpoint = openai_compatible_endpoint.removesuffix('/chat/completions')
+            
+            client = OpenAI(
+                api_key=api_key,
+                base_url=openai_compatible_endpoint,
+                http_client=http_client
+            )
+            
+            completion = client.chat.completions.create(
+                model=self.model_id,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=self.model_params.max_tokens,
+                temperature=self.model_params.temperature,
+                top_p=self.model_params.top_p,
+                stream=False,
+            )
+            
+            print("generated via OpenAI Compatible endpoint")
+            response_text = completion.choices[0].message.content
+            
+            return self._extract_json_from_text(response_text) if not self.custom_p else response_text
+            
+        except Exception as e:
+            raise ModelHandlerError(f"OpenAI Compatible request failed: {str(e)}", status_code=500)
 
     # ---------- Gemini -------------------------------------------------------
     def _handle_gemini_request(self, prompt: str):

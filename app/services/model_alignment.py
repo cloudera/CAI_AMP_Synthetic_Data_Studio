@@ -7,8 +7,8 @@ from functools import partial
 import asyncio
 from datetime import datetime, timezone
 from typing import Dict, Optional
-from app.services.synthesis_service import SynthesisService
-from app.services.evaluator_service import EvaluatorService
+from app.services.synthesis_legacy_service import SynthesisLegacyService
+from app.services.evaluator_legacy_service import EvaluatorLegacyService
 from app.models.request_models import SynthesisRequest, EvaluationRequest
 from app.models.request_models import  ModelParameters
 from app.services.aws_bedrock import get_bedrock_client
@@ -21,8 +21,8 @@ class ModelAlignment:
     """Service for aligning model outputs through synthesis and evaluation"""
     
     def __init__(self):
-        self.synthesis_service = SynthesisService()
-        self.evaluator_service = EvaluatorService()
+        self.synthesis_service = SynthesisLegacyService()
+        self.evaluator_service = EvaluatorLegacyService()
         self.db = DatabaseManager()
         self.bedrock_client = get_bedrock_client()  # Add this line
         self._setup_logging()

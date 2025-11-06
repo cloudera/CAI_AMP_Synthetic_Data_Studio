@@ -31,6 +31,7 @@ import json
 from app.models.request_models import EvaluationRequest, ModelParameters
 
 from app.services.evaluator_service import EvaluatorService
+from app.services.evaluator_legacy_service import EvaluatorLegacyService
 import asyncio
 import nest_asyncio  
 
@@ -40,7 +41,7 @@ nest_asyncio.apply()
 async def run_eval(request, job_name, request_id):
     try:
         
-        job = EvaluatorService()
+        job = EvaluatorLegacyService()
         result = job.evaluate_results(request,job_name, is_demo=False, request_id=request_id)
         return result
     except Exception as e:

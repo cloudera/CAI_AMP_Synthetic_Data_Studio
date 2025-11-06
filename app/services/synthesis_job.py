@@ -3,9 +3,9 @@ import json
 import uuid
 import os
 from typing import Dict, Any, Optional
-from app.services.evaluator_service import EvaluatorService
+from app.services.evaluator_legacy_service import EvaluatorLegacyService
 from app.models.request_models import SynthesisRequest, EvaluationRequest, Export_synth, ModelParameters, CustomPromptRequest, JsonDataSize, RelativePath
-from app.services.synthesis_service import SynthesisService
+from app.services.synthesis_legacy_service import SynthesisLegacyService
 from app.services.export_results import Export_Service
 from app.core.prompt_templates import PromptBuilder, PromptHandler
 from app.core.config import UseCase, USE_CASE_CONFIGS
@@ -22,8 +22,8 @@ from app.core.telemetry_integration import track_job
 import cmlapi
 
 # Initialize services
-synthesis_service = SynthesisService()
-evaluator_service = EvaluatorService()
+synthesis_service = SynthesisLegacyService()
+evaluator_service = EvaluatorLegacyService()
 export_service = Export_Service()
 db_manager = DatabaseManager()
 

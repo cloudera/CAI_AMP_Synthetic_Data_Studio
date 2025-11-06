@@ -132,10 +132,10 @@ const TagsContainer = styled.div`
   }
 `;
 
-const StyledTag = styled(Tag)`
-  color: ${props => props.theme.color};
-  background-color: ${props => props.theme.backgroundColor};
-  border: 1px solid ${props => props.theme.borderColor};
+const StyledTag = styled(Tag)<{ $theme: { color: string; backgroundColor: string; borderColor: string } }>`
+  color: ${props => props.$theme.color} !important;
+  background-color: ${props => props.$theme.backgroundColor} !important;
+  border: 1px solid ${props => props.$theme.borderColor} !important;
 `;
 
 
@@ -150,7 +150,7 @@ const TemplateCard: React.FC<Props> = ({ template }) => {
         const { color, backgroundColor, borderColor } = getTemplateTagColors(theme as string);
 
         return (
-          <StyledTag key={tag} theme={{ color, backgroundColor, borderColor }}>
+          <StyledTag key={tag} $theme={{ color, backgroundColor, borderColor }}>
             <div className="tag-title" title={tag} style={{ maxWidth: '150px', color }}>
                 {tag}
             </div>
