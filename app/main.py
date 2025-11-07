@@ -42,8 +42,10 @@ UPLOAD_DIR = ROOT_DIR / "document_upload"
 sys.path.append(str(ROOT_DIR))
 
 from app.services.evaluator_service import EvaluatorService
+from app.services.evaluator_legacy_service import EvaluatorLegacyService
 from app.models.request_models import SynthesisRequest, EvaluationRequest, Export_synth, ModelParameters, CustomPromptRequest, JsonDataSize, RelativePath, Technique
 from app.services.synthesis_service import SynthesisService
+from app.services.synthesis_legacy_service import SynthesisLegacyService
 from app.services.export_results import Export_Service
 
 from app.core.prompt_templates import PromptBuilder, PromptHandler
@@ -66,8 +68,10 @@ from app.core.model_endpoints import collect_model_catalog, sort_unique_models, 
 #****************************************Initialize************************************************
 
 # Initialize services
-synthesis_service = SynthesisService()
-evaluator_service = EvaluatorService()
+synthesis_service = SynthesisService()  # Freeform only
+synthesis_legacy_service = SynthesisLegacyService()  # SFT and Custom_Workflow
+evaluator_service = EvaluatorService()  # Freeform only
+evaluator_legacy_service = EvaluatorLegacyService()  # SFT and Custom_Workflow
 export_service = Export_Service()
 db_manager = DatabaseManager()
 
@@ -552,9 +556,11 @@ async def generate_examples(request: SynthesisRequest):
     
     if is_demo== True:
         if request.input_path:
-            return await synthesis_service.generate_result(request,is_demo, request_id=request_id)
+            # Custom_Workflow technique - route to legacy service
+            return await synthesis_legacy_service.generate_result(request,is_demo, request_id=request_id)
         else:
-            return await synthesis_service.generate_examples(request,is_demo, request_id=request_id)
+            # SFT technique - route to legacy service
+            return await synthesis_legacy_service.generate_examples(request,is_demo, request_id=request_id)
     else:
        return synthesis_job.generate_job(request, core, mem, request_id=request_id)
     
@@ -626,7 +632,8 @@ async def evaluate_examples(request: EvaluationRequest):
    
     is_demo = request.is_demo
     if is_demo:
-       return evaluator_service.evaluate_results(request, request_id=request_id)
+       # SFT and Custom_Workflow evaluation - route to legacy service
+       return evaluator_legacy_service.evaluate_results(request, request_id=request_id)
     
     else:
         return synthesis_job.evaluate_job(request, request_id=request_id)
@@ -1242,7 +1249,7 @@ async def get_custom_gen_examples(use_case: UseCase):
 async def health_check():
     """Get API health status"""
     #return {"status": "healthy"}
-    return synthesis_service.get_health_check()
+    return synthesis_legacy_service.get_health_check()
 
 @app.get("/{use_case}/example_payloads")
 async def get_example_payloads(use_case:UseCase):
@@ -1255,6 +1262,7 @@ async def get_example_payloads(use_case:UseCase):
                     "technique": "sft",
                     "topics": ["python_basics", "data_structures"],
                     "is_demo": True,
+                    "max_concurrent_topics": 5,
                     "examples":  [
                 {
                     "question": "How do you create a list in Python and add elements to it?",
@@ -1281,6 +1289,7 @@ async def get_example_payloads(use_case:UseCase):
                     "technique": "sft",
                     "topics": ["basic_queries", "joins"],
                     "is_demo": True,
+                    "max_concurrent_topics": 5,
                     "schema": "CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255));\nCREATE TABLE orders (id INT PRIMARY KEY, user_id INT, amount DECIMAL(10,2), FOREIGN KEY (user_id) REFERENCES users(id));",
                     "examples":[
                                 {
@@ -1309,6 +1318,7 @@ async def get_example_payloads(use_case:UseCase):
             "topics": ["topic 1", "topic 2"],
             "custom_prompt": "Give your instructions here",
             "is_demo": True,
+            "max_concurrent_topics": 5,
             
             "examples":[
                         {

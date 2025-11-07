@@ -255,7 +255,8 @@ const Finish = () => {
             title: 'Review Dataset',
             description: 'Review your dataset to ensure it properly fits your usecase.',
             icon: <GradingIcon/>,
-            href: getFilesURL(genDatasetResp?.export_path?.local || "")
+            href: getFilesURL(genDatasetResp?.export_path?.local || ""),
+            external: true
         },
         {
             avatar: '',
@@ -278,7 +279,8 @@ const Finish = () => {
             title: 'Review Dataset',
             description: 'Once your dataset finishes generating, you can review your dataset in the workbench files',
             icon: <GradingIcon/>,
-            href: getFilesURL('')
+            href: getFilesURL(''),
+            external: true
         },
         {
             avatar: '',
@@ -361,7 +363,18 @@ const Finish = () => {
             <List
                 itemLayout="horizontal"
                 dataSource={isDemo ? nextStepsListPreview : nextStepsListNonPreview}
-                renderItem={({ title, href, icon, description}, i) => (
+                renderItem={({ title, href, icon, description, external }, i) => (
+                    external ? 
+                    <Link to={href} target="_blank" rel="noopener noreferrer">
+                        <List.Item key={`${title}-${i}`}>
+                            <List.Item.Meta
+                                avatar={<Avatar style={{ backgroundColor: '#1677ff'}} icon={icon} />}
+                                title={title}
+                                description={description}
+                            />
+                        </List.Item>
+                    </Link> : 
+
                     <Link to={href}>
                         <List.Item key={`${title}-${i}`}>
                             <List.Item.Meta
