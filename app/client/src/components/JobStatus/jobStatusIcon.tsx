@@ -24,6 +24,12 @@ const IconWrapper = styled.div`
     }
 `
 
+const StyledIconWrapper = styled(IconWrapper)`
+    svg {
+        color: #008cff;
+    }
+`;
+
 
 export default function JobStatusIcon({ status, customTooltipTitles }: JobStatusProps) {
     const tooltipTitles = {...defaultTooltipTitles, ...customTooltipTitles};
@@ -44,11 +50,11 @@ export default function JobStatusIcon({ status, customTooltipTitles }: JobStatus
                     </Tooltip>;
             case 'ENGINE_SCHEDULING':
                 return <Tooltip title={tooltipTitles.ENGINE_SCHEDULING}>
-                    <IconWrapper><LoadingOutlined spin/></IconWrapper>
+                    <StyledIconWrapper><LoadingOutlined spin/></StyledIconWrapper>
                     </Tooltip>;
             case 'ENGINE_RUNNING':
                 return <Tooltip title={tooltipTitles.ENGINE_RUNNING}>
-                    <IconWrapper><LoadingOutlined spin /></IconWrapper>
+                    <StyledIconWrapper><LoadingOutlined spin /></StyledIconWrapper>
                     </Tooltip>;
             case null:
                 return <Tooltip title={tooltipTitles.null}>

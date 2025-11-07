@@ -42,6 +42,10 @@ environment_variables:
     default: null
     description: >-
       Gemini API Key. Check the Google Gemini documentation for information about role access
+  OpenAI_Endpoint_Compatible_Key:
+    default: null
+    description: >-
+      API Key for OpenAI Compatible endpoints. Used for custom OpenAI-compatible model endpoints.
 # runtimes
 runtimes:
   - editor: JupyterLab

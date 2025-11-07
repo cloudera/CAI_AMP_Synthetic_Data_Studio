@@ -2,17 +2,23 @@ import endsWith from 'lodash/endsWith';
 import isEmpty from 'lodash/isEmpty';
 import isFunction from 'lodash/isFunction';
 import { FunctionComponent, useEffect, useState } from 'react';
-import { Flex, Form, FormInstance, Input, Select, Typography } from 'antd';
+import { Flex, Form, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
 import { File, WorkflowType } from './types';
 import { useFetchModels } from '../../api/api';
 import { MODEL_PROVIDER_LABELS } from './constants';
 import { ModelProviders, ModelProvidersDropdownOpts } from './types';
-import { getWizardModel, getWizardModeType, useWizardCtx } from './utils';
+import { getWizardModeType, useWizardCtx } from './utils';
 import FileSelectorButton from './FileSelectorButton';
 import UseCaseSelector from './UseCaseSelector';
 import { useLocation, useParams } from 'react-router-dom';
 import { WizardModeType } from '../../types';
+import get from 'lodash/get';
+import forEach from 'lodash/forEach';
+import { useModelProviders } from '../Settings/hooks';
+import { ModelProviderType } from '../Settings/AddModelProviderButton';
+import { CustomModel } from '../Settings/SettingsPage';
+import filter from 'lodash/filter';
 
 
 const StepContainer = styled(Flex)`
@@ -47,6 +53,8 @@ export const WORKFLOW_OPTIONS = [
 export const MODEL_TYPE_OPTIONS: ModelProvidersDropdownOpts = [
     { label: MODEL_PROVIDER_LABELS[ModelProviders.BEDROCK], value: ModelProviders.BEDROCK},
     { label: MODEL_PROVIDER_LABELS[ModelProviders.CAII], value: ModelProviders.CAII },
+    { label: MODEL_PROVIDER_LABELS[ModelProviders.OPENAI], value: ModelProviders.OPENAI },
+    { label: MODEL_PROVIDER_LABELS[ModelProviders.GEMINI], value: ModelProviders.GEMINI },
 ];
 
 const Configure: FunctionComponent = () => {
@@ -54,7 +62,12 @@ const Configure: FunctionComponent = () => {
     const formData = Form.useWatch((values) => values, form);
     const location = useLocation();
     const { template_name, generate_file_name } = useParams();
+    const [models, setModels] = useState<string[]>([])
     const [wizardModeType, setWizardModeType] = useState(getWizardModeType(location));
+    const { data } = useFetchModels();
+    const customModelPrividersReq = useModelProviders();  
+    const customModels = get(customModelPrividersReq, 'data.endpoints', []);
+    console.log('customModels', customModels);
 
     useEffect(() => {
         if (wizardModeType === WizardModeType.DATA_AUGMENTATION) {
@@ -77,10 +90,18 @@ const Configure: FunctionComponent = () => {
         }
     }, [template_name]);
 
+    useEffect(() => {
+        // set model providers
+        // set model ids
+        if (formData && (formData?.inference_type === ModelProviderType.OPENAI || formData?.inference_type === ModelProviderType.GEMINI) && isEmpty(generate_file_name)) {
+            form.setFieldValue('inference_type', ModelProviders.OPENAI);
+        }
+
+    }, [customModels, formData]);
+
     
     // let formData = Form.useWatch((values) => values, form);
     const { setIsStepValid } = useWizardCtx();
-    const { data } = useFetchModels();
     const [selectedFiles, setSelectedFiles] = useState(
         !isEmpty(form.getFieldValue('doc_paths')) ? form.getFieldValue('doc_paths') : []);
 
@@ -104,7 +125,6 @@ const Configure: FunctionComponent = () => {
 
     
     useEffect(() => {
-        console.log('useEffect 1');
         if (formData && formData?.inference_type === undefined && isEmpty(generate_file_name)) {
             form.setFieldValue('inference_type', ModelProviders.CAII);
             setTimeout(() => {
@@ -155,6 +175,20 @@ const Configure: FunctionComponent = () => {
         }
     }
 
+    const onModelProviderChange = (value: string) => {
+        form.setFieldValue('model_id', undefined)
+        console.log('value', value);
+        if (ModelProviderType.OPENAI === value) {
+            const _models = filter(customModels, (model: CustomModel) => model.provider_type === ModelProviderType.OPENAI);
+            setModels(_models.map((_model: CustomModel) => _model.model_id));  
+        } else if (ModelProviderType.GEMINI === value) {
+            const _models = filter(customModels, (model: CustomModel) => model.provider_type === ModelProviderType.GEMINI);
+            setModels(_models.map((_model: CustomModel) => _model.model_id));   
+        }
+    }
+    console.log('models', models);
+    
+
     return (
         <StepContainer justify='center'>
             <FormContainer vertical>
@@ -178,7 +212,7 @@ const Configure: FunctionComponent = () => {
                 >
                     <Select
                        
-                        onChange={() => form.setFieldValue('model_id', undefined)}
+                        onChange={(value: string) => onModelProviderChange(value)}
                         placeholder={'Select a model provider'}
                     >
                         {MODEL_TYPE_OPTIONS.map(({ label, value }, i) =>
@@ -200,15 +234,22 @@ const Configure: FunctionComponent = () => {
                     {formData?.inference_type === ModelProviders.CAII ? (
                         <Input placeholder={'Enter Cloudera AI Inference Model ID'}/>
                     ) : (
-                        <Select placeholder={'Select a Model'} notFoundContent={'You must select a Model Provider before selecting a Model'}>
-                            {!isEmpty(data?.models) && data?.models[ModelProviders.BEDROCK]?.map((model, i) =>
+                        <Select
+                            placeholder={'Select a Model'}
+                            notFoundContent={'You must select a Model Provider before selecting a Model'}
+                        >
+                            {formData?.inference_type === ModelProviders.BEDROCK  && data?.models?.[ModelProviders.BEDROCK]?.map((model, i) => (
                                 <Select.Option key={`${model}-${i}`} value={model}>
                                     {model}
                                 </Select.Option>
-                            )}
+                            ))}
+                            {(formData?.inference_type === ModelProviders.OPENAI || formData?.inference_type === ModelProviders.GEMINI) && models?.map((model, i) => (
+                                <Select.Option key={`${model}-${i}`} value={model}>
+                                    {model}
+                                </Select.Option>
+                            ))}
                         </Select>
                     )}
-
                 </Form.Item>
                 {formData?.inference_type === ModelProviders.CAII && (
                     <>

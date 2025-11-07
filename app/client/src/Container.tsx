@@ -95,6 +95,12 @@ const pages: MenuItem[] = [
       <Link to={`${Pages.EXPORTS}`}>{LABELS[Pages.EXPORTS]}</Link>
     ),
   },
+  {
+    key: Pages.SETTINGS,
+    label: (
+      <Link to={`${Pages.SETTINGS}`}>{LABELS[Pages.SETTINGS]}</Link>
+    ),
+  },
   
   // {
   //   key: Pages.TELEMETRY,  

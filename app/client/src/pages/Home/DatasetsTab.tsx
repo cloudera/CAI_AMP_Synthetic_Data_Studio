@@ -106,10 +106,16 @@ const DatasetsTab: React.FC<Props> = ({ hideSearch = false }) => {
             key: 'job_status',
             title: 'Status',
             dataIndex: 'job_status',
-            width: 80,
+            width: 140,
             sorter: sortItemsByKey('job_status'),
-            render: (status: JobStatus) => <Flex justify='center' align='center'>
+            render: (status: JobStatus) => 
+            <Flex>
                 <JobStatusIcon status={status} customTooltipTitles={{"null": `Job wasn't executed because dataset total count is less than ${JOB_EXECUTION_TOTAL_COUNT_THRESHOLD}!`}}></JobStatusIcon>
+                {status === 'ENGINE_SCHEDULING' && <div style={{ marginLeft: '5px'}}>{'Scheduling'}</div> }
+                {status === 'ENGINE_RUNNING' && <div style={{ marginLeft: '5px'}}>{'Running'}</div> }
+                {status === 'ENGINE_STOPPED' && <div style={{ marginLeft: '5px'}}>{'Stopped'}</div> }
+                {status === 'ENGINE_SUCCEEDED' && <div style={{ marginLeft: '5px'}}>{'Success'}</div> }
+                {status === 'ENGINE_TIMEDOUT' && <div style={{ marginLeft: '5px'}}>{'Timeout'}</div> }
             </Flex>
         },
         {

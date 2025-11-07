@@ -19,6 +19,8 @@ export enum ModelProviders {
     CAII = 'CAII',
     AZURE_OPENAI = 'AZURE_OPENAI',
     GOOGLE_GEMINI = 'GOOGLE_GEMINI',
+    OPENAI = 'openai',
+    GEMINI = 'gemini',
 }
 
 export type ModelProvidersDropdownOpts = { label: string, value: ModelProviders }[];

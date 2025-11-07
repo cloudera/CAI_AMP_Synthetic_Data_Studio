@@ -4,7 +4,7 @@ import csv
 import os
 import pandas as pd
 import numpy as np
-from app.models.request_models import Example, Example_eval
+from app.models.request_models import Example, EvaluationExample
 from app.core.config import UseCase, Technique, ModelFamily, get_model_family,USE_CASE_CONFIGS, LENDING_DATA_PROMPT, USE_CASE_CONFIGS_EVALS
 from app.core.data_loader import DataLoader
 from app.core.data_analyser import DataAnalyser
@@ -179,7 +179,7 @@ class PromptHandler:
         ]
 
     @staticmethod
-    def format_examples_eval(examples: List[Example_eval]) -> str:
+    def format_examples_eval(examples: List[EvaluationExample]) -> str:
         """Format examples as JSON string"""
         return [
                         {"score": example.score, "justification": example.justification}
@@ -506,7 +506,7 @@ class ModelPrompts:
         use_case: UseCase,
         question: str,
         solution: str,
-        examples: List[Example_eval],
+        examples: List[EvaluationExample],
         custom_prompt = Optional[str]
     ) -> str:
         custom_prompt_str = PromptHandler.get_default_custom_eval_prompt(use_case, custom_prompt)   
@@ -562,7 +562,7 @@ class ModelPrompts:
     def get_freeform_eval_prompt(model_id: str,
         use_case: UseCase,
         row: Dict[str, Any],
-        examples: List[Example_eval],
+        examples: List[EvaluationExample],
         custom_prompt = Optional[str]
     ) -> str:
         custom_prompt_str = PromptHandler.get_default_custom_eval_prompt(use_case, custom_prompt)   
@@ -1110,7 +1110,7 @@ class PromptBuilder:
         use_case: UseCase,
         question: str,
         solution: str,
-        examples: List[Example_eval],
+        examples: List[EvaluationExample],
         custom_prompt = Optional[str]
     ) -> str:
         
@@ -1154,7 +1154,7 @@ class PromptBuilder:
     def build_freeform_eval_prompt(model_id: str,
         use_case: UseCase,
         row: Dict[str, Any],
-        examples: List[Example_eval],
+        examples: List[EvaluationExample],
         
         custom_prompt = Optional[str]
     ) -> str:

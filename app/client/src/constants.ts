@@ -12,6 +12,7 @@ export const LABELS = {
     [Pages.EXPORTS]: 'Exports',
     [Pages.HISTORY]: 'History',
     [Pages.FEEDBACK]: 'Feedback',
+    [Pages.SETTINGS]: 'Settings',
     //[Pages.TELEMETRY]: 'Telemetry',
     [ModelParameters.TEMPERATURE]: 'Temperature',
     [ModelParameters.TOP_K]: 'Top K',

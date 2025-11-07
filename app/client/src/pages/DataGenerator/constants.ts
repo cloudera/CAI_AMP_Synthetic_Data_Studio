@@ -5,6 +5,8 @@ export const MODEL_PROVIDER_LABELS = {
   [ModelProviders.CAII]: 'Cloudera AI Inference Service',
   [ModelProviders.GOOGLE_GEMINI]: 'Google Gemini',
   [ModelProviders.AZURE_OPENAI]: 'Azure OpenAI',
+  [ModelProviders.GEMINI]: 'Gemini',
+  [ModelProviders.OPENAI]: 'OpenAI'
 };
 
 export const MIN_SEED_INSTRUCTIONS = 1

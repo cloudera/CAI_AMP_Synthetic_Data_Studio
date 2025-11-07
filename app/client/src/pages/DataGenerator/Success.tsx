@@ -122,7 +122,7 @@ const Success: FC<SuccessProps> = ({ formData, isDemo = true }) => {
             <Title level={2}>
                 <Flex align='center' gap={10}>
                     <CheckCircleIcon style={{ color: '#178718' }}/>
-                    {'Success'}
+                    {isDemo ? 'Success' : 'Job successfully started.'}
                 </Flex>
             </Title>
             {isDemo ? (
