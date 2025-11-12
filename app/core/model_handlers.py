@@ -18,26 +18,6 @@ load_dotenv()
 import google.generativeai as genai 
 
 
-def get_custom_endpoint_config(model_id: str, provider_type: str):
-    """
-    Get custom endpoint configuration for a model if it exists
-    
-    Args:
-        model_id: The model identifier
-        provider_type: The provider type
-        
-    Returns:
-        Custom endpoint configuration or None
-    """
-    try:
-        from app.core.custom_endpoint_manager import CustomEndpointManager
-        
-        custom_manager = CustomEndpointManager()
-        return custom_manager.get_endpoint(model_id, provider_type)
-                
-    except Exception as e:
-        print(f"Warning: Failed to get custom endpoint config: {e}")
-        return None
 
 
 class UnifiedModelHandler:
@@ -210,29 +190,8 @@ class UnifiedModelHandler:
     def _handle_bedrock_request(self, prompt: str, retry_with_reduced_tokens: bool):
         """Handle Bedrock requests with retry logic"""
         
-        # Check for custom endpoint configuration
-        custom_config = get_custom_endpoint_config(self.model_id, "bedrock")
-        
-        if custom_config:
-            # Use custom AWS credentials
-            from botocore.config import Config
-            retry_config = Config(
-                region_name=custom_config.aws_region,
-                retries={"max_attempts": 2, "mode": "standard"},
-                connect_timeout=5,
-                read_timeout=3600
-            )
-            bedrock_client = boto3.client(
-                'bedrock-runtime',
-                aws_access_key_id=custom_config.aws_access_key_id,
-                aws_secret_access_key=custom_config.aws_secret_access_key,
-                region_name=custom_config.aws_region,
-                config=retry_config
-            )
-            print(f"Using custom Bedrock endpoint for model: {self.model_id}")
-        else:
-            # Fallback to default bedrock client (environment/IAM credentials)
-            bedrock_client = self.bedrock_client
+        # Always use default bedrock client (credentials from environment/IAM)
+        bedrock_client = self.bedrock_client
         
         retries = 0
         last_exception = None
@@ -295,29 +254,11 @@ class UnifiedModelHandler:
                                 self._exponential_backoff(retries)
                                 retries += 1
                                 
-                                # Create a new client on connection errors  
-                                if custom_config:
-                                    # Recreate with custom credentials
-                                    from botocore.config import Config
-                                    retry_config = Config(
-                                        region_name=custom_config.aws_region,
-                                        retries={"max_attempts": 2, "mode": "standard"},
-                                        connect_timeout=5,
-                                        read_timeout=3600
-                                    )
-                                    bedrock_client = boto3.client(
-                                        'bedrock-runtime',
-                                        aws_access_key_id=custom_config.aws_access_key_id,
-                                        aws_secret_access_key=custom_config.aws_secret_access_key,
-                                        region_name=custom_config.aws_region,
-                                        config=retry_config
-                                    )
-                                else:
-                                    # Recreate default client
-                                    bedrock_client = boto3.client(
-                                        service_name="bedrock-runtime",
-                                        config=self.bedrock_client.meta.config
-                                    )
+                                # Create a new client on connection errors (credentials from environment)
+                                bedrock_client = boto3.client(
+                                    service_name="bedrock-runtime",
+                                    config=self.bedrock_client.meta.config
+                                )
                                 continue
                         
                         # Handle other AWS errors
@@ -374,15 +315,8 @@ class UnifiedModelHandler:
             import httpx
             from openai import OpenAI
             
-            # Check for custom endpoint configuration
-            custom_config = get_custom_endpoint_config(self.model_id, "openai")
-            
-            # Get API key from custom config or environment
-            if custom_config:
-                api_key = custom_config.api_key
-                print(f"Using custom OpenAI endpoint for model: {self.model_id}")
-            else:
-                api_key = os.getenv('OPENAI_API_KEY')
+            # Get API key from environment
+            api_key = os.getenv('OPENAI_API_KEY')
             
             if not api_key:
                 raise ModelHandlerError("OpenAI API key not available", 500)
@@ -428,24 +362,17 @@ class UnifiedModelHandler:
             import httpx
             from openai import OpenAI
             
-            # Check for custom endpoint configuration
-            custom_config = get_custom_endpoint_config(self.model_id, "openai_compatible")
+            # Get API key from environment
+            api_key = os.getenv('OpenAI_Endpoint_Compatible_Key')
             
-            if custom_config:
-                # Use custom endpoint configuration
-                api_key = custom_config.api_key
-                openai_compatible_endpoint = custom_config.endpoint_url
-                print(f"Using custom OpenAI compatible endpoint for model: {self.model_id}")
-            else:
-                # Fallback to environment variables and initialization parameters
-                api_key = os.getenv('OpenAI_Endpoint_Compatible_Key')
-                openai_compatible_endpoint = self.caii_endpoint
+            # Endpoint URL must come from client (self.caii_endpoint)
+            openai_compatible_endpoint = self.caii_endpoint
             
             if not api_key:
                 raise ModelHandlerError("OpenAI compatible API key not available", 500)
             
             if not openai_compatible_endpoint:
-                raise ModelHandlerError("OpenAI compatible endpoint not provided", 500)
+                raise ModelHandlerError("OpenAI compatible endpoint URL is required but not provided", 400)
             
             # Configure timeout for OpenAI compatible client (same as OpenAI v1.57.2)
             timeout_config = httpx.Timeout(
@@ -498,15 +425,8 @@ class UnifiedModelHandler:
                 500,
             )
         try:
-            # Check for custom endpoint configuration
-            custom_config = get_custom_endpoint_config(self.model_id, "gemini")
-            
-            # Get API key from custom config or environment
-            if custom_config:
-                api_key = custom_config.api_key
-                print(f"Using custom Gemini endpoint for model: {self.model_id}")
-            else:
-                api_key = os.getenv("GEMINI_API_KEY")
+            # Get API key from environment
+            api_key = os.getenv("GEMINI_API_KEY")
                 
             if not api_key:
                 raise ModelHandlerError("Gemini API key not available", 500)
@@ -536,27 +456,18 @@ class UnifiedModelHandler:
             import httpx
             from openai import OpenAI
             
-            # Check for custom endpoint configuration
-            custom_config = get_custom_endpoint_config(self.model_id, "caii")
+            # Get API key from environment/JWT
+            API_KEY = _get_caii_token()
+            MODEL_ID = self.model_id
             
-            if custom_config:
-                # Use custom endpoint configuration
-                # If cdp_token is provided in custom config, use it; otherwise fall back to environment/JWT
-                API_KEY = custom_config.cdp_token if custom_config.cdp_token else _get_caii_token()
-                MODEL_ID = self.model_id
-                caii_endpoint = custom_config.endpoint_url
-                print(f"Using custom CAII endpoint for model: {self.model_id}")
-            else:
-                # Fallback to environment variables and initialization parameters
-                API_KEY = _get_caii_token()
-                MODEL_ID = self.model_id
-                caii_endpoint = self.caii_endpoint
+            # Endpoint URL must come from client (self.caii_endpoint)
+            caii_endpoint = self.caii_endpoint
             
             if not API_KEY:
                 raise ModelHandlerError("CAII API key not available", 500)
                 
             if not caii_endpoint:
-                raise ModelHandlerError("CAII endpoint not provided", 500)
+                raise ModelHandlerError("CAII endpoint URL is required but not provided", 400)
             
             caii_endpoint = caii_endpoint.removesuffix('/chat/completions')
             

@@ -65,8 +65,11 @@ SeedsInstructions.json
 nm.json
 french_input.json
 
-# Custom endpoint configurations (contains sensitive credentials)
-custom_model_endpoints.json
+# Credential storage file (contains sensitive credentials)
+.credentials.env.json
+
+# Model catalog (dynamically generated, environment-specific)
+model_catalog.json
 
 # DB
 *metadata.db-shm

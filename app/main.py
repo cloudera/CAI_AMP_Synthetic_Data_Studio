@@ -43,7 +43,7 @@ sys.path.append(str(ROOT_DIR))
 
 from app.services.evaluator_service import EvaluatorService
 from app.services.evaluator_legacy_service import EvaluatorLegacyService
-from app.models.request_models import SynthesisRequest, EvaluationRequest, Export_synth, ModelParameters, CustomPromptRequest, JsonDataSize, RelativePath, Technique, AddCustomEndpointRequest, CustomEndpointListResponse
+from app.models.request_models import SynthesisRequest, EvaluationRequest, Export_synth, ModelParameters, CustomPromptRequest, JsonDataSize, RelativePath, Technique, AddCustomEndpointRequest, CustomEndpointListResponse, SetCredentialsRequest, TestEndpointRequest
 from app.services.synthesis_service import SynthesisService
 from app.services.synthesis_legacy_service import SynthesisLegacyService
 from app.services.export_results import Export_Service
@@ -59,7 +59,8 @@ from app.migrations.alembic_manager import AlembicMigrationManager
 from app.core.config import responses, caii_check
 from app.core.path_manager import PathManager
 from app.core.model_endpoints import collect_model_catalog, sort_unique_models, list_bedrock_models
-from app.core.custom_endpoint_manager import CustomEndpointManager
+from app.core.credential_manager import CredentialManager
+from app.core.model_catalog_manager import ModelCatalogManager
 
 # from app.core.telemetry_middleware import TelemetryMiddleware
 # from app.routes.telemetry_routes import router as telemetry_router
@@ -75,7 +76,6 @@ evaluator_service = EvaluatorService()  # Freeform only
 evaluator_legacy_service = EvaluatorLegacyService()  # SFT and Custom_Workflow
 export_service = Export_Service()
 db_manager = DatabaseManager()
-custom_endpoint_manager = CustomEndpointManager()
 
 
 #Initialize path manager
@@ -261,6 +261,31 @@ async def lifespan(app: FastAPI):
         print(f"Migration completed: {result.stdout}")
     except subprocess.CalledProcessError as e:
         print(f"Migration warning: {e.stderr}")
+    
+    # Initialize credentials from .credentials.env.json or seed from environment
+    print("Initializing credentials...")
+    CredentialManager.initialize()
+    print("✅ Credentials initialized successfully")
+    
+    # Initialize model catalog - load from file or build new one
+    print("Initializing model catalog...")
+    try:
+        if ModelCatalogManager.catalog_exists():
+            # Load existing catalog from file
+            catalog = ModelCatalogManager.load_catalog()
+            summary = ModelCatalogManager.get_catalog_summary()
+            total_models = sum(summary.values())
+            print(f"✅ Model catalog loaded from file: {total_models} models across {len(summary)} providers")
+        else:
+            # First startup - build and save catalog
+            print("Building initial model catalog (no health checks)...")
+            catalog = await collect_model_catalog()
+            ModelCatalogManager.save_catalog(catalog)
+            summary = ModelCatalogManager.get_catalog_summary()
+            total_models = sum(summary.values())
+            print(f"✅ Model catalog created: {total_models} models across {len(summary)} providers")
+    except Exception as e:
+        print(f"⚠️  Warning: Failed to initialize model catalog: {e}")
     
     yield
     print("Application shutting down...")
@@ -768,23 +793,43 @@ async def get_model_id():
 
 @app.get("/model/model_id_filter", include_in_schema=True)
 async def get_model_id_filtered():
-
     """
-    Return two lists per provider: **enabled** (responds within 5 s) and **disabled**.
-    CAII is queried only when running inside a CDP project and it returns pair of endpoints and model IDs.
+    Return model catalog for all providers.
+    
+    The catalog is loaded from persistent storage (model_catalog.json).
+    It gets updated when:
+    - Application starts/restarts
+    - New custom endpoints are added
+    
+    Use /test_model_endpoint to verify individual models work.
     """
     try:
-        models = await collect_model_catalog()
+        models = ModelCatalogManager.load_catalog()
+        
+        # If catalog is empty, return minimal structure
+        if not models:
+            models = {
+                "aws_bedrock": [],
+                "CAII": [],
+                "openai": [],
+                "google_gemini": [],
+                "openai_compatible": [],
+            }
+        
+        return {"models": models}
+        
     except Exception as exc:
-        # Fail closed – return *something* so the UI never breaks
-        models = {
-            "aws_bedrock": {"enabled": [], "disabled": []},
-            "CAII":        {"enabled": [], "disabled": []},
+        # Fail closed – return empty structure so the UI never breaks
+        print(f"Error loading model catalog: {exc}")
+        return {
+            "models": {
+                "aws_bedrock": [],
+                "CAII": [],
+                "openai": [],
+                "google_gemini": [],
+                "openai_compatible": [],
+            }
         }
-        # Log for operators
-        print("Error while building model catalog: ", exc)
-
-    return {"models": models}
     
 
 @app.get("/use-cases", include_in_schema=True)
@@ -1484,142 +1529,179 @@ async def perform_upgrade():
 # ────────────────────────────────────────────────────────────────
 
 @app.post("/add_model_endpoint", include_in_schema=True, responses=responses,
-          description="Add a custom model endpoint")
+          description="Add a custom model endpoint to the catalog")
 async def add_custom_model_endpoint(request: AddCustomEndpointRequest):
-    """Add a new custom model endpoint"""
+    """
+    Add a new custom model endpoint to the model catalog.
+    
+    For CAII and OpenAI Compatible endpoints, include the endpoint_url.
+    For other providers (OpenAI, Gemini, Bedrock), only model_id is needed.
+    """
     try:
-        unique_key = custom_endpoint_manager.add_endpoint(request.endpoint_config)
+        endpoint_config = request.endpoint_config
+        
+        # Map provider type to catalog key
+        provider_map = {
+            "bedrock": "aws_bedrock",
+            "openai": "openai",
+            "openai_compatible": "openai_compatible",
+            "gemini": "google_gemini",
+            "caii": "CAII"
+        }
+        
+        catalog_key = provider_map.get(endpoint_config.provider_type, endpoint_config.provider_type)
+        
+        # Prepare model data
+        if endpoint_config.provider_type in ["caii", "openai_compatible"]:
+            # Need endpoint URL
+            if not endpoint_config.endpoint_url:
+                raise HTTPException(400, f"{endpoint_config.provider_type} requires endpoint_url")
+            
+            model_data = {
+                "model": endpoint_config.model_id,
+                "endpoint": endpoint_config.endpoint_url
+            }
+        else:
+            # Just model ID
+            model_data = endpoint_config.model_id
+        
+        # Add to catalog
+        ModelCatalogManager.add_model_to_catalog(catalog_key, model_data)
         
         return {
             "status": "success",
-            "message": f"Custom endpoint for '{request.endpoint_config.model_id}' ({request.endpoint_config.provider_type}) added successfully",
-            "model_id": request.endpoint_config.model_id,
-            "provider_type": request.endpoint_config.provider_type,
-            "unique_key": unique_key
+            "message": f"Model '{endpoint_config.model_id}' added to catalog ({endpoint_config.provider_type})",
+            "model_id": endpoint_config.model_id,
+            "provider_type": endpoint_config.provider_type
         }
         
-    except APIError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to add custom endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to add model to catalog: {str(e)}")
 
 
-@app.get("/custom_model_endpoints", include_in_schema=True, responses=responses,
-         description="List all custom model endpoints", response_model=CustomEndpointListResponse)
-async def list_custom_model_endpoints(provider_type: Optional[str] = None):
-    """List all custom model endpoints, optionally filtered by provider type"""
+@app.delete("/remove_model_endpoint/{model_id}/{provider_type}", include_in_schema=True, responses=responses,
+           description="Remove a model from the catalog")
+async def remove_model_endpoint(model_id: str, provider_type: str):
+    """Remove a model from the model catalog"""
     try:
-        if provider_type:
-            endpoints = custom_endpoint_manager.get_endpoints_by_provider(provider_type)
-        else:
-            endpoints = custom_endpoint_manager.get_all_endpoints()
+        # Map provider type to catalog key
+        provider_map = {
+            "bedrock": "aws_bedrock",
+            "openai": "openai",
+            "openai_compatible": "openai_compatible",
+            "gemini": "google_gemini",
+            "caii": "CAII"
+        }
         
-        return CustomEndpointListResponse(
-            endpoints=endpoints,
-            total=len(endpoints)
+        catalog_key = provider_map.get(provider_type, provider_type)
+        
+        success = ModelCatalogManager.remove_model_from_catalog(catalog_key, model_id)
+        
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model '{model_id}' not found in catalog for provider '{provider_type}'"
+            )
+        
+        return {
+            "status": "success",
+            "message": f"Model '{model_id}' removed from catalog ({provider_type})"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to remove model from catalog: {str(e)}")
+
+
+# ==================== Credential Management Endpoints ====================
+
+@app.post("/set_credentials", include_in_schema=True, responses=responses,
+         description="Set credentials for model providers")
+async def set_credentials(request: SetCredentialsRequest):
+    """
+    Set credentials for model providers.
+    
+    Credentials are stored in environment variables and persisted to .credentials.env.json.
+    They will persist across app restarts.
+    
+    Example credentials by provider:
+    - CAII: {"CDP_TOKEN": "eyJhbGc..."}
+    - OpenAI: {"OPENAI_API_KEY": "sk-..."}
+    - OpenAI Compatible: {"OpenAI_Endpoint_Compatible_Key": "sk-..."}
+    - Gemini: {"GOOGLE_API_KEY": "AIza..."}
+    - Bedrock: {"AWS_ACCESS_KEY_ID": "AKIA...", "AWS_SECRET_ACCESS_KEY": "...", "AWS_REGION": "us-west-2"}
+    """
+    try:
+        result = CredentialManager.set_credentials(request.credentials)
+        
+        return {
+            "status": "success",
+            "message": f"Successfully updated {result['updated']} and added {result['new']} credentials",
+            "updated_count": result['updated'],
+            "new_count": result['new'],
+            "credentials_set": list(request.credentials.keys())
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to set credentials: {str(e)}")
+
+
+@app.get("/credentials/status", include_in_schema=True, responses=responses,
+        description="Check which credentials are currently set")
+async def get_credentials_status():
+    """
+    Get the status of all managed credentials.
+    
+    Returns which credential keys are set (does not return actual values for security).
+    """
+    try:
+        credentials_status = CredentialManager.list_available_credentials()
+        
+        return {
+            "status": "success",
+            "credentials": credentials_status
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get credentials status: {str(e)}")
+
+
+@app.post("/test_model_endpoint", include_in_schema=True, responses=responses,
+         description="Test a model endpoint with actual inference")
+async def test_model_endpoint(request: TestEndpointRequest):
+    """
+    Test a model endpoint by making a simple inference call.
+    
+    Uses credentials from environment variables (set via /set_credentials).
+    For CAII and OpenAI Compatible endpoints, endpoint_url MUST be provided by client.
+    
+    Returns inference result with small prompt to verify model actually works.
+    """
+    from app.core.inference_test import test_inference
+    
+    try:
+        result = await test_inference(
+            provider_type=request.provider_type,
+            model_id=request.model_id,
+            endpoint_url=request.endpoint_url
         )
         
-    except APIError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+        # If failed, return 400 for client errors, 503 for server errors
+        if result["status"] == "failed":
+            if "not set" in result.get("message", "") or "required" in result.get("message", ""):
+                raise HTTPException(status_code=400, detail=result)
+            else:
+                raise HTTPException(status_code=503, detail=result)
+        
+        return result
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list custom endpoints: {str(e)}")
-
-
-@app.get("/custom_model_endpoints/{model_id}/{provider_type}", include_in_schema=True, responses=responses,
-         description="Get a specific custom model endpoint")
-async def get_custom_model_endpoint(model_id: str, provider_type: str):
-    """Get details of a specific custom model endpoint"""
-    try:
-        endpoint = custom_endpoint_manager.get_endpoint(model_id, provider_type)
-        
-        if not endpoint:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Custom endpoint for model '{model_id}' with provider '{provider_type}' not found"
-            )
-        
-        return {
-            "status": "success",
-            "endpoint": endpoint
-        }
-        
-    except APIError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get custom endpoint: {str(e)}")
-
-
-@app.put("/custom_model_endpoints/{model_id}/{provider_type}", include_in_schema=True, responses=responses,
-         description="Update a custom model endpoint")
-async def update_custom_model_endpoint(model_id: str, provider_type: str, request: AddCustomEndpointRequest):
-    """Update an existing custom model endpoint"""
-    try:
-        # Ensure the model_id and provider_type in the request match the URL parameters
-        if request.endpoint_config.model_id != model_id or request.endpoint_config.provider_type != provider_type:
-            raise HTTPException(
-                status_code=400,
-                detail="Model ID and provider type in request body must match the URL parameters"
-            )
-        
-        success = custom_endpoint_manager.update_endpoint(model_id, provider_type, request.endpoint_config)
-        
-        if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Custom endpoint for model '{model_id}' with provider '{provider_type}' not found"
-            )
-        
-        return {
-            "status": "success",
-            "message": f"Custom endpoint for '{model_id}' ({provider_type}) updated successfully"
-        }
-        
-    except APIError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update custom endpoint: {str(e)}")
-
-
-@app.delete("/custom_model_endpoints/{model_id}/{provider_type}", include_in_schema=True, responses=responses,
-           description="Delete a custom model endpoint")
-async def delete_custom_model_endpoint(model_id: str, provider_type: str):
-    """Delete a custom model endpoint"""
-    try:
-        success = custom_endpoint_manager.delete_endpoint(model_id, provider_type)
-        
-        if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Custom endpoint for model '{model_id}' with provider '{provider_type}' not found"
-            )
-        
-        return {
-            "status": "success",
-            "message": f"Custom endpoint for '{model_id}' ({provider_type}) deleted successfully"
-        }
-        
-    except APIError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete custom endpoint: {str(e)}")
-
-
-@app.get("/custom_model_endpoints_stats", include_in_schema=True, responses=responses,
-         description="Get statistics about custom model endpoints")
-async def get_custom_model_endpoints_stats():
-    """Get statistics about custom model endpoints"""
-    try:
-        stats = custom_endpoint_manager.get_endpoint_stats()
-        
-        return {
-            "status": "success",
-            "stats": stats
-        }
-        
-    except APIError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get endpoint statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}")
 
 
 #****** comment below for testing just backend**************

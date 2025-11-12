@@ -283,70 +283,120 @@ class CustomPromptRequest(BaseModel):
     )
 
 
-# Custom Endpoint Models 
-class CustomCAIIEndpoint(BaseModel):
-    """Custom CAII endpoint - needs custom URL"""
+# Custom Endpoint Models - Simplified (No Credentials Stored)
+# Credentials are managed separately via CredentialManager and environment variables
+
+class CustomEndpointBase(BaseModel):
+    """
+    Base model for custom endpoints.
+    
+    Only stores metadata (model_id, provider_type, optional endpoint_url).
+    Credentials are managed separately via environment variables.
+    """
     model_id: str = Field(..., description="Model identifier")
-    provider_type: str = Field(default="caii", description="Provider type")
-    endpoint_url: str = Field(..., description="CAII endpoint URL")
-    cdp_token: Optional[str] = Field(default=None, description="CDP token for authentication (optional, falls back to CDP_TOKEN env var or /tmp/jwt)")
+    provider_type: str = Field(..., description="Provider type: 'caii', 'bedrock', 'openai', 'openai_compatible', 'gemini'")
+    endpoint_url: Optional[str] = Field(default=None, description="Endpoint URL (required for CAII and OpenAI Compatible)")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "model_id": "meta/llama-3.1-70b-instruct",
+                    "provider_type": "caii",
+                    "endpoint_url": "https://caii-prod.site/endpoints/llama/v1/chat/completions"
+                },
+                {
+                    "model_id": "gpt-4",
+                    "provider_type": "openai"
+                },
+                {
+                    "model_id": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+                    "provider_type": "bedrock"
+                }
+            ]
+        }
+    )
 
 
-class CustomBedrockEndpoint(BaseModel):
-    """Custom Bedrock endpoint - uses standard AWS Bedrock API"""
-    model_id: str = Field(..., description="Model identifier")
-    provider_type: str = Field(default="bedrock", description="Provider type")
-    aws_access_key_id: str = Field(..., description="AWS Access Key ID")
-    aws_secret_access_key: str = Field(..., description="AWS Secret Access Key")
-    aws_region: str = Field(default="us-west-2", description="AWS region")
-
-
-class CustomOpenAIEndpoint(BaseModel):
-    """Custom OpenAI endpoint - uses standard OpenAI API"""
-    model_id: str = Field(..., description="Model identifier")
-    provider_type: str = Field(default="openai", description="Provider type")
-    api_key: str = Field(..., description="OpenAI API key")
-
-
-class CustomOpenAICompatibleEndpoint(BaseModel):
-    """Custom OpenAI Compatible endpoint - needs custom URL"""
-    model_id: str = Field(..., description="Model identifier")
-    provider_type: str = Field(default="openai_compatible", description="Provider type")
-    endpoint_url: str = Field(..., description="OpenAI compatible endpoint URL")
-    api_key: str = Field(..., description="API key for authentication")
-
-
-class CustomGeminiEndpoint(BaseModel):
-    """Custom Gemini endpoint - uses standard Gemini API"""
-    model_id: str = Field(..., description="Model identifier")
-    provider_type: str = Field(default="gemini", description="Provider type")
-    api_key: str = Field(..., description="Gemini API key")
-
-
-# Union type for all custom endpoint types
-CustomEndpoint = Union[
-    CustomCAIIEndpoint,
-    CustomBedrockEndpoint, 
-    CustomOpenAIEndpoint,
-    CustomOpenAICompatibleEndpoint,
-    CustomGeminiEndpoint
-]
+# Alias for backward compatibility
+CustomEndpoint = CustomEndpointBase
 
 
 class AddCustomEndpointRequest(BaseModel):
     """Request model for adding custom endpoints"""
-    endpoint_config: CustomEndpoint = Field(..., description="Custom endpoint configuration")
+    endpoint_config: CustomEndpointBase = Field(..., description="Custom endpoint configuration")
     
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "endpoint_config": {
-                    "model_id": "claude-3-sonnet-20240229",
-                    "provider_type": "openai_compatible",
-                    "endpoint_url": "https://my-endpoint.com/v1",
-                    "api_key": "sk-..."
+                    "model_id": "meta/llama-3.1-70b-instruct",
+                    "provider_type": "caii",
+                    "endpoint_url": "https://caii-prod.site/endpoints/llama/v1/chat/completions"
                 }
             }
+        }
+    )
+
+
+class SetCredentialsRequest(BaseModel):
+    """
+    Request model for setting credentials.
+    
+    Credentials are stored in environment variables and persisted to .credentials.env.json.
+    They are NOT stored in the endpoint configuration.
+    """
+    credentials: Dict[str, str] = Field(..., description="Dictionary of credential key-value pairs")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "credentials": {
+                        "CDP_TOKEN": "eyJhbGc...",
+                        "OPENAI_API_KEY": "sk-..."
+                    }
+                },
+                {
+                    "credentials": {
+                        "AWS_ACCESS_KEY_ID": "AKIA...",
+                        "AWS_SECRET_ACCESS_KEY": "...",
+                        "AWS_REGION": "us-west-2"
+                    }
+                }
+            ]
+        }
+    )
+
+
+class TestEndpointRequest(BaseModel):
+    """
+    Request model for testing model endpoints.
+    
+    Tests endpoint using existing environment variables (no credentials in request).
+    User must set credentials first via /set_credentials.
+    """
+    provider_type: str = Field(..., description="Provider type: 'caii', 'bedrock', 'openai', 'openai_compatible', 'gemini'")
+    model_id: str = Field(..., description="Model identifier")
+    endpoint_url: Optional[str] = Field(default=None, description="Endpoint URL (optional, will lookup from saved endpoints if not provided)")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                   "provider_type": "bedrock",
+                    "model_id": "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+                },
+                {
+                    "provider_type": "openai",
+                    "model_id": "gpt-4"
+                },
+                {
+                    "provider_type": "caii",
+                    "model_id": "llama-3.1-70b-instruct",
+                    "endpoint_url": "https://caii-prod.site/endpoints/llama/v1/chat/completions"
+                }
+            ]
         }
     )
 

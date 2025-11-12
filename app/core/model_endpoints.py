@@ -47,20 +47,10 @@ def sort_unique_models(models: List[str]) -> List[str]:
 # ────────────────────────────────────────────────────────────────
 def list_openai_models() -> List[str]:
     """Return curated list of latest OpenAI text generation models, sorted by release date (newest first)."""
-    # Based on research - only most relevant latest text-to-text models
-    models = [
-        "gpt-4.1",               # Latest GPT-4.1 series (April 2025)
-        "gpt-4.1-mini", 
-        "gpt-4.1-nano",
-        "o3",                    # Latest reasoning models (April 2025) 
-        "o4-mini",
-        "o3-mini",               # January 2025
-        "o1",                    # December 2024
-        "gpt-4o",                # November 2024
-        "gpt-4o-mini",           # July 2024
-        "gpt-4-turbo",           # April 2024
-        "gpt-3.5-turbo"          # Legacy but still widely used
-    ]
+    # Latest text-to-text models
+    models = ["gpt-5", "gpt-5-mini", 
+            "gpt-5-nano", "gpt-4.1"]
+    
     return models
 
 
@@ -106,16 +96,12 @@ async def health_openai(models: List[str], concurrency: int = 5) -> Tuple[List[s
 # ────────────────────────────────────────────────────────────────
 def list_gemini_models() -> List[str]:
     """Return curated list of latest Gemini text generation models, sorted by release date (newest first)."""
-    # Based on research - only most relevant latest text-to-text models
+    # Latest text-to-text models 
     models = [
-        "gemini-2.5-pro",           # June 2025 - most powerful thinking model
-        "gemini-2.5-flash",         # June 2025 - best price-performance  
-        "gemini-2.5-flash-lite",    # June 2025 - cost-efficient
-        "gemini-2.0-flash",         # February 2025 - next-gen features
-        "gemini-2.0-flash-lite",    # February 2025 - low latency
-        "gemini-1.5-pro",           # September 2024 - complex reasoning
-        "gemini-1.5-flash",         # September 2024 - fast & versatile
-        "gemini-1.5-flash-8b"       # October 2024 - lightweight
+        "gemini-2.5-pro",          
+        "gemini-2.5-flash",        
+        "gemini-2.5-flash-lite",    
+            
     ]
     return models
 
@@ -293,7 +279,7 @@ def list_caii_models() -> list[_CaiiPair]:
         {"key": "task", "value": "TEXT_GENERATION"},
         {"key": "state", "value": "Loaded"},
     ]}
-    _, eps = cmlendpoints.list_endpoints(apps, filt)
+    eps = cmlendpoints.list_endpoints(apps, filt)
 
     return [{"model": e["model_name"], "endpoint": e["url"]} for e in eps]
 
@@ -324,82 +310,83 @@ async def health_caii(pairs: list[_CaiiPair],
 # Single orchestrator used by the api endpoint
 # ────────────────────────────────────────────────────────────────
 async def collect_model_catalog() -> Dict[str, Dict[str, List[str]]]:
-    """Collect and health-check models from all providers, including custom endpoints."""
+    """
+    Collect models from all providers.
     
-    # Import here to avoid circular imports
-    from app.core.custom_endpoint_manager import CustomEndpointManager
+    Health checks are DISABLED - use /test_model_endpoint to verify individual models.
+    Models are stored persistently and only updated when new endpoints are added.
+    """
     
-    # Bedrock
+    # Bedrock - just get the list, no health checks
     bedrock_all = list_bedrock_models()
-    bedrock_enabled, bedrock_disabled = await health_bedrock(bedrock_all)
-
-    # OpenAI  
+    
+    # OpenAI - just get the list, no health checks
     openai_all = list_openai_models()
-    openai_enabled, openai_disabled = await health_openai(openai_all)
-
-    # Gemini
-    gemini_all = list_gemini_models() 
-    gemini_enabled, gemini_disabled = await health_gemini(gemini_all)
-
+    
+    # Gemini - just get the list, no health checks
+    gemini_all = list_gemini_models()
+    
+    # Build catalog without health checks
     catalog: Dict[str, Dict[str, List[str]]] = {
-        "aws_bedrock": {
-            "enabled": bedrock_enabled,
-            "disabled": bedrock_disabled,
-        },
-        "openai": {
-            "enabled": openai_enabled,
-            "disabled": openai_disabled,
-        },
-        "google_gemini": {
-            "enabled": gemini_enabled,
-            "disabled": gemini_disabled,
-        },
-        "openai_compatible": {
-            "enabled": [],
-            "disabled": [],
-        }
+        "aws_bedrock": bedrock_all,
+        "openai": openai_all,
+        "google_gemini": gemini_all,
+        "openai_compatible": [],
     }
-
+    
     # CAII (only on-cluster)
     if os.getenv("CDSW_PROJECT_ID", "local") != "local":
         caii_all = list_caii_models()
-        caii_enabled, caii_disabled = await health_caii(caii_all)
-        catalog["CAII"] = {
-            "enabled": caii_enabled,      # list[{"model":…, "endpoint":…}]
-            "disabled": caii_disabled,
-        }
+        catalog["CAII"] = caii_all  # list[{"model":…, "endpoint":…}]
     else:
-        catalog["CAII"] = {}
-
-    # Add custom endpoints
-    try:
-        custom_manager = CustomEndpointManager()
-        custom_endpoints = custom_manager.get_all_endpoints()
-        
-        for endpoint in custom_endpoints:
-            provider_key = _get_catalog_key_for_provider(endpoint.provider_type)
-            
-            if provider_key not in catalog:
-                catalog[provider_key] = {"enabled": [], "disabled": []}
-            
-            # For now, assume custom endpoints are enabled (we could add health checks later)
-            if endpoint.provider_type in ["caii"]:
-                # CAII format: {"model": name, "endpoint": url}
-                catalog[provider_key]["enabled"].append({
-                    "model": endpoint.model_id,
-                    "endpoint": getattr(endpoint, 'endpoint_url', ''),
-                    "custom": True
-                })
-            else:
-                # Other providers: just the model name with custom metadata
-                catalog[provider_key]["enabled"].append({
-                    "model": endpoint.model_id,
-                    "custom": True,
-                    "provider_type": endpoint.provider_type
-                })
-                
-    except Exception as e:
-        print(f"Warning: Failed to load custom endpoints: {e}")
+        catalog["CAII"] = []
+    
+    # ============ HEALTH CHECKS DISABLED ============
+    # Health checks commented out - use /test_model_endpoint to verify models
+    # This improves startup time and allows offline operation
+    
+    # # Bedrock
+    # bedrock_all = list_bedrock_models()
+    # bedrock_enabled, bedrock_disabled = await health_bedrock(bedrock_all)
+    
+    # # OpenAI  
+    # openai_all = list_openai_models()
+    # openai_enabled, openai_disabled = await health_openai(openai_all)
+    
+    # # Gemini
+    # gemini_all = list_gemini_models() 
+    # gemini_enabled, gemini_disabled = await health_gemini(gemini_all)
+    
+    # catalog: Dict[str, Dict[str, List[str]]] = {
+    #     "aws_bedrock": {
+    #         "enabled": bedrock_enabled,
+    #         "disabled": bedrock_disabled,
+    #     },
+    #     "openai": {
+    #         "enabled": openai_enabled,
+    #         "disabled": openai_disabled,
+    #     },
+    #     "google_gemini": {
+    #         "enabled": gemini_enabled,
+    #         "disabled": gemini_disabled,
+    #     },
+    #     "openai_compatible": {
+    #         "enabled": [],
+    #         "disabled": [],
+    #     }
+    # }
+    
+    # # CAII (only on-cluster)
+    # if os.getenv("CDSW_PROJECT_ID", "local") != "local":
+    #     caii_all = list_caii_models()
+    #     caii_enabled, caii_disabled = await health_caii(caii_all)
+    #     catalog["CAII"] = {
+    #         "enabled": caii_enabled,      # list[{"model":…, "endpoint":…}]
+    #         "disabled": caii_disabled,
+    #     }
+    # else:
+    #     catalog["CAII"] = {}
+    # ============ END HEALTH CHECKS ============
 
     return catalog
 
