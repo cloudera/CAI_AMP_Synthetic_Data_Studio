@@ -23,7 +23,7 @@ export const useFetchExamples = (useCase: string): UseFetchApiReturn<FetchExampl
 }
 
 export const useFetchModels = (): UseFetchApiReturn<FetchModelsResp> => {
-    const url = `${baseUrl}/model/model_ID`;
+    const url = `${baseUrl}/model/model_id_filter`;
     return useFetch(url);
 }
 

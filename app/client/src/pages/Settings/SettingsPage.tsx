@@ -7,16 +7,20 @@ import { sortItemsByKey } from "../../utils/sortutils";
 import Paragraph from "antd/es/typography/Paragraph";
 import StyledTitle from "../Evaluator/StyledTitle";
 import Toolbar from "./Toolbar";
-import AddModelProviderButton, { ModelProviderType } from "./AddModelProviderButton";
+// ModelProviderType
 import DateTime from "../../components/DateTime/DateTime";
 import {
     EditOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    CheckOutlined,
+    CloseOutlined
   } from '@ant-design/icons';
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import EditModelProvider from "./EditModelProvider";
+import { useEffect, useState } from "react";
 import isEmpty from "lodash/isEmpty";
+import SetModelProviderCredentials from "./SeModelProviderCredentials";
+import { ModelProviderCredentials, ModelProviderType } from "./types";
+import { find, isEqual } from "lodash";
 
 
 
@@ -77,116 +81,111 @@ const StyledButton = styled(Button)`
     margin-left: 8px;
 `;
 
+enum ModelProvideTypeKey {
+  OPENAI_API_KEY = 'OPENAI_API_KEY',
+  GEMINI_API_KEY = 'GEMINI_API_KEY',
+  CDP_TOKEN = 'CDP_TOKEN',
+  OPENAI_ENDPOINT_COMPATIBLE_KEY = 'OpenAI_Endpoint_Compatible_Key',
+  AWS_ACCESS_KEY_ID = 'AWS_ACCESS_KEY_ID',
+  AWS_SECRET_ACCESS_KEY = 'AWS_SECRET_ACCESS_KEY'
+}
+
+interface ProviderCredential {
+  key: string;
+  is_set: boolean;
+}
+
+const getModelProviderKey = (type: ModelProvideTypeKey, credentials: ProviderCredential[]) => {
+  const providerType = find(credentials, { key: type});
+  return providerType?.is_set === true;
+}
+
 const SettingsPage: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
-    const [model, setModel] = useState<CustomModel | null>(null);
-    const filteredModelsReq = useModelProviders();   
-    const customModels = get(filteredModelsReq, 'data.endpoints', []);
+    const [modelProviderCredentials, setModelProviderCredentials] = useState<ModelProviderCredentials[]>([]);
+    const [model, setModel] = useState<ModelProviderCredentials | null>(null);
+    const filteredModelsReq = useModelProviders();
+    const credentials = get(filteredModelsReq, 'data.credentials', []);
 
-    const mutation = useMutation({
-        mutationFn: deleteModelProvider
-    });
-   
-    const onDelete = (model: CustomModel) => {
-        Modal.confirm({
-          content: (
-            <span>{`Are you sure you want to delete the model \'${model.display_name}\'`}</span>
-          ),
-          onOk: async () => {
-            try {
-                mutation.mutate({
-                    endpoint_id: model.endpoint_id
-                })
-            } catch (error) {
-              notification.error({
-                message: "Error",
-                description: error instanceof Error ? error.message : String(error),
-              });
-            }
-            filteredModelsReq.refetch();
-          },
-          title: 'Confirm'
+
+    useEffect(() => {
+      if (!isEmpty(credentials)) {
+        const _modelProviderCredentials: ModelProviderCredentials[] = [];
+        _modelProviderCredentials.push({
+          providerType: ModelProviderType.OPENAI,
+          isSet: getModelProviderKey(ModelProvideTypeKey.OPENAI_API_KEY, credentials)
         });
-      };
+        _modelProviderCredentials.push({
+          providerType: ModelProviderType.GEMINI,
+          isSet: getModelProviderKey(ModelProvideTypeKey.GEMINI_API_KEY, credentials)
+        });
+        _modelProviderCredentials.push({
+          providerType: ModelProviderType.OPENAI_COMPATIBLE,
+          isSet: getModelProviderKey(ModelProvideTypeKey.OPENAI_ENDPOINT_COMPATIBLE_KEY, credentials)
+        });
+        _modelProviderCredentials.push({
+          providerType: ModelProviderType.AWS_BEDROCK,
+          isSet: getModelProviderKey(ModelProvideTypeKey.AWS_ACCESS_KEY_ID, credentials)
+        });
+        _modelProviderCredentials.push({
+          providerType: ModelProviderType.CAII,
+          isSet: getModelProviderKey(ModelProvideTypeKey.CDP_TOKEN, credentials)
+        });
+        if (!isEqual(_modelProviderCredentials, modelProviderCredentials)) {
+          setModelProviderCredentials(_modelProviderCredentials)
+        }
+      }
+      
+    }, [credentials, filteredModelsReq.data]);
 
-    const onEdit = (_model: CustomModel) => {
+    const onEdit = (model: ModelProviderCredentials) => {
         setShowModal(true);
-        setModel(_model)
-        
-
+        setModel(model);
     }
 
-    const modelProvidersColumns = [{
-        key: 'model_id',
-        title: 'Model ID',
-        dataIndex: 'model_id',
-        width: 200,
-        sorter: sortItemsByKey('model_id') 
-      },{
-        key: 'provider_type',
+    const modelProvidersColumns = [
+      {
+        key: 'providerType',
         title: 'Provider Type',
-        dataIndex: 'provider_type',
-        width: 150,
+        dataIndex: 'providerType',
+        width: 350,
         sorter: sortItemsByKey('provider_type'),
         render: (provider_type: string) => {
-            if (provider_type === 'openai') {
+            if (provider_type === ModelProviderType.OPENAI) {
                 return 'OpenAI';
-            } else if (provider_type === 'openai_compatible') {
-                return 'OpenAI Compatible';    
+            } else if (provider_type === ModelProviderType.OPENAI_COMPATIBLE) {
+                return 'OpenAI Compatible';
             } else if (provider_type === ModelProviderType.GEMINI) {
-                return 'Gemini';
+                return 'Gemini';     
+            } else if (provider_type === ModelProviderType.AWS_BEDROCK) {
+                return 'AWS Bedrock';
             } else if (provider_type === ModelProviderType.CAII) {
                 return 'CAII';
             }
             return 'N/A'
         }
     }, {
-    //     key: 'created_at',
-    //     title: 'Created At',
-    //     dataIndex: 'created_at',
-    //     width: 200,
-    //     sorter: sortItemsByKey('created_at'),
-    //     render: (timestamp: string) => <>{timestamp == null ? 'N/A' : <DateTime dateTime={timestamp}/>}</>
-    // }, {
-        key: 'endpoint_url',
-        title: 'Endpoint',
-        dataIndex: 'endpoint_url',
-        width: 300,
-        sorter: sortItemsByKey('endpoint_url'),
-        render: (endpoint_url: string) => {
-          if (isEmpty(endpoint_url)) {
-            return 'N/A';
+        key: 'isSet',
+        title: 'Configured',
+        dataIndex: 'isSet',
+        width: 100,
+        sorter: sortItemsByKey('isSet'),
+        render: (is_set: boolean) => {
+          if (is_set) {
+            return <Flex><CheckOutlined style={{ color: 'green' }} /></Flex>
           }
-
-          return (
-            <Tooltip title={endpoint_url}>
-               <StyledParagraph style={{ width: 200, marginBottom: 0 }} ellipsis={{ rows: 1 }}>{endpoint_url}</StyledParagraph>
-            </Tooltip>
-          )
-
+          return <Flex><CloseOutlined style={{ color: 'red' }} /></Flex>;
         }
     }, {
         title: 'Actions',
         width: 100,
-        render: (model: CustomModel) => {
+        render: (model: ModelProviderCredentials) => {
             return (
                 <Flex>
                     <Tooltip title="Edit">
-                        <Button
-                            type="link"
-                            key={`${model.endpoint_id}-delete`}
-                            onClick={() => onDelete(model)}
-                            data-event-category="User Action"
-                            data-event="Delete"
-                        >
-                            <DeleteOutlined />
-                        </Button>
-                    </Tooltip>
-                    <Tooltip title="Edit">
                         <StyledButton
                             type="link"
-                            disabled={model?.provider_type === ModelProviderType.CAII}
-                            key={`${model.endpoint_id}-deploy`}
+                            key={`${model.providerType}-deploy`}
                             onClick={() => onEdit(model)}
                             data-event-category="User Action"
                             data-event="Edit"
@@ -208,28 +207,24 @@ const SettingsPage: React.FC = () => {
             
                 <br />
                 <br />
-                <Row style={{ marginTop: '26px' }}>
+                <Row style={{ marginTop: '12px' }}>
                     <Col sm={24}>
                       <Toolbar
                         left={
-                          <StyledTitle style={{ fontSize: '18px' }}>{'Custom Models'}</StyledTitle>
-                        }
-                        right={
-                          <Flex style={{ height: '100%', marginBottom: '12px' }}>
-                            <AddModelProviderButton refetch={filteredModelsReq.refetch} />
-                          </Flex>
+                          <StyledTitle style={{ fontSize: '18px' }}>{'Model Providers'}</StyledTitle>
                         }
                       />
                       <StyledTable 
-                        rowKey={(row: CustomModel) => `${row?.endpoint_id}`}
+                        rowKey={(row: ModelProviderCredentials) => `${row?.providerType}`}
                         tableLayout="fixed"
                         columns={modelProvidersColumns}
-                        dataSource={customModels || [] as CustomModel[]} />
+                        pagination={false}
+                        dataSource={modelProviderCredentials || [] as ModelProviderCredentials[]} />
                     </Col>
                 </Row>
                 </Container>
                 {showModal && 
-                    <EditModelProvider model={model as CustomModel} refetch={filteredModelsReq.refetch} onClose={() => setShowModal(false)} />}
+                    <SetModelProviderCredentials model={model as ModelProviderCredentials} refetch={filteredModelsReq.refetch} onClose={() => setShowModal(false)} />}
             </StyledContent>
         </Layout>        
     );

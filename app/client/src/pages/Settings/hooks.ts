@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { CustomModel } from "./SettingsPage";
+import { ModelProviderCredentials } from "./types";
 
 const BASE_API_URL = import.meta.env.VITE_AMP_URL;
 
 
 const fetchFilteredModels = async () => {
-    // const model_filtered_resp = await fetch(`${BASE_API_URL}/model/model_id_filter`, {
-    const model_filtered_resp = await fetch(`/custom_model_endpoints`, {    
+    const model_filtered_resp = await fetch(`/credentials/status`, {    
       method: 'GET',
     });
     return await model_filtered_resp.json();
@@ -53,8 +53,9 @@ export const useModelProviders = () => {
     };
 }
 
-export const addModelProvider = async (params: any) => {
-    const model_filtered_resp = await fetch(`/add_model_endpoint`, {    
+export const setCredentials = async (params: any) => {
+    console.log('setCredentials', params);
+    const model_filtered_resp = await fetch(`/set_credentials`, {    
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params)
@@ -62,7 +63,7 @@ export const addModelProvider = async (params: any) => {
     return await model_filtered_resp.json();
 }
 
-export const useGetModelProvider = (model: CustomModel) => {
+export const useGetModelProvider = (model: ModelProviderCredentials) => {
     
     const { data, isLoading, isError, refetch } = useQuery(
       {

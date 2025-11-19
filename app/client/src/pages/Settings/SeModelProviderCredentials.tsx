@@ -1,58 +1,49 @@
 import { useEffect, useState } from 'react';
-import { PlusCircleOutlined } from '@ant-design/icons';
-import { Alert, Button, Form, Input, Modal, notification, Radio, Select } from 'antd';
-import type { CheckboxGroupProps } from 'antd/es/checkbox';
-import get from 'lodash/get';
-import isEqual from 'lodash/isEqual';
+import { Alert, Form, Input, Modal, notification, Radio, Select } from 'antd';
 import { useMutation } from "@tanstack/react-query";
-import { addModelProvider, useGetModelProvider } from './hooks';
+import { setCredentials } from './hooks';
 import Loading from '../Evaluator/Loading';
-import { CustomModel } from './SettingsPage';
-import isEmpty from 'lodash/isEmpty';
-import { GEMINI_MODELS_OPTIONS, ModelProviderType, modelProviderTypeOptions, OPENAI_MODELS_OPTIONS } from './AddModelProviderButton';
+import { ModelProviderCredentials, ModelProviderType } from './types';
+import get from 'lodash/get';
 
 
 interface Props {
     refetch: () => void;
     onClose: () => void;
-    model: CustomModel;
+    model: ModelProviderCredentials;
 }
 
-const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
+export const modelProviderTypeOptions: CheckboxGroupProps<string>['options'] = [
+    { label: 'OpenAI', value: 'openai' },
+    { label: 'OpenAI Compatible', value: 'openai_compatible' },
+    { label: 'Gemini', value: 'gemini' },
+    { label: 'AWS Bedrock', value: 'aws_bedrock' },
+    { label: 'CAII', value: 'caii' },
+  ];
+
+const SetModelProviderCredentials: React.FC<Props> = ({ model, refetch, onClose }) => {
+    const { providerType } = model;
+    const [modelProviderType, setModelProviderType] = useState<ModelProviderType>(providerType);
     const [form] = Form.useForm();
-    const [modelProviderType, setModelProviderType] = useState<ModelProviderType>(ModelProviderType.OPENAI);
-    const modelProviderReq = useGetModelProvider(model);
-    const [models, setModels] = useState(OPENAI_MODELS_OPTIONS);
+    
     const mutation = useMutation({
-        mutationFn: addModelProvider
+        mutationFn: setCredentials
     });
-
-    useEffect(() => {
-        if (!isEmpty(modelProviderReq.data)) {
-            const endpoint = get(modelProviderReq, 'data.endpoint');
-            if (!isEmpty(endpoint)) {
-                form.setFieldsValue({
-                    ...endpoint
-                });
-                setModelProviderType(endpoint?.provider_type as ModelProviderType);
-            }
-        }
-    }, [modelProviderReq.data]);
-
 
     useEffect(() => {
         if (mutation.isError) {
             notification.error({
               message: 'Error',
-              description: `An error occurred while fetching the model.\n ${mutation.error}`
+              description: `An error occurred while setting credentials.\n ${mutation.error}`
             });
         }
         if (mutation.isSuccess) {
             notification.success({
                 message: 'Success',
-                description: `THe model provider has been edited successfully!.`
-              });
-          refetch();
+                description: `The credentials has been edited successfully!.`
+            });
+            onClose();  
+            refetch();
         }
     }, [mutation.error, mutation.isSuccess]);
 
@@ -65,42 +56,38 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
         try {
             await form.validateFields();
             const values = form.getFieldsValue();
+            delete values.provider_type;
             
             mutation.mutate({
-                endpoint_config: {
-                  display_name: values.display_name,
-                  endpoint_id: values.endpoint_id,
-                  model_id: values.model_id,
-                  provider_type: values.provider_type, 
-                  api_key: values.api_key,
-                  endpoint_url: values.endpoint_url
+                credentials: {
+                  ...values
                 }
             });
         } catch (error) {
             console.error(error);
         }
     };
-    
 
     const initialValues = {
-        provider_type: 'openai'
+        provider_type: providerType
     };
 
     const onChange = (e: any) => {
         const value = get(e, 'target.value');
-        if (value === 'openai' && !isEqual(OPENAI_MODELS_OPTIONS, models)) {
-            setModels(OPENAI_MODELS_OPTIONS);
-        } else if (value === 'gemini' && !isEqual(GEMINI_MODELS_OPTIONS, models)) {
-            setModels(GEMINI_MODELS_OPTIONS);
-        }
+        console.log('onChange', value);
+        setModelProviderType(value as ModelProviderType);
+        form.setFieldsValue({
+            ...form.getFieldsValue(),
+            provider_type: value
+        });
     }
 
     return (
         <>
             <Modal
                 visible
-                okText={`Edit`}
-                title={`Edit Model Provider`}
+                okText={`Save`}
+                title={`Configure Model Provider`}
                 onCancel={onCancel}
                 onOk={onSubmit}
                 width={800}
@@ -108,7 +95,7 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                 <Form form={form} layout="vertical" initialValues={initialValues}>
                     <br />
                     <br />
-                    {(mutation.isPending || modelProviderReq.isLoading) && <Loading />}
+                    {mutation.isPending && <Loading />}
                     {mutation.error && (
                         <Alert
                             type="error"
@@ -125,22 +112,11 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                             defaultValue="openai"
                             optionType="button"
                             buttonStyle="solid"
-                            style={{ width: '100%',  whiteSpace: 'nowrap' }}
                             onChange={onChange}
+                            style={{ width: '100%',  whiteSpace: 'nowrap' }}
                         />
                     </Form.Item>
-                    <Form.Item 
-                        name="model_id" 
-                        label="Model"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'This field is required.'
-                            }
-                        ]}>
-                            <Select options={models} />
-                    </Form.Item>
-                    {modelProviderType !== ModelProviderType.OPENAI && modelProviderType !== ModelProviderType.GEMINI && <Form.Item 
+                    {/* {providerType !== ModelProviderType.OPENAI && providerType !== ModelProviderType.GEMINI && <Form.Item 
                         name="endpoint_url" 
                         label="Endpoint URL" 
                         rules={[
@@ -150,9 +126,9 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                             }
                         ]}>
                             <Input />
-                    </Form.Item>}
-                    {modelProviderType !== ModelProviderType.AWS_BEDROCK && modelProviderType !== ModelProviderType.CAII && <Form.Item 
-                        name="api_key" 
+                    </Form.Item>} */}
+                    {modelProviderType === ModelProviderType.OPENAI && <Form.Item 
+                        name="OPENAI_API_KEY" 
                         label="API Key"
                         rules={[
                             {
@@ -163,8 +139,19 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                        <Input.Password />
                     </Form.Item>}
                     {modelProviderType === ModelProviderType.CAII && <Form.Item 
-                        name="cdp_token" 
+                        name="CDP_TOKEN" 
                         label="CDP Token"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'This field is required.'
+                            }
+                        ]}>
+                       <Input.Password />
+                    </Form.Item>}
+                    {modelProviderType === ModelProviderType.GEMINI && <Form.Item 
+                        name="GEMINI_API_KEY" 
+                        label="API Key"
                         rules={[
                             {
                                 required: true,
@@ -176,7 +163,7 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                     {modelProviderType === ModelProviderType.AWS_BEDROCK && 
                     <>
                       <Form.Item 
-                        name="aws_access_key_id:" 
+                        name="AWS_ACCESS_KEY_ID" 
                         label="Access Key"
                         rules={[
                             {
@@ -187,7 +174,7 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                        <Input.Password />
                     </Form.Item>
                     <Form.Item 
-                        name="aws_secret_access_key:" 
+                        name="AWS_SECRET_ACCESS_KEY" 
                         label="Secret Key"
                         rules={[
                             {
@@ -197,17 +184,6 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
                         ]}>
                        <Input.Password />
                     </Form.Item>
-                    <Form.Item 
-                        name="region:" 
-                        label="Region"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'This field is required.'
-                            }
-                        ]}>
-                       <Input />
-                    </Form.Item>
                     </>
                    }
                 </Form>
@@ -216,5 +192,5 @@ const EditModelProvider: React.FC<Props> = ({ model, refetch, onClose }) => {
     );
 }
 
-export default EditModelProvider;
+export default SetModelProviderCredentials;
 

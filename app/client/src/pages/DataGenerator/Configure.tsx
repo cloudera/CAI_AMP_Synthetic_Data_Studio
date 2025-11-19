@@ -14,11 +14,10 @@ import UseCaseSelector from './UseCaseSelector';
 import { useLocation, useParams } from 'react-router-dom';
 import { WizardModeType } from '../../types';
 import get from 'lodash/get';
-import forEach from 'lodash/forEach';
 import { useModelProviders } from '../Settings/hooks';
-import { ModelProviderType } from '../Settings/AddModelProviderButton';
 import { CustomModel } from '../Settings/SettingsPage';
 import filter from 'lodash/filter';
+import { ModelProviderType } from '../Settings/types';
 
 
 const StepContainer = styled(Flex)`
@@ -93,7 +92,8 @@ const Configure: FunctionComponent = () => {
     useEffect(() => {
         // set model providers
         // set model ids
-        if (formData && (formData?.inference_type === ModelProviderType.OPENAI || formData?.inference_type === ModelProviderType.GEMINI) && isEmpty(generate_file_name)) {
+        if (formData && (formData?.inference_type === ModelProviderType.OPENAI || 
+            formData?.inference_type === ModelProviderType.GEMINI) && isEmpty(generate_file_name)) {
             form.setFieldValue('inference_type', ModelProviders.OPENAI);
         }
 
@@ -177,14 +177,9 @@ const Configure: FunctionComponent = () => {
 
     const onModelProviderChange = (value: string) => {
         form.setFieldValue('model_id', undefined)
-        console.log('value', value);
-        if (ModelProviderType.OPENAI === value) {
-            const _models = filter(customModels, (model: CustomModel) => model.provider_type === ModelProviderType.OPENAI);
-            setModels(_models.map((_model: CustomModel) => _model.model_id));  
-        } else if (ModelProviderType.GEMINI === value) {
-            const _models = filter(customModels, (model: CustomModel) => model.provider_type === ModelProviderType.GEMINI);
-            setModels(_models.map((_model: CustomModel) => _model.model_id));   
-        }
+        console.log('------value', value);
+        console.log(data?.models?.[value]);
+        setModels(data?.models?.[value] as string[]);
     }
     console.log('models', models);
     
