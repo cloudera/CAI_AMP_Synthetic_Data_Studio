@@ -4,6 +4,9 @@ set -eox pipefail
 # Set UV timeout for slow networks
 export UV_HTTP_TIMEOUT=3600
 
+# Use copy mode for uv to avoid hardlink warnings across filesystems
+export UV_LINK_MODE=copy
+
 # Ensure uv is installed
 set +e
 uv --version >/dev/null 2>&1
