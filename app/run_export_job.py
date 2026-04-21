@@ -15,8 +15,15 @@ notebook_dir = os.getcwd()
 # Detect the Python version dynamically
 python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
 
+# Determine venv location - check UV_PROJECT_ENVIRONMENT or CDSW_PROJECT for CML
+venv_base = os.environ.get('UV_PROJECT_ENVIRONMENT')
+if not venv_base and os.environ.get('CDSW_PROJECT'):
+    venv_base = '/tmp/sds-venv'
+if not venv_base:
+    venv_base = os.path.join(notebook_dir, '.venv')
+
 # Path for Linux virtual environment structure
-venv_path = os.path.join(notebook_dir, '.venv', 'lib', python_version, 'site-packages')
+venv_path = os.path.join(venv_base, 'lib', python_version, 'site-packages')
 
 # Add to path if not already there and if it exists
 if os.path.exists(venv_path) and venv_path not in sys.path:

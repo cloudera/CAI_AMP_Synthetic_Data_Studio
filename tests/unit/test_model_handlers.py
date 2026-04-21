@@ -26,3 +26,51 @@ def test_invalid_model_error():
     handler = UnifiedModelHandler("invalid.model", bedrock_client=mock_bedrock_client)
     with pytest.raises(InvalidModelError):
         handler.generate_response("test", request_id="test_id")
+
+
+def test_bedrock_converse_prefers_temperature_when_both_sampling_params_are_set():
+    mock_bedrock_client = Mock()
+    mock_bedrock_client.converse.return_value = {
+        "output": {"message": {"content": [{"text": "ok"}]}}
+    }
+    handler = UnifiedModelHandler(
+        "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        bedrock_client=mock_bedrock_client,
+        model_params=ModelParameters(
+            temperature=0.3,
+            top_p=0.8,
+            top_k=10,
+            max_tokens=32,
+        ),
+        custom_p=True,
+    )
+
+    handler.generate_response("test", request_id="test_id")
+
+    inference_config = mock_bedrock_client.converse.call_args.kwargs["inferenceConfig"]
+    assert inference_config["temperature"] == pytest.approx(0.3)
+    assert "topP" not in inference_config
+
+
+def test_bedrock_converse_uses_top_p_when_temperature_is_default():
+    mock_bedrock_client = Mock()
+    mock_bedrock_client.converse.return_value = {
+        "output": {"message": {"content": [{"text": "ok"}]}}
+    }
+    handler = UnifiedModelHandler(
+        "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        bedrock_client=mock_bedrock_client,
+        model_params=ModelParameters(
+            temperature=0.0,
+            top_p=0.8,
+            top_k=10,
+            max_tokens=32,
+        ),
+        custom_p=True,
+    )
+
+    handler.generate_response("test", request_id="test_id")
+
+    inference_config = mock_bedrock_client.converse.call_args.kwargs["inferenceConfig"]
+    assert inference_config["topP"] == pytest.approx(0.8)
+    assert "temperature" not in inference_config

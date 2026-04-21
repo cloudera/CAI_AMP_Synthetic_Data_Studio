@@ -167,6 +167,25 @@ class UnifiedModelHandler:
             print(f"Raw text: {text}")
             return []
 
+    def _build_bedrock_inference_config(
+        self,
+        max_tokens: int,
+        stop_sequences: List[str],
+    ) -> Dict[str, Any]:
+        inference_config: Dict[str, Any] = {
+            "maxTokens": min(self.model_params.max_tokens, max_tokens),
+            "stopSequences": stop_sequences,
+        }
+        temperature = min(self.model_params.temperature, 1.0)
+        top_p = self.model_params.top_p
+
+        # Some Converse models reject requests that include both temperature and topP.
+        if top_p != 1.0 and temperature == 0.0:
+            inference_config["topP"] = top_p
+        else:
+            inference_config["temperature"] = temperature
+        return inference_config
+
 
     #@track_llm_operation("generate")
     def generate_response(
@@ -205,13 +224,10 @@ class UnifiedModelHandler:
                 additional_model_fields = {"top_k": self.model_params.top_k}
                 
                 if "claude" in self.model_id:
-                    inference_config = {
-                                "maxTokens": min(self.model_params.max_tokens, new_max_tokens),
-                                "temperature": min(self.model_params.temperature, 1.0),
-                                "topP": self.model_params.top_p,
-                                "stopSequences": ["\n\nHuman:"],
-                              
-                             }
+                    inference_config = self._build_bedrock_inference_config(
+                        max_tokens=new_max_tokens,
+                        stop_sequences=["\n\nHuman:"],
+                    )
                     response = bedrock_client.converse(
                         modelId=self.model_id,
                         messages=conversation,
@@ -219,12 +235,10 @@ class UnifiedModelHandler:
                         additionalModelRequestFields=additional_model_fields
                     )
                 else:
-                    inference_config = {
-                                "maxTokens": min(self.model_params.max_tokens, new_max_tokens),
-                                "temperature": min(self.model_params.temperature, 1.0),
-                                "topP": self.model_params.top_p,
-                               "stopSequences": []
-                             }
+                    inference_config = self._build_bedrock_inference_config(
+                        max_tokens=new_max_tokens,
+                        stop_sequences=[],
+                    )
                     print(inference_config)
                     response = bedrock_client.converse(
                         modelId=self.model_id,
